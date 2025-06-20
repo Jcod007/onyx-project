@@ -1,0 +1,28 @@
+# === Fichiers/dossiers générés par Maven ===
+Timer/target/
+/target/
+
+# === Fichiers de configuration Eclipse ===
+.classpath
+.project
+.settings/
+.metadata/
+
+# === Fichiers temporaires/OS ===
+*.log
+*.tmp
+*.swp
+*.bak
+.DS_Store
+Thumbs.db
+
+# === Fichiers système Git ===
+*.orig
+
+# === Fichiers de config perso ===
+.env
+.idea/
+.vscode/
+
+# === Ignorer les fichiers compilés Java ===
+*.class

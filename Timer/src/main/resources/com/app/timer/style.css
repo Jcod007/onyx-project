@@ -1,0 +1,83 @@
+.digital-label {
+    -fx-font-family: "Digital-7 Mono", monospace;
+    -fx-font-size: 96.0px;
+    -fx-text-fill: white;
+}
+
+.root {
+    -fx-background-color: #0D1B2A;
+    -fx-padding: 40.0px;
+}
+
+.button {
+    -fx-font-size: 14.0px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+    -fx-background-radius: 6.0;
+    -fx-cursor: hand;
+    -fx-padding: 10.0px 20.0px;
+    -fx-pref-width: 150.0px;
+}
+
+.ok-button,
+.pause-button,
+.demarrer-button,
+.reset-button {
+    -fx-background-color: #2A3A5B;
+}
+
+.reglage-button {
+    -fx-background-color: #415A77;
+}
+
+.ok-button:pressed,
+.pause-button:pressed,
+.demarrer-button:pressed,
+.reset-button:pressed,
+.reglage-button:pressed {
+    -fx-background-color: #1B263B;
+}
+
+.button:focused {
+    -fx-focus-color: #00a1f7;
+    -fx-faint-focus-color: #415A77;
+    -fx-border-color: #00a1f7;
+    -fx-border-width: 2.0;
+    -fx-border-radius: 6.0;
+    -fx-background-insets: 0.0;
+}
+
+.timeField {
+   
+   	
+    -fx-background-color: #374151;
+    -fx-text-fill: white; /* Vert brillant pour un look plus "digital" */
+    -fx-prompt-text-fill: #778DA9; /* Couleur du placeholder */
+    -fx-background-radius: 6.0;
+    -fx-border-color: #778DA9;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6.0;
+    -fx-font-family: "Digital-7 Mono", monospace; /* Cohérent avec votre label */
+    -fx-font-size: 16.0px;
+    -fx-alignment: center; /* Centre le texte */
+}
+
+
+
+
+.settingsLabel {
+    -fx-font-weight: bold;
+    -fx-font-size: 14.0px;
+    -fx-text-fill: white;
+}
+
+#settingsBox {
+    -fx-background-color: #1B263B;
+    -fx-background-radius: 6.0;
+    -fx-pref-width: 500.0px;
+    -fx-pref-height: 100.0px;
+    -fx-min-width: 500.0px;
+    -fx-min-height: 100.0px;
+    -fx-max-width: 500.0px;
+    -fx-max-height: 100.0px;
+}
