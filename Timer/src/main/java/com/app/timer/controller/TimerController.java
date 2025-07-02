@@ -210,32 +210,43 @@ public class TimerController {
 
 	}
 
-	private void parseTextToModel(String text) {
-		String[] parts = text.split(":");
-		byte h, m, s;
+       private void parseTextToModel(String text) {
+               String[] parts = text.split(":");
+               int h, m, s;
 
-		if (parts.length == 3) {
-			// Format HH:MM:SS
-			h = Byte.parseByte(parts[0]);
-			m = Byte.parseByte(parts[1]);
-			s = Byte.parseByte(parts[2]);
-		} else if (parts.length == 2) {
-			// Format MM:SS (pas d'heures)
-			h = 0;
-			m = Byte.parseByte(parts[0]);
-			s = Byte.parseByte(parts[1]);
-		} else if (parts.length == 1) {
-			// Format SS (que des secondes)
-			h = 0;
-			m = 0;
-			s = Byte.parseByte(parts[0]);
-		} else {
-			// Format invalide, garder les valeurs actuelles
-			return;
-		}
+               if (parts.length == 3) {
+                       // Format HH:MM:SS
+                       h = Integer.parseInt(parts[0]);
+                       m = Integer.parseInt(parts[1]);
+                       s = Integer.parseInt(parts[2]);
+               } else if (parts.length == 2) {
+                       // Format MM:SS (pas d'heures)
+                       h = 0;
+                       m = Integer.parseInt(parts[0]);
+                       s = Integer.parseInt(parts[1]);
+               } else if (parts.length == 1) {
+                       // Format SS (que des secondes)
+                       h = 0;
+                       m = 0;
+                       s = Integer.parseInt(parts[0]);
+               } else {
+                       // Format invalide, garder les valeurs actuelles
+                       return;
+               }
 
-		model = new TimerModel(h, m, s);
-	}
+               // Clamp dans les bornes valides pour éviter les dépassements lors du cast
+               h = clamp(h, 0, 99);
+               m = clamp(m, 0, 59);
+               s = clamp(s, 0, 59);
+
+               model = new TimerModel((byte) h, (byte) m, (byte) s);
+       }
+
+       private int clamp(int value, int min, int max) {
+               if (value < min) return min;
+               if (value > max) return max;
+               return value;
+       }
 
 	// ========================================
 	// GESTION DU MINUTEUR
