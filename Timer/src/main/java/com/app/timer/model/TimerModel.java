@@ -9,28 +9,51 @@ public class TimerModel {
 	private final byte initHours;
 
 	public TimerModel(byte hours, byte minutes, byte seconds) {
-		
+
 		this.hours = hours;
 		this.minutes = minutes;
 		this.seconds = seconds;
-		convertOverflow();
+		convertAndClamp();
 		this.initMinutes = this.minutes;
 		this.initSeconds = this.seconds;
 		this.initHours = this.hours;
-		
+
 	}
 
-	private void convertOverflow() {
-		if (seconds > 59) {
-			minutes += seconds / 60;
-			seconds = (byte) (seconds % 60);
-		}
-		if (minutes > 59) {
-			hours += minutes / 60;
-			minutes = (byte) (minutes % 60);
-		}
-		checkValue();
-	}
+	 private void convertAndClamp() {
+	        // NOUVEAU: Stratégie de saturation au lieu d'overflow
+	        
+	        // Si on dépasse les limites absolues, on sature directement
+	        if (hours > 99 || minutes > 59 || seconds > 59) {
+	            // Saturation complète
+	            if (hours > 99) {
+	                hours = 99;
+	                minutes = 59;
+	                seconds = 59;
+	                checkValue();
+	                return;
+	            }
+	        }
+	        
+	        // Sinon, overflow normal puis clamp
+	        if (seconds > 59) {
+	            minutes += seconds / 60;
+	            seconds = (byte) (seconds % 60);
+	        }
+	        if (minutes > 59) {
+	            hours += minutes / 60;
+	            minutes = (byte) (minutes % 60);
+	        }
+	        
+	        // Clamp final après overflow
+	        if (hours > 99) {
+	            hours = 99;
+	            minutes = 59;
+	            seconds = 59;
+	        }
+	        
+	        checkValue();
+	    }
 
 	private void checkValue() {
 		if (hours < 0 || minutes < 0 || seconds < 0) {
@@ -97,8 +120,19 @@ public class TimerModel {
 
 	@Override
 	public String toString() {
+	    if (hours > 0) {
+	        return String.format("%02d:%02d:%02d", hours, minutes, seconds);
+	    } else if (minutes > 0) {
+	        return String.format("%02d:%02d", minutes, seconds);
+	    } else {
+	        return String.format("%d", seconds);
+	    }
+	}
+	
+	public String getFormattedTime()
+	{
 		return String.format("%02d:%02d:%02d", hours, minutes, seconds);
 	}
-
 	
+
 }
