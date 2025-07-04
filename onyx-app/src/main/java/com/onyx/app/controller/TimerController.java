@@ -1,5 +1,7 @@
 package com.onyx.app.controller;
 
+import javax.swing.Timer;
+
 import com.onyx.app.model.TimerModel;
 
 import javafx.animation.KeyFrame;
@@ -185,7 +187,7 @@ public class TimerController {
 			updateButtonStates(); // Mettre à jour l'état des boutons
 		}
 
-		timeEditField.setText(model.getFormattedTime());
+		timeEditField.setText(getFormattedTime());
 		timeEditField.setManaged(true);
 		timeEditField.setVisible(true);
 		timeLabel.setVisible(false);
@@ -270,7 +272,7 @@ public class TimerController {
 	 */
 	private void updateDisplay() {
 		updateButtonStates();
-		timeLabel.setText(model.toString());
+		timeLabel.setText(formatTime());
 	}
 
 	/**
@@ -380,12 +382,32 @@ public class TimerController {
 		});
 	}
 
+	public String getFormattedTime()
+	{
+		return String.format("%02d:%02d:%02d", model.getHours(), model.getMinutes(), model.getSeconds());
+	}
 	private String formatDigits(String digits) {
 		while (digits.length() < 6) {
 			digits = "0" + digits;
 		}
 		return digits.substring(0, 2) + ":" + digits.substring(2, 4) + ":" + digits.substring(4, 6);
 	}
+	
+	private String formatTime() {
+	    if (model.getHours() > 0) {
+	        return String.format("%02d:%02d:%02d",
+	                model.getHours(),
+	                model.getMinutes(),
+	                model.getSeconds());
+	    } else if (model.getMinutes() > 0) {
+	        return String.format("%02d:%02d",
+	                model.getMinutes(),
+	                model.getSeconds());
+	    } else {
+	        return String.format("%d", model.getSeconds());
+	    }
+	}
+
 
 	// ========================================
 	// UTILITAIRES DE PARSING
