@@ -118,21 +118,6 @@ public class TimerModel {
 		return minutes == initMinutes && seconds == initSeconds && hours == initHours;
 	}
 
-	@Override
-	public String toString() {
-	    if (hours > 0) {
-	        return String.format("%02d:%02d:%02d", hours, minutes, seconds);
-	    } else if (minutes > 0) {
-	        return String.format("%02d:%02d", minutes, seconds);
-	    } else {
-	        return String.format("%d", seconds);
-	    }
-	}
 	
-	public String getFormattedTime()
-	{
-		return String.format("%02d:%02d:%02d", hours, minutes, seconds);
-	}
 	
-
 }
