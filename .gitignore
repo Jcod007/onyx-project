@@ -13,6 +13,7 @@ Timer/target/
 *.tmp
 *.swp
 *.bak
+*.lst
 .DS_Store
 Thumbs.db
 
