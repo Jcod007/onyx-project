@@ -1,7 +1,5 @@
 package com.onyx.app.controller;
 
-import javax.swing.Timer;
-
 import com.onyx.app.model.TimerModel;
 
 import javafx.animation.KeyFrame;
