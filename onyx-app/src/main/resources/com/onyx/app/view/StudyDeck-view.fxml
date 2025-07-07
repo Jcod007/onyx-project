@@ -1,53 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-<?import javafx.geometry.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
 
-<BorderPane xmlns="http://javafx.com/javafx/23.0.1"
-            xmlns:fx="http://javafx.com/fxml/1"
-            prefWidth="800" prefHeight="600"
-            styleClass="root-pane" 
-            stylesheets="@/styles/studydeck-view.css"
-            >
+<BorderPane prefHeight="600" prefWidth="800"
+	styleClass="root-pane" stylesheets="@/styles/studydeck-view.css"
+	xmlns="http://javafx.com/javafx/23.0.1"
+	xmlns:fx="http://javafx.com/fxml/1"
+	fx:controller="com.onyx.app.controller.StudyDeckController">
 
-    <top>
-        <HBox alignment="CENTER_LEFT" spacing="10.0">
-            <padding>
-                <Insets top="20.0" right="20.0" bottom="20.0" left="20.0"/>
-            </padding>
-            <Button text="+ Ajouter un cours"
-                    fx:id="addCourseButton"
-                    styleClass="add-course-button"/>
-        </HBox>
-    </top>
+	<center>
+		<VBox fx:id="coursesList" spacing="15.0">
+			<padding>
+				<Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+			</padding>
 
-    <center>
-        <VBox fx:id="coursesList" spacing="15.0">
-            <padding>
-                <Insets top="20.0" right="20.0" bottom="20.0" left="20.0"/>
-            </padding>
-            
-            <VBox styleClass="course-card" spacing="10.0">
-                <padding>
-                    <Insets top="15.0" right="15.0" bottom="15.0" left="15.0"/>
-                </padding>
-                
-                <HBox alignment="CENTER_LEFT" spacing="10.0">
-                    <Label text="Mathématiques" styleClass="course-name"/>
-                    <Label text="Fait" styleClass="status-badge status-done"/>
-                </HBox>
+			<VBox spacing="10.0" styleClass="course-card">
+				<padding>
+					<Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+				</padding>
 
-                <HBox alignment="CENTER_LEFT" spacing="5.0">
-                    <Label text="Objectif de temps :" styleClass="label-small"/>
-                    <Label text="10 h 00" styleClass="time-label"/>
-                </HBox>
+				<HBox alignment="CENTER_LEFT" spacing="10.0">
+					<Label styleClass="course-name" text="Mathématiques" />
+					<Label styleClass="status-badge status-done" text="Fait" />
+				</HBox>
 
-                <Button text="Démarrer minuterie"
-                        styleClass="start-button"/>
-            </VBox>
-            
-        </VBox>
-    </center>
+				<HBox alignment="CENTER_LEFT" spacing="5.0">
+					<Label styleClass="label-small" text="Objectif de temps :" />
+					<Label styleClass="time-label" text="10 h 00" />
+				</HBox>
+
+				<Button styleClass="start-button" text="Démarrer minuterie" />
+			</VBox>
+
+		</VBox>
+	</center>
+	<bottom>
+		<HBox alignment="CENTER_LEFT" spacing="10.0"
+			BorderPane.alignment="CENTER">
+			<padding>
+				<Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+			</padding>
+			<Button fx:id="addCourseButton" styleClass="add-course-button"
+				text="+ Ajouter un cours" />
+		</HBox>
+	</bottom>
 
 </BorderPane>

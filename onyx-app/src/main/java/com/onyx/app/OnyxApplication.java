@@ -18,7 +18,7 @@ public class OnyxApplication extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
-        scene = new Scene(loadFXML("/com/onyx/app/StudyDeck-view"), 640, 480);
+        scene = new Scene(loadFXML("/com/onyx/app/view/Main-view"), 640, 480);
         stage.setScene(scene);
         stage.setTitle(title);
         stage.show();

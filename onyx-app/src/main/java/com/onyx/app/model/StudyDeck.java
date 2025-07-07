@@ -20,7 +20,7 @@ public class StudyDeck {
 	}
 
 	public List<Subject> getSubjectList() {
-		return (List<Subject>) Collections.unmodifiableCollection(subjectList);
+		return Collections.unmodifiableList(subjectList);
 	}
 	
 	
