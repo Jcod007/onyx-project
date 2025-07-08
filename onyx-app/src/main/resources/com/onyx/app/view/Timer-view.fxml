@@ -4,21 +4,23 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
 
-<VBox alignment="CENTER" spacing="40" styleClass="root"
+<VBox alignment="CENTER" minWidth="200" minHeight="200"
+	prefWidth="320" prefHeight="320" maxWidth="500" maxHeight="500"
+	spacing="40" styleClass="root"
+	stylesheets="@/com/onyx/app/styles/timer-view.css"
 	xmlns="http://javafx.com/javafx/23.0.1"
 	xmlns:fx="http://javafx.com/fxml/1"
-	fx:controller="com.onyx.app.controller.TimerController"
-	stylesheets="@/styles/timer-view.css">
+	fx:controller="com.onyx.app.controller.TimerController">
 
 	<!-- Conteneur pour le Label et TextField -->
 	<StackPane id="timeContainer" alignment="CENTER">
 		<Label fx:id="timeLabel" onMouseClicked="#startEditing"
 			styleClass="digital-label" text="00:00:00" />
 		<TextField fx:id="timeEditField" managed="false"
-			onAction="#finishEditing" visible="false" styleClass="digital-field" />
+			onAction="#finishEditing" styleClass="digital-field" visible="false" />
 	</StackPane>
 
 	<HBox alignment="CENTER" spacing="15">

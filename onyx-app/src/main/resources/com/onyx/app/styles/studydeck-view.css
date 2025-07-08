@@ -1,0 +1,122 @@
+/* === ONYX StudyDeck Global === */
+
+.root, .main-container {
+    -fx-font-family: "Roboto", "Montserrat", sans-serif;
+    -fx-background-color: #0B132B; /* deep night blue */
+    -fx-text-fill: #E0E0E0;
+}
+
+/* Add course form container */
+#addCoursePane {
+    -fx-background-color: #1C2541;
+    -fx-padding: 15;
+    -fx-background-radius: 8;
+    -fx-spacing: 10;
+    -fx-border-color: #0097A7;
+    -fx-border-width: 2;
+    -fx-border-radius: 8;
+}
+
+/* Labels in form */
+#addCoursePane Label {
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+}
+
+/* TextFields in form */
+#addCoursePane TextField {
+    -fx-background-color: #3A506B;
+    -fx-text-fill: #ffffff;
+    -fx-prompt-text-fill: #B0BEC5;
+    -fx-background-radius: 5;
+    -fx-border-color: transparent;
+    -fx-padding: 5 10 5 10;
+    -fx-font-size: 13px;
+}
+
+/* Buttons in form */
+#addCoursePane Button {
+    -fx-background-color: #1976D2;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5;
+    -fx-padding: 6 15 6 15;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+}
+
+#addCoursePane Button:hover {
+    -fx-background-color: #0F4C81;
+}
+
+#addCoursePane Button:pressed {
+    -fx-background-color: #0B3A63;
+}
+
+/* Add Course Button (main add button) */
+.add-course-button {
+    -fx-background-color: #FF9800;
+    -fx-text-fill: #0B132B;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5;
+    -fx-padding: 10 20 10 20;
+    -fx-font-size: 14px;
+    -fx-cursor: hand;
+}
+
+.add-course-button:hover {
+    -fx-background-color: #E68900;
+}
+
+.add-course-button:pressed {
+    -fx-background-color: #CC7700;
+}
+
+#addCoursePane TextField:focused {
+    -fx-background-color: #3A506B;
+    -fx-border-color: #42A5F5; /* nouveau bleu focus */
+    -fx-border-width: 2;
+    -fx-border-radius: 5;
+    -fx-effect: dropshadow(gaussian, #42A5F5, 5, 0.4, 0, 0);
+}
+
+#addCoursePane Button:focused {
+    -fx-border-color: #42A5F5;
+    -fx-border-width: 2;
+    -fx-border-radius: 5;
+    -fx-effect: dropshadow(gaussian, #42A5F5, 5, 0.4, 0, 0);
+}
+
+.add-course-button:focused {
+    -fx-border-color: #42A5F5;
+    -fx-border-width: 2;
+    -fx-border-radius: 5;
+    -fx-effect: dropshadow(gaussian, #42A5F5, 5, 0.4, 0, 0);
+}
+#addCoursePane .cancel-button {
+    -fx-background-color: #C62828;
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5;
+    -fx-padding: 6 15 6 15;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+}
+
+#addCoursePane .cancel-button:hover {
+    -fx-background-color: #B71C1C;
+}
+
+#addCoursePane .cancel-button:pressed {
+    -fx-background-color: #7F0000;
+}
+
+#addCoursePane .cancel-button:focused {
+    -fx-border-color: #FF8A80;
+    -fx-border-width: 2;
+    -fx-border-radius: 5;
+    -fx-effect: dropshadow(gaussian, #FF8A80, 5, 0.4, 0, 0);
+}
+

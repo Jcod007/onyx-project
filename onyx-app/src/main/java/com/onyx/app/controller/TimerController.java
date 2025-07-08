@@ -60,6 +60,11 @@ public class TimerController {
 		updateDisplay();
 	}
 
+	public void setModel(TimerModel model) {
+	    this.model = model;
+	    updateDisplay();
+	}
+	
 	private void setupClickOutsideListener() {
 		// Attendre que le timeEditField soit attaché à une scène
 		timeEditField.sceneProperty().addListener((observable, oldScene, newScene) -> {

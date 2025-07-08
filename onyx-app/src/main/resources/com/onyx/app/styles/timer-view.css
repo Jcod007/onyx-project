@@ -2,9 +2,22 @@
    CONTENEUR PRINCIPAL
    ================================ */
 
+
+
 .root {
     -fx-background-color: #0D1B2A;
-    -fx-padding: 40.0px;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: #1976D2;
+    -fx-border-width: 2;
+    -fx-padding: 20;
+    -fx-min-width: 200px;
+    -fx-min-height: 200px;
+    -fx-pref-width: 320px;
+    -fx-pref-height: 320px;
+    -fx-max-width: 500px;
+    -fx-max-height: 500px;
+    
 }
 
 #timeContainer {
@@ -19,7 +32,7 @@
 .digital-label,
 .digital-field {
     -fx-font-family: "Digital-7 Mono", monospace;
-    -fx-font-size: 96.0px;
+    -fx-font-size: 50.0px;
     -fx-text-fill: white;
     -fx-alignment: center;
     -fx-text-alignment: center;
@@ -35,7 +48,7 @@
 #timeEditField {
     -fx-font-family: "Digital-7 Mono", monospace;
     -fx-background-color: transparent;
-    -fx-font-size: 96.0px;
+    -fx-font-size: 50.0px;
     -fx-text-fill: white;
     -fx-padding: 0px;
     -fx-margin: 0px;
