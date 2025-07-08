@@ -1,0 +1,91 @@
+/* === ONYX Theme Colors === */
+.root {
+    -fx-font-family: "Roboto", "Montserrat", sans-serif;
+    -fx-font-size: 14px;
+}
+
+/* Card container */
+.course-card {
+    -fx-background-color: #1C2541; /* foncé mais moins que le fond global */
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: #0097A7; /* turquoise */
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 5, 0.3, 0, 2);
+    -fx-padding: 15;
+    -fx-spacing: 10;
+}
+
+/* Header HBox */
+#header {
+    -fx-alignment: center-left;
+}
+
+/* Course name label */
+.course-name {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white; /* bleu ONYX */
+}
+
+/* Status label */
+.status-label {
+    -fx-background-color: #FF9800;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 3 8 3 8;
+    -fx-background-radius: 5;
+    -fx-font-size: 12px;
+}
+
+#actions .button:focused {
+    -fx-border-color: #42A5F5;
+    -fx-border-width: 2;
+    -fx-border-radius: 5;
+    -fx-effect: dropshadow(gaussian, #42A5F5, 5, 0.4, 0, 0);
+}
+
+/* Duration label */
+.course-duration {
+    -fx-text-fill: #E0E0E0;
+    -fx-font-size: 14px;
+}
+
+/* Buttons in actions HBox */
+#actions .button {
+    -fx-background-color: #1976D2;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5;
+    -fx-padding: 6 12 6 12;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+}
+
+#actions .button:hover {
+    -fx-background-color: #0F4C81; /* bleu plus foncé */
+}
+
+#actions .button:pressed {
+    -fx-background-color: #0B3A63;
+}
+
+/* Objective label */
+.objective-label {
+    -fx-background-color: #1976D2; /* bleu ONYX */
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+    -fx-padding: 3 8 3 8;
+    -fx-background-radius: 5;
+    -fx-font-size: 12px;
+}
+
+/* Elapsed label */
+.elapsed-label {
+    -fx-background-color: #0097A7; /* turquoise ONYX */
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+    -fx-padding: 3 8 3 8;
+    -fx-background-radius: 5;
+    -fx-font-size: 12px;
+}
