@@ -1,0 +1,66 @@
+/* ------------------------------- */
+/* SIDEBAR (VBOX)                  */
+/* ------------------------------- */
+
+.menu-bar {
+    -fx-background-color: #222B45; /* Bleu nuit ONYX */
+    -fx-padding: 20 10 20 10;
+    -fx-spacing: 10;
+}
+
+/* Title label ONYX */
+.menu-bar .title {
+    -fx-text-fill: #FFFFFF;                  /* Blanc pur */
+    -fx-font-family: "Montserrat";
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-padding: 10 15 10 15;
+}
+
+/* Boutons du menu */
+.menu-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #F3F6FD;                 /* Bleu pâle ONYX (texte) */
+    -fx-font-family: "Montserrat";
+    -fx-font-size: 14px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-content-display: left;               /* Icône à gauche */
+    -fx-graphic-text-gap: 10px;              /* Espace icône-texte */
+    -fx-padding: 8px 0 8px 15px;
+    -fx-background-radius: 7px;
+    -fx-cursor: hand;
+    -fx-border-width: 0;
+    -fx-effect: dropshadow(gaussian, rgba(51,102,255,0.07), 2,0,0,1);
+}
+
+/* Style de l'icône par défaut */
+.menu-button .ikonli-font-icon {
+    -fx-icon-color: #F3F6FD;                /* Même couleur que le texte */
+    -fx-icon-size: 18px;
+}
+
+/* Effet de survol */
+.menu-button:hover {
+    -fx-background-color: #3366FF22;        /* Bleu primaire, léger, 13% opacité */
+    -fx-text-fill: #09D3AC;                 /* Turquoise ONYX */
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, #3366FF33, 4,0,0,2);
+    /* Ombre subtile en hover */
+}
+
+/* Changement couleur icône au survol */
+.menu-button:hover .ikonli-font-icon {
+    -fx-icon-color: #09D3AC !important;     /* Turquoise ONYX */
+    -fx-icon-size: 22px;
+    -fx-effect: dropshadow(gaussian, #09D3AC44, 3,0,0,1);
+}
+
+/* Optionnel : bouton actif */
+.menu-button.active, .menu-button:selected {
+    -fx-background-color: #3366FF33;        /* Bleu primaire, plus visible */
+    -fx-text-fill: #3366FF;
+    -fx-font-weight: bold;
+}
+.menu-button.active .ikonli-font-icon, .menu-button:selected .ikonli-font-icon {
+    -fx-icon-color: #3366FF !important;
+}
