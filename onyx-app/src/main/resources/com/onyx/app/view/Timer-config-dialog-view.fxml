@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<StackPane xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.onyx.app.controller.TimerConfigDialogController">
+    <children>
+        <VBox alignment="TOP_CENTER" fillWidth="true" maxHeight="691.0" maxWidth="500" 
+              prefHeight="691.0" prefWidth="500" spacing="20" 
+              styleClass="timer-config-dialog-root" 
+              stylesheets="@/com/onyx/app/styles/timerconfigdialog-view.css">
+            
+            <!-- Titre (fixe en haut) -->
+            <Label prefHeight="24.0" prefWidth="68.0" style="-fx-font-weight: bold;" 
+                   styleClass="timer-config-dialog-label" text="Add Timer" />
+            
+            <!-- Champ texte (taille fixe) -->
+            <TextField fx:id="timerTextFliedConfig" alignment="CENTER" text="00:00:00" 
+                       prefWidth="200" prefHeight="40" />
+            
+            <!-- Indicateur de statut (taille fixe) -->
+            <HBox fx:id="statusIndicator" alignment="CENTER" 
+                  style="-fx-background-color: #e8f5e9; -fx-padding: 5 15; -fx-background-radius: 15;">
+                <Label style="-fx-font-size: 14px;" text="⏱" />
+                <Label fx:id="statusLabel" style="-fx-text-fill: #2e7d32; -fx-font-size: 14px;" 
+                       text="Aucun timer sélectionné" />
+            </HBox>
+            
+            <!-- Section choix timer (contenu extensible) -->
+            <VBox VBox.vgrow="ALWAYS" spacing="10">
+                <children>
+                    <Label prefHeight="26.0" prefWidth="108.0" style="-fx-font-weight: bold;" 
+                           styleClass="timer-config-dialog-label" text="Choose a Timer" />
+                    <ComboBox prefWidth="200.0" prefHeight="40" />
+                </children>
+                <padding>
+                    <Insets bottom="20"/>
+                </padding>
+            </VBox>
+            
+            <!-- Section cours associé (contenu extensible) -->
+            <VBox VBox.vgrow="ALWAYS" spacing="10">
+                <children>
+                    <Label styleClass="timer-config-dialog-label" text="Associated course" />
+                    <ComboBox prefWidth="200.0" prefHeight="40" />
+                </children>
+                <padding>
+                    <Insets bottom="20"/>
+                </padding>
+            </VBox>
+            
+            <!-- Bouton OK (fixe en bas) -->
+            <Region VBox.vgrow="ALWAYS"/> <!-- Espaceur pour pousser le bouton vers le bas -->
+            <HBox alignment="CENTER" prefHeight="35.0" prefWidth="500.0">
+                <children>
+                    <Button mnemonicParsing="false" styleClass="timer-config-dialog-ok-button" 
+                            text="OK" prefWidth="100" prefHeight="40" />
+                </children>
+                <padding>
+                    <Insets bottom="20"/>
+                </padding>
+            </HBox>
+        </VBox>
+    </children>
+</StackPane>

@@ -1,0 +1,26 @@
+.timer-config-dialog-root
+{
+	-fx-background-color: #2A3A5B;
+	-fx-background-radius: 20.0px;
+	-fx-padding: 10.0px;
+	
+	
+	
+}
+
+.timer-config-dialog-label
+{
+	-fx-text-fill: white;
+	
+}
+
+#timerTextFliedConfig
+{
+	-fx-background-color: transparent;
+	-fx-alignment: CENTER;
+	-fx-text-fill: white;
+	-fx-font-size: 50.0px;
+	
+	
+	
+}
