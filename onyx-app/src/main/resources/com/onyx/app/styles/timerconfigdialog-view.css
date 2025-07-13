@@ -1,26 +1,118 @@
-.timer-config-dialog-root
-{
-	-fx-background-color: #2A3A5B;
-	-fx-background-radius: 20.0px;
-	-fx-padding: 10.0px;
-	
-	
-	
+/* ============================================= */
+/* DIALOG ROOT                                   */
+/* ============================================= */
+
+.timer-config-dialog-root {
+    -fx-background-color: #0D1B2A;
+    -fx-background-radius: 20px;
+    -fx-border-radius: 20px;
+    -fx-border-width: 2px;
+    -fx-padding: 20px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 255, 255, 0.2), 20, 0.3, 0, 8);
 }
 
-.timer-config-dialog-label
-{
-	-fx-text-fill: white;
-	
+/* ============================================= */
+/* OK BUTTON                                     */
+/* ============================================= */
+
+.timer-config-dialog-ok-button {
+    -fx-background-color: #1976D2;
+    -fx-background-radius: 10px;
+    -fx-border-radius: 10px;
+    -fx-border-width: 1px;
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-padding: 10px 20px;
+    -fx-cursor: hand;
+   
 }
 
-#timerTextFliedConfig
-{
-	-fx-background-color: transparent;
-	-fx-alignment: CENTER;
-	-fx-text-fill: white;
-	-fx-font-size: 50.0px;
-	
-	
-	
+.timer-config-dialog-ok-button:hover {
+    -fx-background-color: #2563eb;
+}
+
+.timer-config-dialog-ok-button:pressed {
+    -fx-background-color: #0B3C74;
+   
+}
+
+/* ============================================= */
+/* COMBO BOX                                     */
+/* ============================================= */
+
+.timer-config-dialog-combo-box {
+    -fx-border-color: aqua;
+    -fx-border-radius: 10px;
+    -fx-border-width: 2px;
+    -fx-background-color: #1B263B;
+    -fx-background-radius: 10px;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+    -fx-text-fill: white;
+    -fx-padding: 5px;
+    -fx-font-size: 16px;
+}
+
+.timer-config-dialog-combo-box:focused {
+    -fx-border-color: #1976D2;
+}
+
+/* ============================================= */
+/* LABELS                                        */
+/* ============================================= */
+
+.timer-config-dialog-label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+}
+
+/* ============================================= */
+/* TEXT FIELD CONFIG                             */
+/* ============================================= */
+
+#timerTextFliedConfig {
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-font-size: 50px;
+    -fx-alignment: center;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+}
+
+/* ============================================= */
+/* COMBO BOX DROPDOWN LIST                       */
+/* ============================================= */
+
+.timer-config-dialog-combo-box .list-view .list-cell:filled:selected  {
+    -fx-text-fill: white !important;
+}
+
+.combo-box .text-input {
+    -fx-text-fill: white !important;
+}
+
+.timer-config-dialog-combo-box .list-view {
+    -fx-background-color: #1B263B;
+    -fx-background-radius: 8px;
+    -fx-border-color: aqua;
+    -fx-border-width: 2px;
+    -fx-border-radius: 8px;
+    -fx-text-fill: white;
+}
+
+.timer-config-dialog-combo-box .cell:selected {
+    -fx-text-fill: white;
+}
+.timer-config-dialog-combo-box .list-view .list-cell {
+    -fx-font-size: 16px;
+    -fx-padding: 8px 16px;
+    -fx-text-fill: white;
+    -fx-background-color: transparent;
+}
+
+.timer-config-dialog-combo-box .list-view .list-cell:hover {
+    -fx-background-color: #1976D2;
+    -fx-text-fill: white;
 }

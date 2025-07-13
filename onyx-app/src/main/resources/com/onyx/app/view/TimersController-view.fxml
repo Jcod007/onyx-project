@@ -1,25 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.geometry.Insets?>
 
-<AnchorPane prefHeight="600" prefWidth="800"
+<StackPane prefHeight="600" prefWidth="800"
+	stylesheets="@/com/onyx/app/styles/timerscontroller-view.css"
 	xmlns="http://javafx.com/javafx/23.0.1"
 	xmlns:fx="http://javafx.com/fxml/1"
-	fx:controller="com.onyx.app.controller.TimersController">
-
-	<FlowPane fx:id="timersList" hgap="24.0"
-		styleClass="timers-list-view" vgap="24.0" AnchorPane.bottomAnchor="0"
-		AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0.0"
-		AnchorPane.topAnchor="0">
-		<padding>
-			<Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-		</padding>
-	</FlowPane>
+	fx:controller="com.onyx.app.controller.TimersController"
+	styleClass = "timercontroller-root">
+	
+	<ScrollPane fitToWidth="true" styleClass = "timer-card-contener">
+		<content>
+			<FlowPane fx:id="timersList" hgap="24.0" vgap="24.0"
+				styleClass="timers-card-list-view">
+				<padding>
+					<Insets bottom="80.0" left="20.0" right="20.0" top="20.0" />
+				</padding>
+			</FlowPane>
+		</content>
+	</ScrollPane>
 
 	<Button fx:id="addTimerButton" onAction="#handleCreateTimer"
-		styleClass="fab-button" text="+" AnchorPane.bottomAnchor="20"
-		AnchorPane.rightAnchor="20" />
-</AnchorPane>
+		styleClass="fab-button" text="+" />
+</StackPane>

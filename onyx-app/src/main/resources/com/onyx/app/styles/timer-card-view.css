@@ -4,19 +4,34 @@
 
 
 
-.root {
+.timer-card-root {
     -fx-background-color: #0D1B2A;
     -fx-background-radius: 12;
     -fx-border-radius: 12;
-    -fx-border-color: #1976D2;
+    /*-fx-border-color: Aqua;*/
     -fx-border-width: 2;
     -fx-padding: 20;
     -fx-min-width: 200px;
     -fx-min-height: 200px;
-    -fx-pref-width: 320px;
-    -fx-pref-height: 320px;
+    -fx-pref-width: 300px;
+    -fx-pref-height: 300px;
     -fx-max-width: 500px;
     -fx-max-height: 500px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 255, 255, 0.5), 20, 0.3, 0, 0);
+    
+}
+.timer-card-root:pressed {
+    -fx-effect: dropshadow(gaussian, rgba(0, 255, 255, 0.3), 12, 0.2, 0, 2);
+    -fx-translate-y: 2;
+    -fx-background-color: #091727; /* Légèrement plus sombre */
+    /* Pour donner un effet "enfoncé" */
+    transition: all 0.15s ease;
+}
+
+
+.timer-card-root:hover{
+   
+    -fx-effect: dropshadow(gaussian, rgba(0, 255, 255, 0.3), 12, 0.2, 0, 2);
     
 }
 
@@ -39,13 +54,14 @@
     -fx-padding: 0px;
     -fx-border-width: 0px;
     -fx-background-insets: 0px;
+    -fx-background-color: transparent;
 }
 
 .digital-label {
     -fx-cursor: hand;
 }
 
-#timeEditField {
+.digital-field {
     -fx-font-family: "Digital-7 Mono", monospace;
     -fx-background-color: transparent;
     -fx-font-size: 50.0px;
@@ -59,7 +75,6 @@
     -fx-highlight-fill: rgba(255, 255, 255, 0.2);
     -fx-highlight-text-fill: white;
     -fx-border-insets: 0px;
-    -fx-text-box-border: transparent;
     -fx-control-inner-background: transparent;
     -fx-text-inner-color: white;
 }
@@ -100,9 +115,9 @@
 
 /* Effet enfoncé */
 
-.demarrer-button:pressed,
-.reset-button:pressed{
-    -fx-background-color: #1B263B;
+.button.demarrer-button:pressed,
+.button.reset-button:pressed{
+    -fx-background-color: #2C3F5F;
 }
 
 .demarrer-button:hover,
@@ -110,7 +125,7 @@
     -fx-background-color: #3B4F73;
 }
 /* Focus */
-.button:focused {
+/* .button:focused {
     -fx-focus-color: #00a1f7;
     -fx-faint-focus-color: #415A77;
     -fx-border-color: #00a1f7;
@@ -119,3 +134,4 @@
     -fx-background-insets: 0.0;
 }
 
+*/

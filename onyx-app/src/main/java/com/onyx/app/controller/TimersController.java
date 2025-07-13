@@ -60,7 +60,7 @@ public class TimersController {
 
 		// Configurer le contrôleur avec le service
 		TimerController timerController = loader.getController();
-		timerController.setModel(timerService.getTimerModel());
+		timerController.setTimerService(timerService);
 		
 		return timerCard;
 	}

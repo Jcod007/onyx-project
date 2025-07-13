@@ -44,27 +44,32 @@ public class TimerController {
 	 */
 	@FXML
 	public void initialize() {
-		// Initialiser le service Timer
-		timerService = new TimerService();
+		// Le service sera défini via setTimerService()
+		// Configurer le champ de saisie
+		timeEditField.setTextFormatter(TimeFormatService.createTimeFormatter());
+		
+		setupClickOutsideListener();
+	}
+
+	/**
+	 * Définit un modèle de timer existant
+	 */
+	// public void setModel(TimerModel model) {
+	// 	timerService.setTimerModel(model);
+	// 	updateDisplay();
+	// }
+
+	/**
+	 * Définit le service Timer à utiliser
+	 */
+	public void setTimerService(TimerService service) {
+		this.timerService = service;
 		
 		// Configurer les callbacks du service
 		timerService.setOnTimeUpdate(this::updateDisplay);
 		timerService.setOnStateChanged(this::updateButtonStates);
 		timerService.setOnTimerFinished(this::handleTimerFinished);
 		
-		// Configurer le champ de saisie
-		timeEditField.setTextFormatter(TimeFormatService.createTimeFormatter());
-		
-		
-		setupClickOutsideListener();
-		updateDisplay();
-	}
-
-	/**
-	 * Définit un modèle de timer existant
-	 */
-	public void setModel(TimerModel model) {
-		timerService.setTimerModel(model);
 		updateDisplay();
 	}
 	

@@ -1,0 +1,43 @@
+/* Style de base pour le FAB */
+
+
+.fab-button {
+	-fx-alignement : CENTER;
+    -fx-background-color: #2A3A5B; /* Couleur primaire Material Design */
+    -fx-background-radius: 6px;
+    -fx-text-fill: white;
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-pref-weight: 65px;
+    -fx-pref-heigth: 56px;
+    -fx-min-width: 60px;
+    -fx-min-height: 56px;
+    -fx-max-width: 60px;
+    -fx-max-height: 56px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 10, 0, 0, 3);
+    -fx-cursor: hand;
+}
+
+/* Effet au survol */
+.fab-button:hover {
+    -fx-background-color: #3B4F73;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 15, 0, 0, 5);
+}
+
+/* Effet lorsqu'on clique */
+.fab-button:pressed {
+    -fx-background-color: #2C3F5F;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 5, 0, 0, 1);
+}
+
+.timer-card-contener, .timer-card-contener > .viewport {
+    -fx-background-color: #0c1026;
+}
+
+
+.timercontroller-root {
+    -fx-alignment: BOTTOM_RIGHT;
+    -fx-padding: 20;   
+    -fx-background-color: #0c1026;
+}
+/* Style pour la liste des cartes */
