@@ -18,7 +18,9 @@ public class OnyxApplication extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
-        scene = new Scene(loadFXML("/com/onyx/app/view/Main-view"), 640, 480);
+        scene = new Scene(loadFXML("/com/onyx/app/view/Main-view"), 1000, 700);
+        stage.setMinWidth(1000);
+        stage.setMinHeight(700);
         stage.setScene(scene);
         stage.setTitle(title);
         stage.show();

@@ -3,11 +3,22 @@
 /* ------------------------------- */
 
 .menu-bar {
-    -fx-background-color: #222B45; /* Bleu nuit ONYX */
+    -fx-background-color: #0D1B2A; /* Bleu nuit ONYX */
     -fx-padding: 20 10 20 10;
     -fx-spacing: 10;
 }
 
+.title
+{
+	-fx-graphic-text-grap:14px;
+}
+
+.title .ikonli-font-icon
+{
+	
+    -fx-icon-size: 30px;
+    -fx-icon-color : Aqua;
+}
 /* Title label ONYX */
 .menu-bar .title {
     -fx-text-fill: #FFFFFF;                  /* Blanc pur */
@@ -30,7 +41,7 @@
     -fx-background-radius: 7px;
     -fx-cursor: hand;
     -fx-border-width: 0;
-    -fx-effect: dropshadow(gaussian, rgba(51,102,255,0.07), 2,0,0,1);
+   
 }
 
 /* Style de l'icône par défaut */
@@ -41,10 +52,10 @@
 
 /* Effet de survol */
 .menu-button:hover {
-    -fx-background-color: #3366FF22;        /* Bleu primaire, léger, 13% opacité */
+    -fx-background-color: #2A3A5B;        /* Bleu primaire, léger, 13% opacité */
     -fx-text-fill: #09D3AC;                 /* Turquoise ONYX */
     -fx-font-weight: bold;
-    -fx-effect: dropshadow(gaussian, #3366FF33, 4,0,0,2);
+   
     /* Ombre subtile en hover */
 }
 
@@ -52,7 +63,7 @@
 .menu-button:hover .ikonli-font-icon {
     -fx-icon-color: #09D3AC !important;     /* Turquoise ONYX */
     -fx-icon-size: 22px;
-    -fx-effect: dropshadow(gaussian, #09D3AC44, 3,0,0,1);
+    
 }
 
 /* Optionnel : bouton actif */

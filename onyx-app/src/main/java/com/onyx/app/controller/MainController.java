@@ -5,13 +5,13 @@ import java.net.URL;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
 
 public class MainController {
 
 	@FXML
-	private StackPane mainContent;
+	private BorderPane mainPane;
 	private static final String PATH = "/com/onyx/app/view/";
 
 	@FXML
@@ -21,12 +21,12 @@ public class MainController {
 
 	@FXML
 	public void handleTimer() {
-		mainContent.getChildren().setAll(loadFXML("TimersController-view"));
+		mainPane.setCenter(loadFXML("TimersController-view"));
 	}
 
 	@FXML
 	public void handleStudyDeck() {
-		mainContent.getChildren().setAll(loadFXML("StudyDeck-view"));
+		mainPane.setCenter(loadFXML("StudyDeck-view"));
 	}
 
 	private Pane loadFXML(String fxml) {
