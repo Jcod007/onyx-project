@@ -26,4 +26,8 @@
 
 	<Button fx:id="addTimerButton" onAction="#handleCreateTimer"
 		styleClass="fab-button" text="+" />
+
+    <StackPane fx:id="configOverlay" visible="false" managed = "false" pickOnBounds="false" style="-fx-background-color: rgba(0,0,0,0.25);">
+        <!-- Le contenu de la config sera injecté ici dynamiquement -->
+    </StackPane>
 </StackPane>

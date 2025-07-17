@@ -2,96 +2,76 @@ package com.onyx.app.controller;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
-import javafx.scene.control.TextFormatter;
+import com.onyx.app.service.TimeFormatService;
+import com.onyx.app.model.TimerConfigResult;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Button;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
 public class TimerConfigDialogController {
 
 	@FXML
 	private TextField timerTextFliedConfig;
+	@FXML
+	private ComboBox<String> timerTypeComboBox;
+	@FXML
+	private ComboBox<String> courseComboBox;
+	@FXML
+	private VBox associatedCourseSection;
+	@FXML
+	private Button cancelButton;
+	@FXML
+	private Button okButton;
 	
 	public void initialize()
 	{
-		timerTextFliedConfig.setTextFormatter(createShiftFormatter());
-	}
-	
-	private TextFormatter<String> createShiftFormatter() {
-		return new TextFormatter<>(change -> {
-			String oldText = change.getControlText();
-			String newText = change.getControlNewText();
-
-			// Détecter le type de changement
-			boolean isDeletion = newText.length() < oldText.length();
-			boolean isInsertion = !change.getText().isEmpty();
-
-			if (isDeletion) {
-				// Gestion de la suppression
-				String oldDigits = oldText.replace(":", "");
-
-				// Si on a encore des chiffres à décaler
-				if (oldDigits.length() > 0) {
-					// Décalage à DROITE : enlever le dernier chiffre et ajouter un 0 au début
-					String newDigits = "0" + oldDigits.substring(0, oldDigits.length() - 1);
-					String rebuilt = formatDigits(newDigits);
-
-					change.setText(rebuilt);
-					change.setRange(0, oldText.length());
-					change.setCaretPosition(rebuilt.length());
-					change.setAnchor(rebuilt.length());
-
-					return change;
-				} else {
-					// Si plus de chiffres, remettre à zéro
-					change.setText("00:00:00");
-					change.setRange(0, oldText.length());
-					change.setCaretPosition(8);
-					change.setAnchor(8);
-
-					return change;
-				}
-			}
-
-			if (isInsertion) {
-				String insertedText = change.getText();
-
-				// Filtrer uniquement les chiffres
-				String onlyDigits = insertedText.replaceAll("\\D", "");
-
-				if (onlyDigits.isEmpty()) {
-					return null; // Rien à insérer
-				}
-
-				String currentDigits = oldText.replace(":", "");
-				String newDigits = currentDigits + onlyDigits;
-
-				// Limiter à 6 chiffres
-				if (newDigits.length() > 6) {
-					newDigits = newDigits.substring(newDigits.length() - 6);
-				}
-
-				String rebuilt = formatDigits(newDigits);
-
-				// Validation
-//	            if (!isValidTime(rebuilt)) {
-//	                return null;
-//	            }
-
-				change.setText(rebuilt);
-				change.setRange(0, oldText.length());
-				change.setCaretPosition(rebuilt.length());
-				change.setAnchor(rebuilt.length());
-
-				return change;
-			}
-
-			// Rejeter les autres types de changements
-			return null;
+		timerTextFliedConfig.setTextFormatter(TimeFormatService.createTimeFormatter());
+		
+		// Écouter les changements de sélection du type de timer
+		timerTypeComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
+			updateAssociatedCourseVisibility(newValue);
 		});
+		
+		// Configurer le bouton Cancel
+		cancelButton.setOnAction(e -> handleCancel());
 	}
 	
-	private String formatDigits(String digits) {
-		while (digits.length() < 6) {
-			digits = "0" + digits;
+	/**
+	 * Gère le clic sur le bouton Cancel
+	 */
+	private void handleCancel() {
+		// Fermer la fenêtre/overlay
+		Stage stage = (Stage) cancelButton.getScene().getWindow();
+		if (stage != null) {
+			stage.close();
 		}
-		return digits.substring(0, 2) + ":" + digits.substring(2, 4) + ":" + digits.substring(4, 6);
 	}
+	
+	/**
+	 * Met à jour la visibilité de la section "Associated course"
+	 */
+	private void updateAssociatedCourseVisibility(String selectedType) {
+		if (selectedType != null && selectedType.contains("Study session")) {
+			associatedCourseSection.setVisible(true);
+			associatedCourseSection.setManaged(true);
+		} else {
+			associatedCourseSection.setVisible(false);
+			associatedCourseSection.setManaged(false);
+		}
+	}
+
+	public TimerConfigResult getResult() {
+        String timeText = timerTextFliedConfig.getText();
+        TimeFormatService.TimeValues timeValues = TimeFormatService.parseTimeFromText(timeText);
+        
+        return new TimerConfigResult(
+            timeValues != null ? timeValues.getHours() : 0,
+            timeValues != null ? timeValues.getMinutes() : 0,
+            timeValues != null ? timeValues.getSeconds() : 0,
+            timerTypeComboBox.getValue(),
+            courseComboBox.getValue()
+        );
+    }
 }
+		

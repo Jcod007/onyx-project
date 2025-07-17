@@ -38,6 +38,32 @@
 }
 
 /* ============================================= */
+/* CANCEL BUTTON                                 */
+/* ============================================= */
+
+.timer-config-dialog-cancel-button {
+    -fx-background-color: #6c757d;
+    -fx-background-radius: 10px;
+    -fx-border-radius: 10px;
+    -fx-border-width: 1px;
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-padding: 10px 20px;
+    -fx-cursor: hand;
+   
+}
+
+.timer-config-dialog-cancel-button:hover {
+    -fx-background-color: #5a6268;
+}
+
+.timer-config-dialog-cancel-button:pressed {
+    -fx-background-color: #495057;
+   
+}
+
+/* ============================================= */
 /* COMBO BOX                                     */
 /* ============================================= */
 
@@ -56,6 +82,15 @@
 
 .timer-config-dialog-combo-box:focused {
     -fx-border-color: #1976D2;
+}
+
+/* Flèche du ComboBox en blanc */
+.timer-config-dialog-combo-box .arrow-button .arrow {
+    -fx-background-color: white;
+}
+
+.timer-config-dialog-combo-box .arrow-button {
+    -fx-background-color: transparent;
 }
 
 /* ============================================= */
@@ -115,4 +150,16 @@
 .timer-config-dialog-combo-box .list-view .list-cell:hover {
     -fx-background-color: #1976D2;
     -fx-text-fill: white;
+}
+
+/* ============================================= */
+/* ARRONDI GLOBAL POUR LA BOITE DE DIALOG        */
+/* ============================================= */
+
+.rounded-dialog {
+    -fx-background-radius: 24px;
+    -fx-border-radius: 24px;
+    -fx-background-color: white; /* ou #0D1B2A si tu veux garder le bleu */
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 24, 0.3, 0, 8);
+    -fx-padding: 0;
 }

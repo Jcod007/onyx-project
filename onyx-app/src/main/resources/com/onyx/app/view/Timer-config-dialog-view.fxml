@@ -12,27 +12,27 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<StackPane xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.onyx.app.controller.TimerConfigDialogController">
+<StackPane xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.onyx.app.controller.TimerConfigDialogController" styleClass="rounded-dialog">
 	<children>
-		<VBox alignment="CENTER_LEFT" fillWidth="true" maxHeight="600.0" maxWidth="500" prefHeight="457.0" prefWidth="500" spacing="20" styleClass="timer-config-dialog-root" stylesheets="@/com/onyx/app/styles/timerconfigdialog-view.css">
+		<VBox alignment="CENTER_LEFT" fillWidth="true" maxHeight="400.0" maxWidth="400" prefHeight="350.0" prefWidth="400" spacing="15" styleClass="timer-config-dialog-root" stylesheets="@/com/onyx/app/styles/timerconfigdialog-view.css">
 
 			<!-- Titre (fixe en haut) -->
-			<Label prefHeight="24.0" prefWidth="122.0" styleClass="timer-config-dialog-label" text="Add Timer" />
+			<Label prefHeight="20.0" prefWidth="100.0" styleClass="timer-config-dialog-label" text="Add Timer" />
 
 			<!-- Champ texte (taille fixe) -->
-			<TextField fx:id="timerTextFliedConfig" alignment="CENTER" prefHeight="40" prefWidth="200" text="00:00:00" />
+			<TextField fx:id="timerTextFliedConfig" alignment="CENTER" prefHeight="35" prefWidth="180" text="00:00:00" />
 
 			<!-- Indicateur de statut (taille fixe) -->
-			<HBox fx:id="statusIndicator" alignment="CENTER" maxHeight="30.0" maxWidth="500.0" prefHeight="30.0" prefWidth="438.0" style="-fx-background-color: #e8f5e9; -fx-padding: 5 15; -fx-background-radius: 15;">
-				<Label style="-fx-font-size: 14px;" text="⏱" />
-				<Label fx:id="statusLabel" style="-fx-text-fill: #2e7d32; -fx-font-size: 14px;" text="Aucun timer sélectionné" />
+			<HBox fx:id="statusIndicator" alignment="CENTER" maxHeight="25.0" maxWidth="400.0" prefHeight="25.0" prefWidth="350.0" style="-fx-background-color: #e8f5e9; -fx-padding: 5 15; -fx-background-radius: 15;">
+				<Label style="-fx-font-size: 12px;" text="⏱" />
+				<Label fx:id="statusLabel" style="-fx-text-fill: #2e7d32; -fx-font-size: 12px;" text="Aucun timer sélectionné" />
 			</HBox>
 
 			<!-- Section choix timer (contenu extensible) -->
-			<VBox prefHeight="174.0" prefWidth="500.0" spacing="5" VBox.vgrow="ALWAYS">
+			<VBox prefHeight="120.0" prefWidth="400.0" spacing="5" VBox.vgrow="ALWAYS">
 				<children>
-					<Label prefHeight="41.0" prefWidth="158.0" styleClass="timer-config-dialog-label" text="Choose a Timer" />
-					<ComboBox prefHeight="40" prefWidth="510.0" promptText="Select..." styleClass="timer-config-dialog-combo-box">
+					<Label prefHeight="30.0" prefWidth="120.0" styleClass="timer-config-dialog-label" text="Choose a Timer" />
+					<ComboBox fx:id="timerTypeComboBox" prefHeight="35" prefWidth="350.0" promptText="Select..." styleClass="timer-config-dialog-combo-box">
 						<items>
 							<FXCollections fx:factory="observableArrayList">
 								<String fx:value="🆓 Free session" />
@@ -41,31 +41,36 @@
 
 						</items>
 					</ComboBox>
-					<Label prefHeight="39.0" prefWidth="171.0" styleClass="timer-config-dialog-label" text="Associated course" />
-					<ComboBox prefHeight="40.0" prefWidth="510.0" promptText="Select..." styleClass="timer-config-dialog-combo-box">
-						<items>
-						<FXCollections fx:factory="observableArrayList">
-							<String fx:value="Mathematique" />
-							<String fx:value="Physique" />
-							<String fx:value="Histoire" />
-						</FXCollections>
+					
+					<!-- Section Associated course (visible seulement pour Study session) -->
+					<VBox fx:id="associatedCourseSection" prefHeight="70.0" prefWidth="400.0" spacing="5" visible="false" managed = "false">
+						<Label prefHeight="30.0" prefWidth="130.0" styleClass="timer-config-dialog-label" text="Associated course" />
+						<ComboBox fx:id="courseComboBox" prefHeight="35.0" prefWidth="350.0" promptText="Select..." styleClass="timer-config-dialog-combo-box">
+							<items>
+							<FXCollections fx:factory="observableArrayList">
+								<String fx:value="Mathematique" />
+								<String fx:value="Physique" />
+								<String fx:value="Histoire" />
+							</FXCollections>
 
-					</items>
-					</ComboBox>
+						</items>
+						</ComboBox>
+					</VBox>
 				</children>
 				<padding>
-					<Insets bottom="20" />
+					<Insets bottom="15" />
 				</padding>
 			</VBox>
 
 			<!-- Bouton OK (fixe en bas) -->
-			<Region prefHeight="26.0" prefWidth="500.0" VBox.vgrow="ALWAYS" /> <!-- Espaceur pour pousser le bouton vers le bas -->
-			<HBox alignment="BOTTOM_CENTER" prefHeight="55.0" prefWidth="500.0">
+			<Region prefHeight="20.0" prefWidth="400.0" VBox.vgrow="ALWAYS" /> <!-- Espaceur pour pousser le bouton vers le bas -->
+			<HBox alignment="BOTTOM_CENTER" prefHeight="45.0" prefWidth="400.0" spacing="10">
 				<children>
-					<Button alignment="CENTER" focusTraversable="fasle" mnemonicParsing="false" prefHeight="54.0" prefWidth="300.0" styleClass="timer-config-dialog-ok-button" text="OK" HBox.hgrow="ALWAYS" />
+					<Button fx:id="cancelButton" alignment="CENTER" focusTraversable="false" mnemonicParsing="false" prefHeight="40.0" prefWidth="120.0" styleClass="timer-config-dialog-cancel-button" text="Cancel" />
+					<Button fx:id="okButton" alignment="CENTER" focusTraversable="false" mnemonicParsing="false" prefHeight="40.0" prefWidth="120.0" styleClass="timer-config-dialog-ok-button" text="OK" />
 				</children>
 				<padding>
-					<Insets bottom="20" />
+					<Insets bottom="15" />
 				</padding>
 			</HBox>
 		</VBox>

@@ -1,7 +1,6 @@
 package com.onyx.app.service;
 
 import javafx.scene.control.TextFormatter;
-import java.util.function.UnaryOperator;
 
 /**
  * Service utilitaire pour le formatage et la validation du temps

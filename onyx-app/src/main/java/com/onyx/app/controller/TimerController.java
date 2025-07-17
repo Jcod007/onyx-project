@@ -1,22 +1,15 @@
 package com.onyx.app.controller;
 
-import java.io.IOException;
-
-import com.onyx.app.model.TimerModel;
-import com.onyx.app.service.TimerService;
+import com.onyx.app.model.TimerConfigResult;
 import com.onyx.app.service.TimeFormatService;
+import com.onyx.app.service.TimerService;
 
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
 
 /**
  * Contrôleur principal du minuteur ONYX. Gère l'affichage et les interactions
@@ -34,6 +27,7 @@ public class TimerController {
 	private TextField timeEditField;
 
 	private TimerService timerService;
+	private TimersController parentController;
 
 	// ========================================
 	// INITIALISATION ET CONFIGURATION
@@ -46,9 +40,9 @@ public class TimerController {
 	public void initialize() {
 		// Le service sera défini via setTimerService()
 		// Configurer le champ de saisie
-		timeEditField.setTextFormatter(TimeFormatService.createTimeFormatter());
+		// timeEditField.setTextFormatter(TimeFormatService.createTimeFormatter());
 		
-		setupClickOutsideListener();
+		// setupClickOutsideListener();
 	}
 
 	/**
@@ -64,74 +58,67 @@ public class TimerController {
 	 */
 	public void setTimerService(TimerService service) {
 		this.timerService = service;
-		
-		// Configurer les callbacks du service
-		timerService.setOnTimeUpdate(this::updateDisplay);
-		timerService.setOnStateChanged(this::updateButtonStates);
+		// Un seul callback pour toute la synchronisation
+		timerService.setOnStateChanged(this::updateDisplay);
 		timerService.setOnTimerFinished(this::handleTimerFinished);
-		
 		updateDisplay();
 	}
 	
 	/**
 	 * Configure l'écouteur pour détecter les clics en dehors du champ d'édition
 	 */
-	private void setupClickOutsideListener() {
-		timeEditField.sceneProperty().addListener((observable, oldScene, newScene) -> {
-			if (newScene != null) {
-				newScene.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
-					if (timeEditField.isVisible()) {
-						Node clickedNode = (Node) event.getTarget();
-						if (!isNodeInHierarchy(timeEditField, clickedNode)) {
-							finishEditing();
-						}
-					}
-				});
-			}
-		});
-	}
+	// private void setupClickOutsideListener() {
+	// 	timeEditField.sceneProperty().addListener((observable, oldScene, newScene) -> {
+	// 		if (newScene != null) {
+	// 			newScene.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
+	// 				if (timeEditField.isVisible()) {
+	// 					Node clickedNode = (Node) event.getTarget();
+	// 					if (!isNodeInHierarchy(timeEditField, clickedNode)) {
+	// 						finishEditing();
+	// 					}
+	// 				}
+	// 			});
+	// 		}
+	// 	});
+	// }
 
 	/**
 	 * Vérifie si un nœud fait partie de la hiérarchie d'un parent
 	 */
-	private boolean isNodeInHierarchy(Node parent, Node child) {
-		if (child == null) return false;
+	// private boolean isNodeInHierarchy(Node parent, Node child) {
+	// 	if (child == null) return false;
 
-		Node current = child;
-		while (current != null) {
-			if (current == parent) {
-				return true;
-			}
-			current = current.getParent();
-		}
-		return false;
-	}
+	// 	Node current = child;
+	// 	while (current != null) {
+	// 		if (current == parent) {
+	// 			return true;
+	// 		}
+	// 		current = current.getParent();
+	// 	}
+	// 	return false;
+	// }
 
 	// ========================================
 	// GESTIONNAIRES D'ÉVÉNEMENTS FXML
 	// ========================================
 
 	/**
-	 * Ouvre la boîte de dialogue de configuration
+	 * Ouvre la boîte de dialogue de configuration moderne (style Windows Clock)
 	 */
 	@FXML
 	private void openConfigDialog() {
-		try {
-			FXMLLoader loader = new FXMLLoader(
-					getClass().getResource("/com/onyx/app/view/Timer-config-dialog-view.fxml"));
-			Parent root = loader.load();
+		if (parentController != null) {
+			parentController.showTimerConfigDialog(this);
+		} else {
+			System.err.println("Parent controller not found!");
+		}
+	}
 
-			TimerConfigDialogController controller = loader.getController();
-
-			Stage dialogStage = new Stage();
-			dialogStage.setTitle("Timer Configuration");
-			dialogStage.setScene(new Scene(root));
-			dialogStage.initModality(Modality.APPLICATION_MODAL);
-
-			dialogStage.showAndWait();
-
-		} catch (IOException e) {
-			e.printStackTrace();
+	public void handleDialogResult(TimerConfigResult result) {
+		if (result != null) {
+			// Appliquer la configuration
+			timerService.setTimer(result.getHours(), result.getMinutes(), result.getSeconds());
+			updateDisplay();
 		}
 	}
 
@@ -159,41 +146,41 @@ public class TimerController {
 	/**
 	 * Démarre le mode édition du temps
 	 */
-	@FXML
-	public void startEditing() {
-		if (timerService.isRunning()) {
-			timerService.pauseTimer();
-		}
+	// @FXML
+	// public void startEditing() {
+	// 	if (timerService.isRunning()) {
+	// 		timerService.pauseTimer();
+	// 	}
 
-		timeEditField.setText(timerService.getFormattedTime());
-		timeEditField.setManaged(true);
-		timeEditField.setVisible(true);
-		timeLabel.setVisible(false);
-		timeLabel.setManaged(false);
+	// 	timeEditField.setText(timerService.getFormattedTime());
+	// 	timeEditField.setManaged(true);
+	// 	timeEditField.setVisible(true);
+	// 	timeLabel.setVisible(false);
+	// 	timeLabel.setManaged(false);
 
-		timeEditField.requestFocus();
-		timeEditField.selectAll();
-	}
+	// 	timeEditField.requestFocus();
+	// 	timeEditField.selectAll();
+	// }
 
 	/**
 	 * Termine le mode édition du temps
 	 */
-	@FXML
-	private void finishEditing() {
-		String text = timeEditField.getText();
+	// @FXML
+	// private void finishEditing() {
+	// 	String text = timeEditField.getText();
 
-		if (TimeFormatService.isValidTimeFormat(text)) {
-			TimeFormatService.TimeValues timeValues = TimeFormatService.parseTimeFromText(text);
-			if (timeValues != null) {
-				timerService.setTimer(timeValues.getHours(), timeValues.getMinutes(), timeValues.getSeconds());
-			}
-		}
+	// 	if (TimeFormatService.isValidTimeFormat(text)) {
+	// 		TimeFormatService.TimeValues timeValues = TimeFormatService.parseTimeFromText(text);
+	// 		if (timeValues != null) {
+	// 			timerService.setTimer(timeValues.getHours(), timeValues.getMinutes(), timeValues.getSeconds());
+	// 		}
+	// 	}
 		
-		timeEditField.setVisible(false);
-		timeEditField.setManaged(false);
-		timeLabel.setVisible(true);
-		timeLabel.setManaged(true);
-	}
+	// 	timeEditField.setVisible(false);
+	// 	timeEditField.setManaged(false);
+	// 	timeLabel.setVisible(true);
+	// 	timeLabel.setManaged(true);
+	// }
 
 	// ========================================
 	// MISE À JOUR DE L'AFFICHAGE
@@ -264,5 +251,12 @@ public class TimerController {
 		if (timerService != null) {
 			timerService.dispose();
 		}
+	}
+
+	/**
+	 * Définit le contrôleur parent (TimersController)
+	 */
+	public void setParentController(TimersController parent) {
+		this.parentController = parent;
 	}
 }

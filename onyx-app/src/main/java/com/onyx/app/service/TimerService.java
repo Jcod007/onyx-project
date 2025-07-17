@@ -19,7 +19,7 @@ public class TimerService {
     private boolean canReset;
     
     // Callbacks pour notifier l'interface utilisateur
-    private Runnable onTimeUpdate;
+    //private Runnable onTimeUpdate;
     private Runnable onTimerFinished;
     private Runnable onStateChanged;
     
@@ -49,8 +49,8 @@ public class TimerService {
     private void initializeTimeline() {
         timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
             decrementTimer();
-            if (onTimeUpdate != null) {
-                onTimeUpdate.run();
+            if (onStateChanged != null) {
+                onStateChanged.run();
             }
             
             if (timerModel.isFinished()) {
@@ -140,7 +140,7 @@ public class TimerService {
         timerModel.reset();
         sound.stop();
         notifyStateChanged();
-        onTimeUpdate.run();
+        
     }
     
     /**
@@ -176,9 +176,7 @@ public class TimerService {
      * Notifie le changement d'état des boutons et des valeurs booléennes
      */
     private void notifyStateChanged() {
-        if (onStateChanged != null) {
-            onStateChanged.run();
-        }
+        if (onStateChanged != null) onStateChanged.run();
     }
     
     // Getters pour l'état du timer
@@ -258,9 +256,9 @@ public class TimerService {
     }
     
     // Setters pour les callbacks
-    public void setOnTimeUpdate(Runnable callback) {
-        this.onTimeUpdate = callback;
-    }
+    // public void setOnTimeUpdate(Runnable callback) {
+    //     this.onTimeUpdate = callback;
+    // }
     
     public void setOnTimerFinished(Runnable callback) {
         this.onTimerFinished = callback;
