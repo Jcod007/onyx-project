@@ -1,15 +1,12 @@
 package com.onyx.app.controller;
 
 import com.onyx.app.model.TimerConfigResult;
-import com.onyx.app.service.TimeFormatService;
 import com.onyx.app.service.TimerService;
 
 import javafx.fxml.FXML;
-import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.input.MouseEvent;
 
 /**
  * Contrôleur principal du minuteur ONYX. Gère l'affichage et les interactions
@@ -22,12 +19,15 @@ public class TimerController {
 	@FXML
 	private Label timeLabel;
 	@FXML
+	private Label courseLabel;
+	@FXML
 	private Button startBtn, resetBtn;
 	@FXML
 	private TextField timeEditField;
 
 	private TimerService timerService;
 	private TimersController parentController;
+	private String linkedCourse = null;
 
 	// ========================================
 	// INITIALISATION ET CONFIGURATION
@@ -43,6 +43,7 @@ public class TimerController {
 		// timeEditField.setTextFormatter(TimeFormatService.createTimeFormatter());
 		
 		// setupClickOutsideListener();
+		updateCourseDisplay();
 	}
 
 	/**
@@ -118,7 +119,23 @@ public class TimerController {
 		if (result != null) {
 			// Appliquer la configuration
 			timerService.setTimer(result.getHours(), result.getMinutes(), result.getSeconds());
+			
+			// Mettre à jour le cours lié
+			linkedCourse = result.getCourse();
+			updateCourseDisplay();
+			
 			updateDisplay();
+		}
+	}
+
+	/**
+	 * Met à jour l'affichage du cours lié
+	 */
+	private void updateCourseDisplay() {
+		if (linkedCourse != null && !linkedCourse.isEmpty()) {
+			courseLabel.setText("Lié à : " + linkedCourse);
+		} else {
+			courseLabel.setText("Aucun cours lié");
 		}
 	}
 

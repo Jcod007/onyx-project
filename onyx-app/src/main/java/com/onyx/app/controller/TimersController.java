@@ -155,6 +155,8 @@ public class TimersController {
 				if (timeField != null) {
 					timeField.setText(currentTime);
 				}
+				// Pré-remplir le type de timer et le cours si disponible
+				controller.setExistingTimerData(existingTimerController);
 			}
 			
 			Button okButton = (Button) configContent.lookup("#okButton");

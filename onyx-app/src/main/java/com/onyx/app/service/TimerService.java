@@ -1,5 +1,6 @@
 package com.onyx.app.service;
 
+import com.onyx.app.Constants;
 import com.onyx.app.model.TimerModel;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -47,7 +48,7 @@ public class TimerService {
      * Initialise la timeline pour le décompte
      */
     private void initializeTimeline() {
-        timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
+        timeline = new Timeline(new KeyFrame(javafx.util.Duration.seconds(Constants.TIMER_UPDATE_INTERVAL), e -> {
             decrementTimer();
             if (onStateChanged != null) {
                 onStateChanged.run();
@@ -64,7 +65,7 @@ public class TimerService {
      * Définit un timer par défaut (5 secondes)
      */
     private void setDefaultTimer() {
-        setTimer((byte) 0, (byte) 0, (byte) 5);
+        setTimer((byte) Constants.DEFAULT_HOURS, (byte) Constants.DEFAULT_MINUTES, (byte) Constants.DEFAULT_SECONDS);
     }
     
     /**
@@ -231,16 +232,16 @@ public class TimerService {
      * Parse un texte au format HH:MM:SS en TimerModel
      */
     public void parseTimeFromText(String text) {
-        if (text != null && text.matches("\\d{2}:\\d{2}:\\d{2}")) {
+        if (text != null && text.matches(Constants.TIME_FORMAT_PATTERN)) {
             String[] parts = text.split(":");
             int h = Integer.parseInt(parts[0]);
             int m = Integer.parseInt(parts[1]);
             int s = Integer.parseInt(parts[2]);
             
             // Clamp dans les bornes valides
-            h = clamp(h, 0, 99);
-            m = clamp(m, 0, 59);
-            s = clamp(s, 0, 59);
+            h = clamp(h, 0, Constants.MAX_HOURS);
+            m = clamp(m, 0, Constants.MAX_MINUTES);
+            s = clamp(s, 0, Constants.MAX_SECONDS);
             
             setTimer((byte) h, (byte) m, (byte) s);
         }

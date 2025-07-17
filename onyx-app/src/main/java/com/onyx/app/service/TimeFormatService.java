@@ -1,5 +1,6 @@
 package com.onyx.app.service;
 
+import com.onyx.app.Constants;
 import javafx.scene.control.TextFormatter;
 
 /**
@@ -98,7 +99,7 @@ public class TimeFormatService {
      * Formate une chaîne de chiffres en format HH:MM:SS
      */
     public static String formatDigits(String digits) {
-        while (digits.length() < 6) {
+        while (digits.length() < Constants.TIME_FORMAT_LENGTH) {
             digits = "0" + digits;
         }
         return digits.substring(0, 2) + ":" + digits.substring(2, 4) + ":" + digits.substring(4, 6);
@@ -128,7 +129,7 @@ public class TimeFormatService {
      * Parse un texte au format HH:MM:SS en valeurs numériques
      */
     public static TimeValues parseTimeFromText(String text) {
-        if (text == null || !text.matches("\\d{2}:\\d{2}:\\d{2}")) {
+        if (text == null || !text.matches(Constants.TIME_FORMAT_PATTERN)) {
             return null;
         }
         
@@ -138,9 +139,9 @@ public class TimeFormatService {
         int s = Integer.parseInt(parts[2]);
         
         // Clamp dans les bornes valides
-        h = clamp(h, 0, 99);
-        m = clamp(m, 0, 59);
-        s = clamp(s, 0, 59);
+        h = clamp(h, 0, Constants.MAX_HOURS);
+        m = clamp(m, 0, Constants.MAX_MINUTES);
+        s = clamp(s, 0, Constants.MAX_SECONDS);
         
         return new TimeValues((byte) h, (byte) m, (byte) s);
     }
@@ -149,16 +150,16 @@ public class TimeFormatService {
      * Valide si un texte représente un temps valide
      */
     public static boolean isValidTimeFormat(String text) {
-        return text != null && text.matches("\\d{2}:\\d{2}:\\d{2}");
+        return text != null && text.matches(Constants.TIME_FORMAT_PATTERN);
     }
     
     /**
      * Valide si les valeurs de temps sont dans les bornes acceptables
      */
     public static boolean isValidTimeValues(byte hours, byte minutes, byte seconds) {
-        return hours >= 0 && hours <= 99 && 
-               minutes >= 0 && minutes <= 59 && 
-               seconds >= 0 && seconds <= 59;
+        return hours >= 0 && hours <= Constants.MAX_HOURS && 
+               minutes >= 0 && minutes <= Constants.MAX_MINUTES && 
+               seconds >= 0 && seconds <= Constants.MAX_SECONDS;
     }
     
     /**
@@ -176,9 +177,9 @@ public class TimeFormatService {
     public static String formatSecondsToTime(int totalSeconds) {
         if (totalSeconds < 0) totalSeconds = 0;
         
-        int hours = totalSeconds / 3600;
-        int minutes = (totalSeconds % 3600) / 60;
-        int seconds = totalSeconds % 60;
+        int hours = totalSeconds / Constants.SECONDS_PER_HOUR;
+        int minutes = (totalSeconds % Constants.SECONDS_PER_HOUR) / Constants.SECONDS_PER_MINUTE;
+        int seconds = totalSeconds % Constants.SECONDS_PER_MINUTE;
         
         return formatTime((byte) hours, (byte) minutes, (byte) seconds);
     }
@@ -187,7 +188,7 @@ public class TimeFormatService {
      * Convertit un temps en secondes totales
      */
     public static int timeToSeconds(byte hours, byte minutes, byte seconds) {
-        return hours * 3600 + minutes * 60 + seconds;
+        return hours * Constants.SECONDS_PER_HOUR + minutes * Constants.SECONDS_PER_MINUTE + seconds;
     }
     
     /**

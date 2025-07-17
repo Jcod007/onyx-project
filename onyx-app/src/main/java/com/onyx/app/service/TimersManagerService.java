@@ -1,5 +1,6 @@
 package com.onyx.app.service;
 
+import com.onyx.app.Constants;
 import com.onyx.app.model.TimerModel;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,7 @@ public class TimersManagerService {
      * Crée un nouveau timer avec les valeurs par défaut
      */
     public TimerService createTimer() {
-        return createTimer((byte) 0, (byte) 3, (byte) 5);
+        return createTimer((byte) Constants.DEFAULT_HOURS, (byte) Constants.DEFAULT_MINUTES, (byte) Constants.DEFAULT_SECONDS);
     }
     
     /**
