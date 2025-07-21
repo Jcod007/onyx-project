@@ -2,17 +2,31 @@ package com.onyx.app.controller;
 
 import com.onyx.app.model.TimerConfigResult;
 import com.onyx.app.service.TimerService;
+import com.onyx.app.model.Subject;
+import com.onyx.app.model.TimerModel;
+import com.onyx.app.Constants;
+import com.onyx.app.repository.SubjectRepository;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.media.AudioClip;
+import javafx.util.Duration;
 
 /**
  * Contrôleur principal du minuteur ONYX. Gère l'affichage et les interactions
  * utilisateur. La logique métier est déléguée au TimerService.
  */
+import javafx.scene.layout.VBox;
+
 public class TimerController {
+
+	private VBox timerCardVBox;
 	private static final String DEMARRER_BUTTON = "demarre-button";
 	private static final String PAUSE_BUTTON = "pause-button";
 
@@ -21,13 +35,15 @@ public class TimerController {
 	@FXML
 	private Label courseLabel;
 	@FXML
-	private Button startBtn, resetBtn;
+	private Button startBtn, resetBtn, deleteBtn;
 	@FXML
 	private TextField timeEditField;
 
 	private TimerService timerService;
 	private TimersController parentController;
-	private String linkedCourse = null;
+	private SubjectRepository subjectRepository;
+	private Timeline timeline;
+    private AudioClip sound;
 
 	// ========================================
 	// INITIALISATION ET CONFIGURATION
@@ -44,15 +60,36 @@ public class TimerController {
 		
 		// setupClickOutsideListener();
 		updateCourseDisplay();
+		initializeTimeline();
+        initializeSound();
+
+        // Set delete button graphic
+        try {
+            Image deleteIcon = new Image(getClass().getResourceAsStream("/images/delete-icon.png"));
+            ImageView deleteIconView = new ImageView(deleteIcon);
+            deleteIconView.setFitHeight(16);
+            deleteIconView.setFitWidth(16);
+            deleteBtn.setGraphic(deleteIconView);
+            deleteBtn.setText(""); // No text, just icon
+        } catch (Exception e) {
+            System.err.println("Error loading delete icon: " + e.getMessage());
+            deleteBtn.setText("X"); // Fallback to text
+        }
 	}
 
-	/**
-	 * Définit un modèle de timer existant
-	 */
-	// public void setModel(TimerModel model) {
-	// 	timerService.setTimerModel(model);
-	// 	updateDisplay();
-	// }
+	private void initializeTimeline() {
+        timeline = new Timeline(new KeyFrame(Duration.seconds(Constants.TIMER_UPDATE_INTERVAL), e -> {
+            if (timerService != null) {
+                timerService.decrement();
+            }
+        }));
+        timeline.setCycleCount(Timeline.INDEFINITE);
+    }
+
+    private void initializeSound() {
+        sound = new AudioClip(getClass().getResource("/sounds/timerSound.mp3").toString());
+        sound.setCycleCount(AudioClip.INDEFINITE);
+    }
 
 	/**
 	 * Définit le service Timer à utiliser
@@ -117,13 +154,9 @@ public class TimerController {
 
 	public void handleDialogResult(TimerConfigResult result) {
 		if (result != null) {
-			// Appliquer la configuration
-			timerService.setTimer(result.getHours(), result.getMinutes(), result.getSeconds());
-			
-			// Mettre à jour le cours lié
-			linkedCourse = result.getCourse();
-			updateCourseDisplay();
-			
+			// Appliquer la configuration complète
+			timerService.setTimer(result.hours(), result.minutes(), result.seconds(), result.timerType(), result.subject(), subjectRepository);
+			// updateCourseDisplay(); // Appel redondant, géré par updateDisplay()
 			updateDisplay();
 		}
 	}
@@ -132,8 +165,10 @@ public class TimerController {
 	 * Met à jour l'affichage du cours lié
 	 */
 	private void updateCourseDisplay() {
-		if (linkedCourse != null && !linkedCourse.isEmpty()) {
-			courseLabel.setText("Lié à : " + linkedCourse);
+        if (timerService == null) return;
+		Subject subject = timerService.getLinkedSubject();
+		if (subject != null) {
+			courseLabel.setText("Lié à : " + subject.getName());
 		} else {
 			courseLabel.setText("Aucun cours lié");
 		}
@@ -145,6 +180,11 @@ public class TimerController {
 	@FXML
 	public void handleStartPause() {
 		timerService.toggleTimer();
+        if (timerService.isRunning()) {
+            timeline.play();
+        } else {
+            timeline.pause();
+        }
 	}
 
 	/**
@@ -152,9 +192,19 @@ public class TimerController {
 	 */
 	@FXML
 	public void handleReset() {
+        timeline.stop();
+        sound.stop();
 		timerService.resetTimer();
-		//updateDisplay();
 	}
+
+    @FXML
+    private void handleDelete() {
+        if (parentController != null) {
+            parentController.removeTimerCard(this);
+        } else {
+            System.err.println("Parent controller not found, cannot delete timer.");
+        }
+    }
 
 	// ========================================
 	// GESTION DE L'ÉDITION DE TEMPS
@@ -207,8 +257,10 @@ public class TimerController {
 	 * Met à jour l'affichage du timer
 	 */
 	private void updateDisplay() {
+        if (timerService == null) return; // Sécurité si le service n'est pas encore injecté
 		timeLabel.setText(timerService.getFormattedTime());
 		updateButtonStates();
+        updateCourseDisplay(); // Assure la synchronisation du cours lié
 	}
 
 	/**
@@ -237,8 +289,8 @@ public class TimerController {
 	 * Gère la fin du timer
 	 */
 	private void handleTimerFinished() {
-		// Le service gère déjà l'alarme sonore
-		// Ici on peut ajouter des actions spécifiques à l'UI si nécessaire
+		timeline.stop();
+        sound.play();
 		System.out.println("Timer termine !");
 		updateButtonStates();
 	}
@@ -265,6 +317,8 @@ public class TimerController {
 	 * Nettoie les ressources
 	 */
 	public void dispose() {
+        timeline.stop();
+        sound.stop();
 		if (timerService != null) {
 			timerService.dispose();
 		}
@@ -275,5 +329,17 @@ public class TimerController {
 	 */
 	public void setParentController(TimersController parent) {
 		this.parentController = parent;
+	}
+
+	public void setSubjectRepository(SubjectRepository subjectRepository) {
+		this.subjectRepository = subjectRepository;
+	}
+
+	public void setTimerCardVBox(VBox timerCardVBox) {
+		this.timerCardVBox = timerCardVBox;
+	}
+
+	public VBox getTimerCard() {
+		return timerCardVBox;
 	}
 }

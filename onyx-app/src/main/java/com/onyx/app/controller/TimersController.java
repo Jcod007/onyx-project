@@ -15,6 +15,8 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
+import com.onyx.app.model.Subject;
+
 /**
  * Contrôleur pour gérer plusieurs timers
  * Utilise le TimersManagerService pour la logique métier
@@ -24,20 +26,30 @@ public class TimersController {
 	@FXML
 	private FlowPane timersList;
 	
-	private TimersManagerService timersManager;
-//	private TimerController timerController;
-//	private VBox timerCard;
+	private final TimersManagerService timersManager;
 
 	@FXML
 	private StackPane configOverlay;
+
+	public TimersController(TimersManagerService timersManager) {
+		this.timersManager = timersManager;
+	}
 
 	/**
 	 * Initialise le contrôleur avec le service de gestion des timers
 	 */
 	@FXML
 	public void initialize() {
-		timersManager = new TimersManagerService();
-		
+		// Load existing timers from the service
+		for (TimerService timerService : timersManager.getAllTimers()) {
+			try {
+				VBox newTimerCard = createTimerCard(timerService);
+				timersList.getChildren().add(newTimerCard);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
 		// Configurer les callbacks pour les changements de liste
 		timersManager.setOnTimersListChanged(this::refreshTimersList);
 		timersManager.setOnActiveTimersChanged(this::updateActiveTimersDisplay);
@@ -59,16 +71,14 @@ public class TimersController {
 		FXMLLoader loader = new FXMLLoader(
 			getClass().getResource("/com/onyx/app/view/Timer-card-view.fxml")
 		);
-		VBox newTimerCard = loader.load();
+		VBox newTimerCard = (VBox) loader.load();
 
 		// Configurer le contrôleur avec le service
-		TimerController newTimerController = loader.getController();
+		TimerController newTimerController = loader.<TimerController>getController();
 		newTimerController.setTimerService(timerService);
 		newTimerController.setParentController(this);
-		
-		// Stocker les références pour usage futur
-		// this.timerController = newTimerController;
-		// this.timerCard = newTimerCard;
+		newTimerController.setSubjectRepository(timersManager.getSubjectRepository());
+		newTimerController.setTimerCardVBox(newTimerCard);
 		
 		return newTimerCard;
 	}
@@ -144,18 +154,11 @@ public class TimersController {
 			FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/onyx/app/view/Timer-config-dialog-view.fxml"));
 			Parent configContent = loader.load();
 
-			TimerConfigDialogController controller = loader.getController();
+			TimerConfigDialogController controller = loader.<TimerConfigDialogController>getController();
+			controller.setSubjectRepository(timersManager.getSubjectRepository()); // Pass the SubjectRepository
 			
 			// Si on modifie un timer existant, pré-remplir les valeurs actuelles
 			if (existingTimerController != null) {
-				TimerService timerService = existingTimerController.getTimerService();
-				String currentTime = timerService.getFormattedTime();
-				// Pré-remplir le champ de temps dans la boîte de dialogue
-				TextField timeField = (TextField) configContent.lookup("#timerTextFliedConfig");
-				if (timeField != null) {
-					timeField.setText(currentTime);
-				}
-				// Pré-remplir le type de timer et le cours si disponible
 				controller.setExistingTimerData(existingTimerController);
 			}
 			
@@ -163,6 +166,7 @@ public class TimersController {
 			Button cancelButton = (Button) configContent.lookup("#cancelButton");
 			
 			okButton.setOnAction(e -> {
+				controller.forceCommitFields();
 				TimerConfigResult result = controller.getResult();
 				if (result != null) {
 					if (existingTimerController != null) {
@@ -171,11 +175,12 @@ public class TimersController {
 					} else {
 						// Créer un nouveau timer avec les paramètres configurés
 						TimerService timerService = timersManager.createTimer(
-							result.getHours(), 
-							result.getMinutes(), 
-							result.getSeconds()
+							result.hours(),
+							result.minutes(),
+							result.seconds(),
+							result.timerType(),
+							result.subject() // Corrigé : getSubject()
 						);
-						
 						// Créer l'interface utilisateur pour ce timer
 						try {
 							VBox newTimerCard = createTimerCard(timerService);
@@ -205,10 +210,22 @@ public class TimersController {
 	/**
 	 * Masque l'overlay de configuration
 	 */
+	/**
+	 * Masque l'overlay de configuration
+	 */
 	public void hideTimerConfigDialog() {
 		configOverlay.setVisible(false);
 		configOverlay.setPickOnBounds(false);
 		configOverlay.setManaged(false);
 		configOverlay.getChildren().clear();
+	}
+
+	public void removeTimerCard(TimerController timerController) {
+		TimerService timerServiceToRemove = timerController.getTimerService();
+		if (timerServiceToRemove != null) {
+			timersManager.removeTimer(timerServiceToRemove);
+			// Remove the VBox from the FlowPane
+			timersList.getChildren().remove(timerController.getTimerCard());
+		}
 	}
 }

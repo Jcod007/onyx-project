@@ -14,6 +14,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.VBox;
 
+import com.onyx.app.repository.SubjectRepository;
+
 public class StudyDeckController {
 
     @FXML private VBox coursesList;
@@ -25,13 +27,33 @@ public class StudyDeckController {
 
     private final StudyDeck studyDeck = new StudyDeck();
     private final BooleanProperty formVisible = new SimpleBooleanProperty(false);
+    private final SubjectRepository subjectRepository;
+
+    public StudyDeckController(SubjectRepository subjectRepository) {
+        this.subjectRepository = subjectRepository;
+    }
 
     @FXML
     public void initialize() {
+        loadCourses();
         configureFormVisibility();
         setupFormValidation();
         setupInitialState();
         setupDurationField();
+    }
+
+    private void loadCourses() {
+        coursesList.getChildren().clear();
+        subjectRepository.findAll().forEach(subject -> {
+            try {
+                VBox card = createCourseCard(subject);
+                coursesList.getChildren().add(card);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        // Add the addCoursePane and addCourseButton back after loading existing courses
+        coursesList.getChildren().addAll(addCoursePane, addCourseButton);
     }
 
     private void setupDurationField() {
@@ -86,14 +108,11 @@ public class StudyDeckController {
             try {
                 Duration duration = parseDuration(durationText);
                 Subject newSubject = new Subject(name, duration);
-                System.out.println(newSubject.getTargetTime().toMinutes());
-                if (studyDeck.addSubject(newSubject)) {
-                    VBox card = createCourseCard(newSubject);
-                    addCourseCardToUI(card);
-                    resetForm();
-                    formVisible.set(false);
-                }
-                System.out.println("Juste");
+                subjectRepository.save(newSubject); // Save the new subject
+                VBox card = createCourseCard(newSubject);
+                addCourseCardToUI(card);
+                resetForm();
+                formVisible.set(false);
             } catch (IllegalArgumentException | IOException e) {
             	e.printStackTrace();
                 courseDurationField.setStyle("-fx-border-color: red;");
@@ -108,41 +127,33 @@ public class StudyDeckController {
             int minutes = parts.length > 1 && !parts[1].isEmpty() ? Integer.parseInt(parts[1]) : 0;
             return Duration.ofHours(hours).plusMinutes(minutes);
         }
-        System.out.println("PartDuration");
         return Duration.ofMinutes(Integer.parseInt(durationText));
     }
 
     private VBox createCourseCard(Subject subject) throws IOException {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/onyx/app/view/course-card.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/onyx/app/view/Course-card.fxml"));
         VBox card = loader.load();
         
         CourseCardController controller = loader.getController();
-        controller.initData(subject);
+        controller.initData(subject, this); // Pass this controller for deletion
         
         return card;
     }
 
     private void addCourseCardToUI(VBox card) {
-        // Trouve la position du panneau d'ajout
+        // Find the position of the addCoursePane
         int formIndex = coursesList.getChildren().indexOf(addCoursePane);
         if (formIndex >= 0) {
-            coursesList.getChildren().add(formIndex, card); // Ajoute avant le formulaire
+            coursesList.getChildren().add(formIndex, card); // Add before the form
         } else {
-            coursesList.getChildren().add(card); // Fallback : ajout à la fin
+            coursesList.getChildren().add(card); // Fallback: add to the end
         }
     }
 
-//    private void refreshCourseList() {
-//        coursesList.getChildren().clear();
-//        studyDeck.getSubjectList().forEach(subject -> {
-//            try {
-//                coursesList.getChildren().add(createCourseCard(subject));
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        });
-//        coursesList.getChildren().addAll(addCoursePane, addCourseButton);
-//    }
+    public void deleteCourse(Subject subject, VBox card) {
+        subjectRepository.deleteById(subject.getId());
+        coursesList.getChildren().remove(card);
+    }
 
     private void resetForm() {
         courseNameField.clear();

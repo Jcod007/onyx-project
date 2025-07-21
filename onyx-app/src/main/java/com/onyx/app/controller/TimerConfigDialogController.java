@@ -1,15 +1,24 @@
 package com.onyx.app.controller;
 
-import javafx.fxml.FXML;
-import javafx.scene.control.TextField;
-import com.onyx.app.service.TimeFormatService;
 import com.onyx.app.model.TimerConfigResult;
-import javafx.scene.control.ComboBox;
+import com.onyx.app.model.TimerModel;
+import com.onyx.app.model.Subject;
+import com.onyx.app.service.TimeFormatService;
+import com.onyx.app.service.TimerService;
+
+import javafx.application.Platform;
+import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import com.onyx.app.controller.TimerController;
-import javafx.scene.control.Label;
+
+import java.util.List;
+import com.onyx.app.model.StudyDeck;
+
+import com.onyx.app.repository.SubjectRepository;
 
 public class TimerConfigDialogController {
 
@@ -18,7 +27,7 @@ public class TimerConfigDialogController {
 	@FXML
 	private ComboBox<String> timerTypeComboBox;
 	@FXML
-	private ComboBox<String> courseComboBox;
+	private ComboBox<Subject> courseComboBox;
 	@FXML
 	private VBox associatedCourseSection;
 	@FXML
@@ -27,11 +36,23 @@ public class TimerConfigDialogController {
 	private Button okButton;
 	@FXML
 	private Label statusLabel;
+
+	private StudyDeck studyDeck;
+	private SubjectRepository subjectRepository;
 	
-	public void initialize()
-	{
+	public void initialize() {
 		timerTextFliedConfig.setTextFormatter(TimeFormatService.createTimeFormatter());
-		
+		Platform.runLater(() -> {
+            timerTextFliedConfig.requestFocus();
+            if (!timerTextFliedConfig.getText().isEmpty()) {
+                timerTextFliedConfig.positionCaret(1);
+            }
+        });
+		// Désactivation dynamique du bouton OK selon la validité des champs
+		timerTextFliedConfig.textProperty().addListener((obs, oldVal, newVal) -> validateForm());
+		timerTypeComboBox.valueProperty().addListener((obs, oldVal, newVal) -> validateForm());
+		courseComboBox.valueProperty().addListener((obs, oldVal, newVal) -> validateForm());
+		validateForm();
 		// Écouter les changements de sélection du type de timer
 		timerTypeComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
 			updateAssociatedCourseVisibility(newValue);
@@ -46,10 +67,22 @@ public class TimerConfigDialogController {
 		// Initialiser le label
 		updateStatusLabel();
 	}
+
+	public void setStudyDeck(StudyDeck studyDeck) {
+        this.studyDeck = studyDeck;
+        courseComboBox.getItems().setAll(studyDeck.getSubjectList());
+    }
+
+	public void setSubjectRepository(SubjectRepository subjectRepository) {
+		this.subjectRepository = subjectRepository;
+		// Optionally load subjects into courseComboBox if needed here
+		// courseComboBox.getItems().setAll(subjectRepository.getAllSubjects());
+	}
 	
 	/**
 	 * Gère le clic sur le bouton Cancel
 	 */
+	@FXML
 	private void handleCancel() {
 		// Fermer la fenêtre/overlay
 		Stage stage = (Stage) cancelButton.getScene().getWindow();
@@ -76,38 +109,42 @@ public class TimerConfigDialogController {
         TimeFormatService.TimeValues timeValues = TimeFormatService.parseTimeFromText(timeText);
         
         return new TimerConfigResult(
-            timeValues != null ? timeValues.getHours() : 0,
-            timeValues != null ? timeValues.getMinutes() : 0,
-            timeValues != null ? timeValues.getSeconds() : 0,
+            (byte) (timeValues != null ? timeValues.hours() : 0),
+            (byte) (timeValues != null ? timeValues.minutes() : 0),
+            (byte) (timeValues != null ? timeValues.seconds() : 0),
             timerTypeComboBox.getValue(),
-            courseComboBox.getValue()
+            courseComboBox.getValue() != null ? courseComboBox.getValue().getName() : null,
+            studyDeck != null ? studyDeck.getSubjectList() : List.of()
         );
     }
 
 	public void setExistingTimerData(TimerController existingTimerController) {
-		// On suppose que le TimerController expose le type et le cours lié
-		// (il faut que ces infos soient stockées dans TimerController)
 		try {
-			// Récupérer le type de timer et le cours lié
-			String timerType = null;
-			String course = null;
-			// Si TimerController expose des getters, utilisez-les ici
-			java.lang.reflect.Field typeField = existingTimerController.getClass().getDeclaredField("linkedCourse");
-			typeField.setAccessible(true);
-			course = (String) typeField.get(existingTimerController);
-			// On suppose que le type de timer est "Study session" si un cours est lié
-			if (course != null && !course.isEmpty()) {
-				timerType = "📖 Study session";
-			} else {
-				timerType = "🆓 Free session";
+			TimerService timerService = existingTimerController.getTimerService();
+			if (timerService != null && timerService.getTimerModel() != null) {
+				TimerModel model = timerService.getTimerModel();
+				// Pré-remplir le champ de temps
+				String formattedTime = timerService.getFormattedTime();
+				timerTextFliedConfig.setText(formattedTime);
+				Platform.runLater(() -> {
+					timerTextFliedConfig.requestFocus();
+					if (!formattedTime.isEmpty()) {
+						timerTextFliedConfig.positionCaret(1);
+					}
+				});
+				// Pré-remplir le type de timer
+				TimerModel.TimerType timerType = model.getTimerType();
+				if (timerType != null) {
+					timerTypeComboBox.setValue(timerType.toString());
+					updateAssociatedCourseVisibility(timerType.toString());
+				}
+				// Pré-remplir le cours associé
+				Subject subject = model.getLinkedSubject();
+				if (subject != null) {
+					courseComboBox.setValue(subject);
+				}
+				updateStatusLabel();
 			}
-			// Pré-remplir les ComboBox
-			timerTypeComboBox.setValue(timerType);
-			updateAssociatedCourseVisibility(timerType);
-			if (course != null && !course.isEmpty()) {
-				courseComboBox.setValue(course);
-			}
-			updateStatusLabel();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -115,10 +152,10 @@ public class TimerConfigDialogController {
 
 	private void updateStatusLabel() {
 		String timerType = timerTypeComboBox.getValue();
-		String course = courseComboBox.getValue();
+		Subject course = courseComboBox.getValue();
 		if (timerType != null && timerType.contains("Study session")) {
-			if (course != null && !course.isEmpty()) {
-				statusLabel.setText("Lié à : " + course);
+			if (course != null) {
+				statusLabel.setText("Lié à : " + course.getName());
 			} else {
 				statusLabel.setText("Aucun cours lié");
 			}
@@ -130,5 +167,21 @@ public class TimerConfigDialogController {
 			statusLabel.setManaged(false);
 		}
 	}
+
+	private void validateForm() {
+		boolean timeEmpty = timerTextFliedConfig.getText().trim().isEmpty();
+		boolean typeEmpty = timerTypeComboBox.getValue() == null || timerTypeComboBox.getValue().trim().isEmpty();
+		boolean studySession = !typeEmpty && timerTypeComboBox.getValue().contains("Study session");
+		boolean courseEmpty = courseComboBox.getValue() == null;
+		boolean disable = timeEmpty || typeEmpty || (studySession && courseEmpty);
+		okButton.setDisable(disable);
+	}
+
+    public void forceCommitFields() {
+        // Force la validation de la saisie en retirant le focus du champ
+        if (timerTextFliedConfig != null && timerTextFliedConfig.getParent() != null) {
+            timerTextFliedConfig.getParent().requestFocus();
+        }
+    }
 }
 		
