@@ -11,6 +11,8 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.Image;
 
 public class CourseCardController {
 
@@ -18,39 +20,46 @@ public class CourseCardController {
     @FXML private VBox cardRoot;
     @FXML private Label courseNameLabel;
     @FXML private Label statusLabel;
-   // @FXML private Label durationLabel;
     @FXML private Label objectiveLabel;
     @FXML private Label elapsedLabel;
-
-//    @FXML private Label progressLabel;
     @FXML private HBox actions;
     @FXML private Button startButton;
     @FXML private Button completeButton;
+    @FXML private Button deleteButton;
 
     private Subject subject;
     private Runnable onStatusChanged;
+    private StudyDeckController studyDeckController;
 
     public void initialize() {
-        // Style initial des boutons
     	HBox.setHgrow(headerSpacer, javafx.scene.layout.Priority.ALWAYS);
-//        startButton.getStyleClass().add("session-button");
-//        completeButton.getStyleClass().add("complete-button");
+        // Set delete button graphic
+        try {
+            Image deleteIcon = new Image(getClass().getResourceAsStream("/images/delete-icon.png")); // Assuming a delete icon exists
+            ImageView deleteIconView = new ImageView(deleteIcon);
+            deleteIconView.setFitHeight(16);
+            deleteIconView.setFitWidth(16);
+            deleteButton.setGraphic(deleteIconView);
+            deleteButton.setText(""); // No text, just icon
+        } catch (Exception e) {
+            System.err.println("Error loading delete icon: " + e.getMessage());
+            deleteButton.setText("X"); // Fallback to text
+        }
+        deleteButton.getStyleClass().add("delete-button");
     }
 
-    public void initData(Subject subject) {
+    public void initData(Subject subject, StudyDeckController studyDeckController) {
         this.subject = subject;
-       // this.onStatusChanged = statusChangeCallback;
+        this.studyDeckController = studyDeckController;
         updateUI();
     }
 
     private void updateUI() {
         courseNameLabel.setText(subject.getName());
         
-        // Mise à jour du statut
         Status status = subject.getStatus();
         statusLabel.setText(status.toString());
         
-        // Reset des classes de style avant d'ajouter la nouvelle
         statusLabel.getStyleClass().removeAll(
             "status-not_started", 
             "status-in_progress", 
@@ -58,19 +67,9 @@ public class CourseCardController {
         );
         statusLabel.getStyleClass().add("status-" + status.name().toLowerCase());
 
-        // Formatage de la durée
-//        durationLabel.setText(String.format(
-//            "Objectif: %s | Passé: %s",
-//            formatDuration(subject.getTargetTime()),
-//            formatDuration(subject.getTimeSpent())
-//        ));
         objectiveLabel.setText("Objectif par semaine: " + formatDuration(subject.getTargetTime()));
         elapsedLabel.setText("Passé: " + formatDuration(subject.getTimeSpent()));
 
-        // Progression
-        //progressLabel.setText(subject.getProgressPercentage());
-        
-        // Gestion de la visibilité des boutons
         updateButtonsVisibility();
     }
 
@@ -99,7 +98,6 @@ public class CourseCardController {
 
     @FXML
     private void handleStart() {
-//        subject.startSession();
         updateUI();
         if (onStatusChanged != null) {
             onStatusChanged.run();
@@ -108,10 +106,16 @@ public class CourseCardController {
 
     @FXML
     private void handleComplete() {
-        //subject.endSession();
         updateUI();
         if (onStatusChanged != null) {
             onStatusChanged.run();
+        }
+    }
+
+    @FXML
+    private void handleDeleteCourse() {
+        if (studyDeckController != null) {
+            studyDeckController.deleteCourse(subject, cardRoot);
         }
     }
 }
