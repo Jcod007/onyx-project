@@ -75,8 +75,10 @@ public class TimerConfigDialogController {
 
 	public void setSubjectRepository(SubjectRepository subjectRepository) {
 		this.subjectRepository = subjectRepository;
-		// Optionally load subjects into courseComboBox if needed here
-		// courseComboBox.getItems().setAll(subjectRepository.getAllSubjects());
+		// Load all subjects into the courseComboBox
+		if (subjectRepository != null) {
+			courseComboBox.getItems().setAll(subjectRepository.findAll());
+		}
 	}
 	
 	/**
@@ -113,8 +115,7 @@ public class TimerConfigDialogController {
             (byte) (timeValues != null ? timeValues.minutes() : 0),
             (byte) (timeValues != null ? timeValues.seconds() : 0),
             timerTypeComboBox.getValue(),
-            courseComboBox.getValue() != null ? courseComboBox.getValue().getName() : null,
-            studyDeck != null ? studyDeck.getSubjectList() : List.of()
+            courseComboBox.getValue()
         );
     }
 
@@ -153,27 +154,32 @@ public class TimerConfigDialogController {
 	private void updateStatusLabel() {
 		String timerType = timerTypeComboBox.getValue();
 		Subject course = courseComboBox.getValue();
+	
+		String s = "No associated course";
 		if (timerType != null && timerType.contains("Study session")) {
 			if (course != null) {
 				statusLabel.setText("Lié à : " + course.getName());
 			} else {
-				statusLabel.setText("Aucun cours lié");
+				statusLabel.setText(s);
 			}
-			statusLabel.setVisible(true);
-			statusLabel.setManaged(true);
+		} else if (timerType != null && timerType.contains("Free session")) {
+			statusLabel.setText(s);
 		} else {
 			statusLabel.setText("");
-			statusLabel.setVisible(false);
-			statusLabel.setManaged(false);
 		}
+	
+		statusLabel.setVisible(true);
+		statusLabel.setManaged(true);
 	}
+	
 
 	private void validateForm() {
 		boolean timeEmpty = timerTextFliedConfig.getText().trim().isEmpty();
+		boolean isTimeZero = timerTextFliedConfig.getText().trim().equals("00:00:00");
 		boolean typeEmpty = timerTypeComboBox.getValue() == null || timerTypeComboBox.getValue().trim().isEmpty();
 		boolean studySession = !typeEmpty && timerTypeComboBox.getValue().contains("Study session");
 		boolean courseEmpty = courseComboBox.getValue() == null;
-		boolean disable = timeEmpty || typeEmpty || (studySession && courseEmpty);
+		boolean disable = timeEmpty || isTimeZero || typeEmpty || (studySession && courseEmpty);
 		okButton.setDisable(disable);
 	}
 

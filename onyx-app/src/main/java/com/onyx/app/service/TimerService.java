@@ -2,10 +2,9 @@ package com.onyx.app.service;
 
 import com.onyx.app.Constants;
 import com.onyx.app.model.TimerModel;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
-import javafx.scene.media.AudioClip;
-import javafx.util.Duration;
+import com.onyx.app.model.Subject;
+import com.onyx.app.repository.SubjectRepository;
+import java.time.Duration;
 
 /**
  * Service pour gérer la logique métier des timers
@@ -14,68 +13,39 @@ import javafx.util.Duration;
 public class TimerService {
     
     private TimerModel timerModel;
-    private Timeline timeline;
-    private AudioClip sound;
     private boolean isRunning;
     private boolean canReset;
+    private SubjectRepository subjectRepository;
     
     // Callbacks pour notifier l'interface utilisateur
-    //private Runnable onTimeUpdate;
     private Runnable onTimerFinished;
     private Runnable onStateChanged;
     
-    public  TimerService() {
-        initializeSound();
-        initializeTimeline();
+    public TimerService(SubjectRepository subjectRepository) {
+        this.subjectRepository = subjectRepository;
         setDefaultTimer();
     }
     
-    public TimerService(byte hours, byte minutes, byte seconds) {
-        initializeSound();
-        initializeTimeline();
-        setTimer(hours, minutes, seconds);
-    }
-    
-    /**
-     * Initialise le son d'alarme
-     */
-    private void initializeSound() {
-        sound = new AudioClip(TimerService.class.getResource("/sounds/timerSound.mp3").toString());
-        sound.setCycleCount(AudioClip.INDEFINITE);
-    }
-    
-    /**
-     * Initialise la timeline pour le décompte
-     */
-    private void initializeTimeline() {
-        timeline = new Timeline(new KeyFrame(javafx.util.Duration.seconds(Constants.TIMER_UPDATE_INTERVAL), e -> {
-            decrementTimer();
-            if (onStateChanged != null) {
-                onStateChanged.run();
-            }
-            
-            if (timerModel.isFinished()) {
-                handleTimerFinished();
-            }
-        }));
-        timeline.setCycleCount(Timeline.INDEFINITE);
+    public TimerService(byte hours, byte minutes, byte seconds, TimerModel.TimerType timerType, Subject linkedSubject, SubjectRepository subjectRepository) {
+        this(subjectRepository); // Call primary constructor to set subjectRepository
+        setTimer(hours, minutes, seconds, timerType, linkedSubject, subjectRepository);
     }
     
     /**
      * Définit un timer par défaut (5 secondes)
      */
     private void setDefaultTimer() {
-        setTimer((byte) Constants.DEFAULT_HOURS, (byte) Constants.DEFAULT_MINUTES, (byte) Constants.DEFAULT_SECONDS);
+        setTimer((byte) Constants.DEFAULT_HOURS, (byte) Constants.DEFAULT_MINUTES, (byte) Constants.DEFAULT_SECONDS, TimerModel.TimerType.FREE_SESSION, null, this.subjectRepository);
     }
     
     /**
      * Définit un nouveau timer
      */
-    public void setTimer(byte hours, byte minutes, byte seconds) {
-        this.timerModel = new TimerModel(hours, minutes, seconds);
+        public void setTimer(byte hours, byte minutes, byte seconds, TimerModel.TimerType timerType, Subject linkedSubject, SubjectRepository subjectRepository) {
+        this.subjectRepository = subjectRepository;
+        this.timerModel = new TimerModel(hours, minutes, seconds, timerType, linkedSubject);
         this.isRunning = false;
         this.canReset = false;
-        stopTimeline();
         notifyStateChanged();
     }
     
@@ -86,7 +56,6 @@ public class TimerService {
         this.timerModel = model;
         this.isRunning = false;
         this.canReset = false;
-        stopTimeline();
         notifyStateChanged();
     }
     
@@ -106,7 +75,6 @@ public class TimerService {
      */
     public void startTimer() {
         if (!timerModel.isFinished()) {
-            timeline.play();
             isRunning = true;
             canReset = true;
             notifyStateChanged();
@@ -117,7 +85,6 @@ public class TimerService {
      * Met en pause le timer
      */
     public void pauseTimer() {
-        timeline.pause();
         isRunning = false;
         notifyStateChanged();
     }
@@ -126,11 +93,9 @@ public class TimerService {
      * Arrête complètement le timer
      */
     public void stopTimer() {
-        timeline.stop();
         isRunning = false;
         canReset = false;
         notifyStateChanged();
-        
     }
     
     /**
@@ -139,37 +104,42 @@ public class TimerService {
     public void resetTimer() {
         stopTimer();
         timerModel.reset();
-        sound.stop();
         notifyStateChanged();
-        
     }
     
     /**
-     * Décompte d'une seconde
+     * Décrémente le temps du timer d'une seconde.
+     * Cette méthode doit être appelée par un mécanisme externe (ex: Timeline)
      */
-    private void decrementTimer() {
-        timerModel.decrement();
+    public void decrement() {
+        if (isRunning) {
+            timerModel.decrement();
+            if (timerModel.isFinished()) {
+                handleTimerFinished();
+            }
+            notifyStateChanged();
+        }
     }
     
     /**
      * Gère la fin du timer
      */
     private void handleTimerFinished() {
-        sound.play();
         stopTimer();
         canReset = true;
+
+        Subject linkedSubject = timerModel.getLinkedSubject();
+        if (linkedSubject != null) {
+            Duration sessionDuration = timerModel.getInitialDuration();
+            linkedSubject.addTimeSpent(sessionDuration);
+            if (subjectRepository != null) {
+                subjectRepository.save(linkedSubject);
+            }
+            System.out.println("Mise à jour du temps pour le cours : " + linkedSubject.getName() + ". Temps ajouté : " + sessionDuration.toString());
+        }
+
         if (onTimerFinished != null) {
             onTimerFinished.run();
-        }
-        
-    }
-    
-    /**
-     * Arrête la timeline
-     */
-    private void stopTimeline() {
-        if (timeline != null) {
-            timeline.stop();
         }
     }
     
@@ -214,18 +184,10 @@ public class TimerService {
      * Retourne le temps formaté pour l'affichage
      */
     public String getFormattedTime() {
-        if (timerModel.getHours() > 0) {
-            return String.format("%02d:%02d:%02d",
-                    timerModel.getHours(),
-                    timerModel.getMinutes(),
-                    timerModel.getSeconds());
-        } else if (timerModel.getMinutes() > 0) {
-            return String.format("%02d:%02d",
-                    timerModel.getMinutes(),
-                    timerModel.getSeconds());
-        } else {
-            return String.format("%d", timerModel.getSeconds());
-        }
+        return switch (timerModel.getHours()) {
+            case 0 -> String.format("%02d:%02d", timerModel.getMinutes(), timerModel.getSeconds());
+            default -> String.format("%02d:%02d:%02d", timerModel.getHours(), timerModel.getMinutes(), timerModel.getSeconds());
+        };
     }
     
     /**
@@ -243,7 +205,7 @@ public class TimerService {
             m = clamp(m, 0, Constants.MAX_MINUTES);
             s = clamp(s, 0, Constants.MAX_SECONDS);
             
-            setTimer((byte) h, (byte) m, (byte) s);
+            setTimer((byte) h, (byte) m, (byte) s, TimerModel.TimerType.FREE_SESSION, null, subjectRepository);
         }
     }
     
@@ -257,10 +219,6 @@ public class TimerService {
     }
     
     // Setters pour les callbacks
-    // public void setOnTimeUpdate(Runnable callback) {
-    //     this.onTimeUpdate = callback;
-    // }
-    
     public void setOnTimerFinished(Runnable callback) {
         this.onTimerFinished = callback;
     }
@@ -269,15 +227,24 @@ public class TimerService {
         this.onStateChanged = callback;
     }
     
+    // Accès direct au type et au cours lié via TimerModel
+    public TimerModel.TimerType getTimerType() {
+        return timerModel != null ? timerModel.getTimerType() : null;
+    }
+    public void setTimerType(TimerModel.TimerType timerType) {
+        if (timerModel != null) timerModel.setTimerType(timerType);
+    }
+    public Subject getLinkedSubject() {
+        return timerModel != null ? timerModel.getLinkedSubject() : null;
+    }
+    public void setLinkedSubject(Subject subject) {
+        if (timerModel != null) timerModel.setLinkedSubject(subject);
+    }
+    
     /**
      * Nettoie les ressources
      */
     public void dispose() {
-        if (timeline != null) {
-            timeline.stop();
-        }
-        if (sound != null) {
-            sound.stop();
-        }
+        // Plus rien à nettoyer ici
     }
 } 

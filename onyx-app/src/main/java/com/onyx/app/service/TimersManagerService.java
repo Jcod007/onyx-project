@@ -1,9 +1,17 @@
 package com.onyx.app.service;
 
 import com.onyx.app.Constants;
+import com.onyx.app.model.Subject;
 import com.onyx.app.model.TimerModel;
+import com.onyx.app.model.TimerModel.TimerType;
+import com.onyx.app.repository.TimerRepository;
+import com.onyx.app.repository.SubjectRepository;
+import com.onyx.app.repository.impl.JsonTimerRepository;
+import com.onyx.app.repository.impl.JsonSubjectRepository;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Service pour gérer plusieurs timers
@@ -11,6 +19,8 @@ import java.util.List;
  */
 public class TimersManagerService {
     
+    private final TimerRepository timerRepository;
+    private final SubjectRepository subjectRepository;
     private List<TimerService> timers;
     private List<TimerService> activeTimers;
     
@@ -19,64 +29,69 @@ public class TimersManagerService {
     private Runnable onActiveTimersChanged;
     
     public TimersManagerService() {
-        this.timers = new ArrayList<>();
+        // Default constructor for convenience, uses JSON implementation
+        this(new JsonTimerRepository(), new JsonSubjectRepository());
+    }
+
+    public TimersManagerService(TimerRepository timerRepository, SubjectRepository subjectRepository) {
+        this.timerRepository = timerRepository;
+        this.subjectRepository = subjectRepository;
+        this.timers = timerRepository.findAll().stream()
+                            .map(model -> {
+                                TimerService timerService = new TimerService(subjectRepository);
+                                timerService.setTimerModel(model);
+                                return timerService;
+                            })
+                            .collect(Collectors.toList());
         this.activeTimers = new ArrayList<>();
+        updateActiveTimers(); // Initialize active timers based on loaded data
     }
     
     /**
      * Crée un nouveau timer avec les valeurs par défaut
      */
     public TimerService createTimer() {
-        return createTimer((byte) Constants.DEFAULT_HOURS, (byte) Constants.DEFAULT_MINUTES, (byte) Constants.DEFAULT_SECONDS);
+        return createTimer((byte) Constants.DEFAULT_HOURS, (byte) Constants.DEFAULT_MINUTES, (byte) Constants.DEFAULT_SECONDS, TimerType.FREE_SESSION,null);
     }
     
     /**
      * Crée un nouveau timer avec des valeurs spécifiques
      */
-    public TimerService createTimer(byte hours, byte minutes, byte seconds) {
-        TimerService timerService = new TimerService(hours, minutes, seconds);
-        
-        // Configurer les callbacks pour ce timer
-        timerService.setOnStateChanged(() -> {
-            updateActiveTimers();
-            notifyTimersListChanged();
-        });
-        
-        timerService.setOnTimerFinished(() -> {
-            updateActiveTimers();
-            notifyTimersListChanged();
-        });
-        
-        timers.add(timerService);
-        updateActiveTimers();
-        notifyTimersListChanged();
-       
-        
-        return timerService;
+    public TimerService createTimer(byte hours, byte minutes, byte seconds, TimerModel.TimerType timerType, Subject subject) {
+        TimerModel newModel = new TimerModel(hours, minutes, seconds, timerType, subject);
+        timerRepository.save(newModel); // Save the new timer model
+        return createTimerServiceFromModel(newModel);
     }
     
     /**
      * Crée un timer à partir d'un modèle existant
      */
     public TimerService createTimerFromModel(TimerModel model) {
-        TimerService timerService = new TimerService();
+        timerRepository.save(model); // Ensure the model is saved/updated in the repository
+        return createTimerServiceFromModel(model);
+    }
+
+    private TimerService createTimerServiceFromModel(TimerModel model) {
+        TimerService timerService = new TimerService(subjectRepository);
         timerService.setTimerModel(model);
         
         // Configurer les callbacks pour ce timer
         timerService.setOnStateChanged(() -> {
             updateActiveTimers();
             notifyTimersListChanged();
+            timerRepository.save(timerService.getTimerModel()); // Save state changes
         });
         
         timerService.setOnTimerFinished(() -> {
             updateActiveTimers();
             notifyTimersListChanged();
+            timerRepository.save(timerService.getTimerModel()); // Save final state
         });
         
         timers.add(timerService);
         updateActiveTimers();
         notifyTimersListChanged();
-        
+       
         return timerService;
     }
     
@@ -87,6 +102,7 @@ public class TimersManagerService {
         if (timerService != null) {
             timerService.dispose();
             timers.remove(timerService);
+            timerRepository.deleteById(timerService.getTimerModel().getId()); // Delete from repository
             updateActiveTimers();
             notifyTimersListChanged();
         }
@@ -98,6 +114,7 @@ public class TimersManagerService {
     public void removeAllTimers() {
         for (TimerService timer : timers) {
             timer.dispose();
+            timerRepository.deleteById(timer.getTimerModel().getId()); // Delete from repository
         }
         timers.clear();
         activeTimers.clear();
@@ -180,6 +197,10 @@ public class TimersManagerService {
         return count;
     }
     
+    public SubjectRepository getSubjectRepository() {
+        return subjectRepository;
+    }
+
     /**
      * Vérifie s'il y a des timers en cours d'exécution
      */

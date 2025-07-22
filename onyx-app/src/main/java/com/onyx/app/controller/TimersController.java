@@ -179,7 +179,7 @@ public class TimersController {
 							result.minutes(),
 							result.seconds(),
 							result.timerType(),
-							result.subject() // Corrigé : getSubject()
+							result.subject()
 						);
 						// Créer l'interface utilisateur pour ce timer
 						try {

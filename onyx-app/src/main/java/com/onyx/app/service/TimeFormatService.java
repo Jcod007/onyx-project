@@ -42,7 +42,7 @@ public class TimeFormatService {
         String oldDigits = oldText.replace(":", "");
 
         // Si on a encore des chiffres à décaler
-        if (oldDigits.length() > 0) {
+        if (!oldDigits.isEmpty()) {
             // Décalage à DROITE : enlever le dernier chiffre et ajouter un 0 au début
             String newDigits = "0" + oldDigits.substring(0, oldDigits.length() - 1);
             String rebuilt = formatDigits(newDigits);
@@ -139,9 +139,9 @@ public class TimeFormatService {
         int s = Integer.parseInt(parts[2]);
         
         // Clamp dans les bornes valides
-        h = clamp(h, 0, Constants.MAX_HOURS);
-        m = clamp(m, 0, Constants.MAX_MINUTES);
-        s = clamp(s, 0, Constants.MAX_SECONDS);
+        // h = clamp(h, 0, Constants.MAX_HOURS);
+        // m = clamp(m, 0, Constants.MAX_MINUTES);
+        // s = clamp(s, 0, Constants.MAX_SECONDS);
         
         return new TimeValues((byte) h, (byte) m, (byte) s);
     }
@@ -194,19 +194,6 @@ public class TimeFormatService {
     /**
      * Classe pour encapsuler les valeurs de temps
      */
-    public static class TimeValues {
-        private final byte hours;
-        private final byte minutes;
-        private final byte seconds;
-        
-        public TimeValues(byte hours, byte minutes, byte seconds) {
-            this.hours = hours;
-            this.minutes = minutes;
-            this.seconds = seconds;
-        }
-        
-        public byte getHours() { return hours; }
-        public byte getMinutes() { return minutes; }
-        public byte getSeconds() { return seconds; }
+    public static record TimeValues(byte hours, byte minutes, byte seconds) {
     }
 } 

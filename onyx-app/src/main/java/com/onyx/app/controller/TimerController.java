@@ -63,18 +63,6 @@ public class TimerController {
 		initializeTimeline();
         initializeSound();
 
-        // Set delete button graphic
-        try {
-            Image deleteIcon = new Image(getClass().getResourceAsStream("/images/delete-icon.png"));
-            ImageView deleteIconView = new ImageView(deleteIcon);
-            deleteIconView.setFitHeight(16);
-            deleteIconView.setFitWidth(16);
-            deleteBtn.setGraphic(deleteIconView);
-            deleteBtn.setText(""); // No text, just icon
-        } catch (Exception e) {
-            System.err.println("Error loading delete icon: " + e.getMessage());
-            deleteBtn.setText("X"); // Fallback to text
-        }
 	}
 
 	private void initializeTimeline() {
@@ -156,7 +144,6 @@ public class TimerController {
 		if (result != null) {
 			// Appliquer la configuration complète
 			timerService.setTimer(result.hours(), result.minutes(), result.seconds(), result.timerType(), result.subject(), subjectRepository);
-			// updateCourseDisplay(); // Appel redondant, géré par updateDisplay()
 			updateDisplay();
 		}
 	}
@@ -293,6 +280,7 @@ public class TimerController {
         sound.play();
 		System.out.println("Timer termine !");
 		updateButtonStates();
+		updateCourseDisplay(); // Mettre à jour l'affichage du cours
 	}
 
 	// ========================================
