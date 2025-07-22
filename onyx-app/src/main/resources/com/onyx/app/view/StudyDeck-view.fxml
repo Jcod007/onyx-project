@@ -6,8 +6,10 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.TilePane?>
 
-<VBox fx:id="coursesList" prefHeight="600" prefWidth="500" spacing="15" 
+<VBox fx:id="coursesList" spacing="15" 
       xmlns="http://javafx.com/javafx/17" 
       xmlns:fx="http://javafx.com/fxml/1" 
       fx:controller="com.onyx.app.controller.StudyDeckController"

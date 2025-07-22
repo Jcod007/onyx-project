@@ -2,25 +2,39 @@
 
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<VBox alignment="CENTER" maxHeight="500" maxWidth="500" minHeight="200" minWidth="200" onMouseClicked="#openConfigDialog" prefHeight="320" prefWidth="320" spacing="40" styleClass="timer-card-root" stylesheets="@/com/onyx/app/styles/timer-card-view.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.onyx.app.controller.TimerController">
+<VBox alignment="CENTER" onMouseClicked="#openConfigDialog" spacing="40" styleClass="timer-card-root" stylesheets="@/com/onyx/app/styles/timer-card-view.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.onyx.app.controller.TimerController">
 
-	<!-- Conteneur pour le Label et TextField -->
-	<StackPane id="timeContainer" alignment="CENTER">
-		<Label fx:id="timeLabel" styleClass="digital-label" text="00:00:00" />
-		<!--<TextField fx:id="timeEditField" managed="false" onAction="#finishEditing" styleClass="digital-field" visible="false" />-->
-	</StackPane>
+    <children>
+        <HBox alignment="TOP_RIGHT" spacing="5">
+            <children>
+                <Region HBox.hgrow="ALWAYS" />
+                <Button fx:id="deleteBtn" onAction="#handleDelete" styleClass="delete-button">
+               <graphic>
+                  <FontIcon iconLiteral="mdi2d-delete" />
+               </graphic></Button>
+            </children>
+        </HBox>
 
-	<HBox alignment="CENTER" spacing="15">
-		<Button fx:id="startBtn" focusTraversable="false" onAction="#handleStartPause" styleClass="demarrer-button" text="Demarrer" />
-		<Button fx:id="resetBtn" focusTraversable="false" managed="false" onAction="#handleReset" styleClass="reset-button" text="Reset" visible="false" />
-		<!-- <Button mnemonicParsing="false" onAction="#toggleSettingsBox" styleClass="reglage-button" 
-			text="Reglages" /> -->
-	</HBox>
+		<!-- Conteneur pour le Label et TextField -->
+		<StackPane id="timeContainer" alignment="CENTER">
+			<Label fx:id="timeLabel" styleClass="digital-label" text="00:00:00" />
+			<!--<TextField fx:id="timeEditField" managed="false" onAction="#finishEditing" styleClass="digital-field" visible="false" />-->
+		</StackPane>
+
+		<!-- Label pour afficher le cours lié -->
+		<Label fx:id="courseLabel" styleClass="course-linked-label" text="Aucun cours lié" />
+
+		<HBox alignment="CENTER" spacing="15">
+			<Button fx:id="startBtn" focusTraversable="false" onAction="#handleStartPause" styleClass="demarrer-button" text="Demarrer" />
+			<Button fx:id="resetBtn" focusTraversable="false" managed="false" onAction="#handleReset" styleClass="reset-button" text="Reset" visible="false" />
+		</HBox>
+    </children>
 
 	<!--<VBox fx:id="settingsBox" alignment="CENTER" managed="false" spacing="10" 
 		visible="false"> <Label styleClass="settingsLabel" text="Réglages du minuteur" 

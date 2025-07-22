@@ -6,14 +6,14 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.geometry.Insets?>
 
-<StackPane prefHeight="600" prefWidth="800"
+<StackPane
 	stylesheets="@/com/onyx/app/styles/timerscontroller-view.css"
 	xmlns="http://javafx.com/javafx/23.0.1"
 	xmlns:fx="http://javafx.com/fxml/1"
 	fx:controller="com.onyx.app.controller.TimersController"
 	styleClass = "timercontroller-root">
 	
-	<ScrollPane fitToWidth="true" styleClass = "timer-card-contener">
+	<ScrollPane fitToWidth="true" fitToHeight="true" styleClass = "timer-card-contener">
 		<content>
 			<FlowPane fx:id="timersList" hgap="24.0" vgap="24.0"
 				styleClass="timers-card-list-view">

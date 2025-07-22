@@ -26,7 +26,7 @@
 							iconColor="#F5F7FA" />
 					</graphic>
 				</Label>
-				<Button mnemonicParsing="false" prefHeight="50.0"
+				<Button fx:id="dashboardButton" mnemonicParsing="false" prefHeight="50.0"
 					prefWidth="150.0" styleClass="menu-button" text="Dashboard">
 					<graphic>
 						<FontIcon iconColor="WHITE"
@@ -37,7 +37,7 @@
 						<Insets />
 					</opaqueInsets>
 				</Button>
-				<Button mnemonicParsing="false" onAction="#handleTimer"
+				<Button fx:id="timerButton" mnemonicParsing="false" onAction="#handleTimer"
 					prefHeight="50.0" prefWidth="150.0" styleClass="menu-button"
 					text="Timer">
 					<graphic>
@@ -45,7 +45,7 @@
 							iconSize="18" styleClass="icon-menu" />
 					</graphic>
 				</Button>
-				<Button mnemonicParsing="false" onAction="#handleStudyDeck"
+				<Button fx:id="studyDeckButton" mnemonicParsing="false" onAction="#handleStudyDeck"
 					prefHeight="50.0" prefWidth="150.0" styleClass="menu-button"
 					text="Study Deck">
 					<graphic>

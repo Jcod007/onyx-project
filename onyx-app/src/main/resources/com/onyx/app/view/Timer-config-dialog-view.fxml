@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<StackPane xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.onyx.app.controller.TimerConfigDialogController" styleClass="rounded-dialog">
+<StackPane styleClass="rounded-dialog" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.onyx.app.controller.TimerConfigDialogController">
 	<children>
 		<VBox alignment="CENTER_LEFT" fillWidth="true" maxHeight="400.0" maxWidth="400" prefHeight="350.0" prefWidth="400" spacing="15" styleClass="timer-config-dialog-root" stylesheets="@/com/onyx/app/styles/timerconfigdialog-view.css">
 
@@ -43,17 +43,9 @@
 					</ComboBox>
 					
 					<!-- Section Associated course (visible seulement pour Study session) -->
-					<VBox fx:id="associatedCourseSection" prefHeight="70.0" prefWidth="400.0" spacing="5" visible="false" managed = "false">
-						<Label prefHeight="30.0" prefWidth="130.0" styleClass="timer-config-dialog-label" text="Associated course" />
+					<VBox fx:id="associatedCourseSection" managed="fasle" prefHeight="70.0" prefWidth="400.0" spacing="5" visible="false">
+						<Label prefHeight="23.0" prefWidth="156.0" styleClass="timer-config-dialog-label" text="Associated course" />
 						<ComboBox fx:id="courseComboBox" prefHeight="35.0" prefWidth="350.0" promptText="Select..." styleClass="timer-config-dialog-combo-box">
-							<items>
-							<FXCollections fx:factory="observableArrayList">
-								<String fx:value="Mathematique" />
-								<String fx:value="Physique" />
-								<String fx:value="Histoire" />
-							</FXCollections>
-
-						</items>
 						</ComboBox>
 					</VBox>
 				</children>
