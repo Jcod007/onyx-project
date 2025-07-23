@@ -4,6 +4,7 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.StackPane?>
@@ -15,6 +16,7 @@
            fx:controller="com.onyx.app.controller.StudyDeckController"
            stylesheets="@/com/onyx/app/styles/global.css, @/com/onyx/app/styles/studydeck-view.css">
 
+<ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
 <VBox fx:id="coursesList" spacing="15" 
       styleClass="main-container">
 
@@ -48,14 +50,19 @@
             text="+ Ajouter un cours" styleClass="add-course-button"/>
 
 </VBox>
+</ScrollPane>
 
-<!-- Container pour le mini-timer flottant -->
-<VBox fx:id="miniTimerContainer" styleClass="mini-timer-floating" 
-      visible="false" managed="false"
-      StackPane.alignment="BOTTOM_LEFT">
+<!-- Container pour la pile de mini-timers avec scroll -->
+<ScrollPane fx:id="timerScrollPane" styleClass="timer-scroll-pane"
+            visible="false" managed="false"
+            StackPane.alignment="BOTTOM_LEFT"
+            hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
+            fitToWidth="true" prefHeight="400" maxHeight="400">
     <StackPane.margin>
         <Insets bottom="20" left="20"/>
     </StackPane.margin>
-</VBox>
+    <VBox fx:id="timerStackContainer" styleClass="timer-stack-container" 
+          spacing="8"/>
+</ScrollPane>
 
 </StackPane>

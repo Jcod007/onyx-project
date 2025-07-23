@@ -2,10 +2,15 @@ package com.onyx.app.controller;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.onyx.app.model.StudyDeck;
 import com.onyx.app.model.Subject;
 import com.onyx.app.model.TimerModel;
+import com.onyx.app.repository.SubjectRepository;
 import com.onyx.app.service.TimerService;
+
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -13,13 +18,10 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.geometry.Pos;
-
-import com.onyx.app.repository.SubjectRepository;
 
 public class StudyDeckController {
 
@@ -30,14 +32,15 @@ public class StudyDeckController {
     @FXML private TextField courseNameField;
     @FXML private TextField courseDurationField;
     @FXML private TextField defaultTimerDurationField;
-    @FXML private VBox miniTimerContainer;
+    @FXML private ScrollPane timerScrollPane;
+    @FXML private VBox timerStackContainer;
 
     private final StudyDeck studyDeck = new StudyDeck();
     private final BooleanProperty formVisible = new SimpleBooleanProperty(false);
     private final SubjectRepository subjectRepository;
     
-    // Mini-timer management
-    private StudyMiniTimerController currentMiniTimer;
+    // Multi-timer management
+    private List<StudyMiniTimerController> activeTimers = new ArrayList<>();
 
     public StudyDeckController(SubjectRepository subjectRepository) {
         this.subjectRepository = subjectRepository;
@@ -205,18 +208,13 @@ public class StudyDeckController {
      * Démarre un mini-timer pour un sujet donné avec une durée spécifique
      */
     public void startMiniTimerWithDuration(Subject subject, Duration timerDuration) {
-        // Fermer le mini-timer actuel s'il existe
-        if (currentMiniTimer != null) {
-            closeMiniTimer();
-        }
-
         try {
             // Charger le FXML du mini-timer pour Study
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/onyx/app/view/StudyMiniTimer-view.fxml"));
             VBox miniTimerView = loader.load();
             
             // Obtenir le contrôleur
-            currentMiniTimer = loader.getController();
+            StudyMiniTimerController newMiniTimer = loader.getController();
             
             // Créer un TimerService pour ce mini-timer
             TimerService timerService = new TimerService(subjectRepository);
@@ -230,36 +228,27 @@ public class StudyDeckController {
             timerService.setTimerModel(timerModel);
             
             // Configurer le mini-timer
-            currentMiniTimer.setupTimer(timerService, subject, timerDuration);
+            newMiniTimer.setupTimer(timerService, subject, timerDuration);
             
             // Configurer les callbacks
-            currentMiniTimer.setOnTimerFinished(this::handleMiniTimerFinished);
-            currentMiniTimer.setOnClose(this::handleMiniTimerClosed);
+            newMiniTimer.setOnTimerFinished(this::handleMiniTimerFinished);
+            newMiniTimer.setOnClose(this::handleMiniTimerClosed);
             
-            // Afficher le mini-timer
-            miniTimerContainer.getChildren().clear();
-            miniTimerContainer.getChildren().add(miniTimerView);
+            // Ajouter à la liste des timers actifs
+            activeTimers.add(newMiniTimer);
             
-            // Configurer les propriétés d'interaction pour un widget non-bloquant
-            miniTimerContainer.setVisible(true);
-            miniTimerContainer.setManaged(false); // Ne pas affecter le layout du parent
-            miniTimerContainer.setMouseTransparent(false); // Permettre les interactions avec le widget
-            miniTimerContainer.setPickOnBounds(false); // CRUCIAL: Ne pas capturer les clics en dehors du contenu visible
+            // Ajouter le timer à la pile
+            timerStackContainer.getChildren().add(miniTimerView);
             
-            // Configurer le widget pour qu'il soit interactif mais non-bloquant
-            miniTimerView.setMouseTransparent(false); // Le widget lui-même doit être cliquable
-            miniTimerView.setPickOnBounds(true); // Mais seulement sur son contenu visible
+            // Configurer les propriétés du conteneur principal
+            updateTimerStackVisibility();
             
-            // S'assurer que le widget ne prend pas le focus automatiquement
+            // Configurer le widget pour qu'il soit interactif
+            miniTimerView.setMouseTransparent(false);
+            miniTimerView.setPickOnBounds(true);
             miniTimerView.setFocusTraversable(false);
             
-            // Empêcher le container de capturer le focus aussi
-            miniTimerContainer.setFocusTraversable(false);
-            
-            // Ajouter un effet de transparence au container pour qu'il soit moins intrusif
-            miniTimerContainer.setOpacity(0.95);
-            
-            // S'assurer que le focus reste sur l'élément actuel (ne pas voler le focus)
+            // Démarrer le timer
             Platform.runLater(() -> {
                 // Permettre au système de terminer le layout avant de démarrer
                 timerService.startTimer();
@@ -272,23 +261,53 @@ public class StudyDeckController {
     }
 
     /**
-     * Ferme le mini-timer actuel
+     * Met à jour la visibilité et le positionnement du conteneur de pile de timers
      */
-    private void closeMiniTimer() {
-        if (currentMiniTimer != null) {
-            // Arrêter le timer s'il est en cours
-            TimerService timerService = currentMiniTimer.getTimerService();
-            if (timerService != null && timerService.isRunning()) {
-                timerService.stopTimer();
-            }
+    private void updateTimerStackVisibility() {
+        if (activeTimers.isEmpty()) {
+            timerScrollPane.setVisible(false);
+            timerScrollPane.setManaged(false);
+        } else {
+            timerScrollPane.setVisible(true);
+            timerScrollPane.setManaged(false); // Reste en position absolue
+            timerScrollPane.setMouseTransparent(false);
+            timerScrollPane.setPickOnBounds(false);
+            timerScrollPane.setFocusTraversable(false);
+            timerScrollPane.setOpacity(0.95);
             
-            // Cacher le conteneur
-            miniTimerContainer.setVisible(false);
-            miniTimerContainer.setManaged(false);
-            miniTimerContainer.getChildren().clear();
-            
-            currentMiniTimer = null;
+            // Positionner en bas à gauche
+            Platform.runLater(() -> {
+                timerScrollPane.setLayoutX(20);
+                
+                // Calculer position Y dynamiquement - le ScrollPane a une hauteur fixe
+                double parentHeight = timerScrollPane.getParent().getBoundsInLocal().getHeight();
+                double scrollHeight = 400; // Hauteur fixe du ScrollPane
+                timerScrollPane.setLayoutY(Math.max(20, parentHeight - scrollHeight - 20));
+            });
         }
+    }
+    
+    /**
+     * Supprime un timer spécifique de la pile
+     */
+    private void removeTimer(StudyMiniTimerController timerToRemove) {
+        // Arrêter le timer s'il est en cours
+        TimerService timerService = timerToRemove.getTimerService();
+        if (timerService != null && timerService.isRunning()) {
+            timerService.stopTimer();
+        }
+        
+        // Retirer de la liste des timers actifs
+        activeTimers.remove(timerToRemove);
+        
+        // Retirer l'interface du conteneur
+        VBox timerView = timerToRemove.getContainer();
+        if (timerView != null) {
+            timerStackContainer.getChildren().remove(timerView);
+        }
+        
+        // Mettre à jour la visibilité
+        updateTimerStackVisibility();
     }
 
     /**
@@ -310,7 +329,7 @@ public class StudyDeckController {
      * Gère la fermeture manuelle d'un mini-timer
      */
     private void handleMiniTimerClosed(StudyMiniTimerController miniTimer) {
-        closeMiniTimer();
+        removeTimer(miniTimer);
     }
 
     /**
@@ -322,16 +341,27 @@ public class StudyDeckController {
     }
 
     /**
-     * Vérifie s'il y a un mini-timer actif
+     * Vérifie s'il y a des mini-timers actifs
      */
     public boolean hasMiniTimerActive() {
-        return currentMiniTimer != null;
+        return !activeTimers.isEmpty();
     }
 
     /**
-     * Obtient le mini-timer actuel (peut être null)
+     * Obtient la liste des mini-timers actifs
      */
-    public StudyMiniTimerController getCurrentMiniTimer() {
-        return currentMiniTimer;
+    public List<StudyMiniTimerController> getActiveTimers() {
+        return new ArrayList<>(activeTimers);
+    }
+    
+    /**
+     * Ferme tous les timers actifs
+     */
+    public void closeAllTimers() {
+        // Créer une copie de la liste pour éviter ConcurrentModificationException
+        List<StudyMiniTimerController> timersToClose = new ArrayList<>(activeTimers);
+        for (StudyMiniTimerController timer : timersToClose) {
+            removeTimer(timer);
+        }
     }
 }

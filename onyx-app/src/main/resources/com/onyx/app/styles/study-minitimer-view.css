@@ -2,7 +2,7 @@
 
 /* Container principal du mini-timer */
 .mini-timer-container {
-    -fx-background-color: linear-gradient(135deg, rgba(45, 45, 45, 0.95), rgba(35, 35, 35, 0.95));
+    -fx-background-color: linear-gradient(to bottom right, rgba(45, 45, 45, 0.95), rgba(35, 35, 35, 0.95));
     -fx-background-radius: 16;
     -fx-border-radius: 16;
     -fx-border-color: rgba(255, 255, 255, 0.2);
