@@ -32,6 +32,9 @@ mvn clean javafx:run
 ### Main Class
 The application entry point is `com.onyx.app.OnyxApplication`
 
+### Testing
+No specific test framework is currently configured. Services are designed to be testable independently of JavaFX UI components.
+
 ## Architecture Overview
 
 The project follows a **Model-View-Controller (MVC)** pattern enhanced with a **Service Layer** for clear separation of concerns:
@@ -54,10 +57,13 @@ src/main/java/com/onyx/app/
 
 ### Key Controllers (UI Layer)
 
-- **MainController**: Main navigation and view management
-- **TimersController**: Manages multiple timer display and creation
-- **TimerController**: Controls individual timer cards (display, buttons, animations)
+- **MainController**: Main navigation and view management, receives services via dependency injection
+- **TimersController**: Manages multiple timer display and creation using overlay-based config dialogs
+- **TimerController**: Controls individual timer cards (display, buttons, animations) - owns JavaFX Timeline and AudioClip
 - **TimerConfigDialogController**: Handles timer configuration dialog
+- **StudyDeckController**: Manages study subjects and integrates study session mini-timers
+- **StudyMiniTimerController**: Widget-based timer (not popup) for study sessions with animations
+- **CourseCardController**: Individual course/subject display cards with quick timer functionality
 
 ### Data Models
 
@@ -95,20 +101,49 @@ The main application class (`OnyxApplication`) initializes services and injects 
 4. Service executes callback to notify controller
 5. Controller updates UI display
 
+## Critical Architecture Patterns
+
+### UI Responsibility Separation
+- **Controllers**: Handle JavaFX-specific concerns (Timeline, AudioClip, animations, FXML event handlers)
+- **Services**: Pure business logic, completely independent of JavaFX, communicate via callbacks
+- **Timeline Management**: Each TimerController owns its JavaFX Timeline that calls `timerService.decrement()` every second
+
+### Service-Controller Communication Pattern
+```java
+// Services notify controllers via callbacks - never the reverse
+timerService.setOnStateChanged(this::updateDisplay);
+timerService.setOnTimerFinished(this::handleTimerFinished);
+```
+
+### Dependency Injection via Controller Factory
+`OnyxApplication` creates services and injects them via `fxmlLoader.setControllerFactory()`. Services are passed down through constructor parameters, not created by controllers.
+
+### Two Distinct Timer Implementations
+1. **Timer Cards**: Traditional timer cards in TimersController with popup-like config dialogs (overlay-based)
+2. **Study Mini-Timers**: Widget-based embedded timers in StudyDeckController (NOT popup windows)
+
+### No Actual Popup Windows
+Despite comments mentioning "popup flottant", the application uses embedded widgets and overlays within the main window, not separate Stage/Window instances.
+
 ## Subject Linking Feature
 
 The core functionality allows timers to be linked to study subjects:
 - When a timer finishes, the elapsed time is automatically added to the linked subject's `timeSpent`
 - Users can track progress toward study goals for each subject
 - Configuration happens through the timer config dialog
+- Study session timers automatically link to subjects when started from CourseCard
 
 ## Resource Structure
 
 ### FXML Views
 Located in `src/main/resources/com/onyx/app/view/`:
-- Main application window and timer management views
-- Individual timer card templates
-- Configuration dialogs
+- `Main-view.fxml`: Main application window with navigation
+- `TimersController-view.fxml`: Timer management with overlay configuration
+- `Timer-card-view.fxml`: Individual timer card template
+- `Timer-config-dialog-view.fxml`: Timer configuration overlay
+- `StudyDeck-view.fxml`: Study subjects management
+- `StudyMiniTimer-view.fxml`: Study session widget timer
+- `Course-card.fxml`: Individual course/subject cards
 
 ### CSS Styles
 Located in `src/main/resources/com/onyx/app/styles/`:
@@ -119,13 +154,36 @@ Located in `src/main/resources/com/onyx/app/styles/`:
 - Icons: Various timer icon sizes in `src/main/resources/images/`
 - Sounds: Timer completion sound in `src/main/resources/sounds/`
 
-## Testing Strategy
-
-Services are designed to be testable independently of JavaFX UI components. The business logic is completely separated from UI concerns, making unit testing straightforward.
-
 ## Data Persistence
 
 The application uses JSON files for data persistence:
-- Timer configurations and states are automatically saved/loaded
-- Subject data and study progress are persisted
-- Repository pattern abstracts storage implementation
+- Timer configurations and states are automatically saved/loaded via JsonTimerRepository
+- Subject data and study progress are persisted via JsonSubjectRepository  
+- Repository pattern abstracts storage implementation using Jackson for JSON serialization
+- Repositories are injected into services, services are injected into controllers
+
+## Constants and Configuration
+
+Key constants are defined in `Constants.java`:
+- Timer limits and defaults
+- UI dimensions (main window: 1000x700)
+- Update intervals (1 second timer updates)
+- Time format patterns
+
+## Important Implementation Notes
+
+### JavaFX Threading
+- All JavaFX UI updates must happen on JavaFX Application Thread
+- Services use `Platform.runLater()` for callback execution
+- Timeline animations are owned by controllers, not services
+
+### Study Session Workflow
+1. User interacts with CourseCard (quick timer button or start with duration)
+2. StudyDeckController creates TimerService and loads StudyMiniTimer-view.fxml
+3. Widget appears embedded in StudyDeck (not popup) with animations
+4. Timer completion automatically adds time to linked Subject
+5. Widget auto-closes after completion animation
+
+### Timer vs Study Session Distinction
+- **Timers**: General-purpose, created in TimersController, can be linked to subjects optionally
+- **Study Sessions**: Subject-specific, always linked, created from course cards, use embedded widgets

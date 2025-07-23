@@ -52,9 +52,9 @@
 <!-- Container pour le mini-timer flottant -->
 <VBox fx:id="miniTimerContainer" styleClass="mini-timer-floating" 
       visible="false" managed="false"
-      StackPane.alignment="BOTTOM_RIGHT">
+      StackPane.alignment="BOTTOM_LEFT">
     <StackPane.margin>
-        <Insets bottom="20" right="20"/>
+        <Insets bottom="20" left="20"/>
     </StackPane.margin>
 </VBox>
 

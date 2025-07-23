@@ -36,7 +36,6 @@
 
 		<HBox fx:id="actions" spacing="5">
 			<children>
-				<Button fx:id="startButton" onAction="#handleStart" text="Démarrer" />
 				<Button fx:id="quickTimerButton" onAction="#handleQuickTimer" styleClass="quick-timer-button">
 					<graphic>
 						<FontIcon iconLiteral="mdi2p-play-circle" iconSize="16"/>
