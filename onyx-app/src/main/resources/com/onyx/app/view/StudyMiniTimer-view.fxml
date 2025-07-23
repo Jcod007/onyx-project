@@ -13,7 +13,7 @@
       xmlns:fx="http://javafx.com/fxml/1" 
       fx:controller="com.onyx.app.controller.StudyMiniTimerController"
       styleClass="mini-timer-container"
-      stylesheets="@/com/onyx/app/styles/study-minitimer-view.css"
+      stylesheets="@/com/onyx/app/styles/global.css, @/com/onyx/app/styles/study-minitimer-view.css"
       spacing="8">
 
     <padding>

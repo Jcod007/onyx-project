@@ -1,17 +1,17 @@
 package com.onyx.app.service;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.onyx.app.Constants;
 import com.onyx.app.model.Subject;
 import com.onyx.app.model.TimerModel;
 import com.onyx.app.model.TimerModel.TimerType;
-import com.onyx.app.repository.TimerRepository;
 import com.onyx.app.repository.SubjectRepository;
-import com.onyx.app.repository.impl.JsonTimerRepository;
+import com.onyx.app.repository.TimerRepository;
 import com.onyx.app.repository.impl.JsonSubjectRepository;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.onyx.app.repository.impl.JsonTimerRepository;
 
 /**
  * Service pour gérer plusieurs timers

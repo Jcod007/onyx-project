@@ -16,6 +16,7 @@ public class Subject {
         this.name = "";
         this.targetTime = Duration.ZERO;
         this.timeSpent = Duration.ZERO;
+        this.defaultTimerDuration = Duration.ZERO; // Sera configuré par l'utilisateur
         this.status = Status.NOT_STARTED;
     }
     private String id;
@@ -23,30 +24,37 @@ public class Subject {
     private Status status;
     private Duration targetTime;  // Temps objectif
     private Duration timeSpent;   // Temps déjà passé
+    private Duration defaultTimerDuration; // Durée par défaut pour le démarrage rapide de timer
     private LocalDateTime lastStudyDate; // Dernière session d'étude
     
     public Subject(String name, int minutes) {
-        this(UUID.randomUUID().toString(), name, Duration.ofMinutes(minutes));
+        this(UUID.randomUUID().toString(), name, Duration.ofMinutes(minutes), Duration.ZERO);
     }
     
     public Subject(String name, Duration targetTime) {
-        this(UUID.randomUUID().toString(), name, targetTime);
+        this(UUID.randomUUID().toString(), name, targetTime, Duration.ZERO);
+    }
+    
+    public Subject(String name, Duration targetTime, Duration defaultTimerDuration) {
+        this(UUID.randomUUID().toString(), name, targetTime, defaultTimerDuration);
     }
 
     public Subject(String id, String name, int minutes) {
-        this(id, name, Duration.ofMinutes(minutes));
+        this(id, name, Duration.ofMinutes(minutes), Duration.ZERO);
     }
     
     @JsonCreator
     public Subject(
         @JsonProperty("id") String id,
         @JsonProperty("name") String name,
-        @JsonProperty("targetTime") Duration targetTime
+        @JsonProperty("targetTime") Duration targetTime,
+        @JsonProperty("defaultTimerDuration") Duration defaultTimerDuration
     ) {
         this.id = id;
         this.name = name;
         this.targetTime = targetTime;
         this.timeSpent = Duration.ZERO;
+        this.defaultTimerDuration = defaultTimerDuration != null ? defaultTimerDuration : Duration.ZERO;
         this.status = Status.NOT_STARTED;
     }
     
@@ -112,6 +120,8 @@ public class Subject {
     public Duration getTargetTime() { return targetTime; }
     public Duration getTimeSpent() { return timeSpent; }
     public void setTimeSpent(Duration timeSpent) { this.timeSpent = timeSpent; }
+    public Duration getDefaultTimerDuration() { return defaultTimerDuration; }
+    public void setDefaultTimerDuration(Duration defaultTimerDuration) { this.defaultTimerDuration = defaultTimerDuration; }
     public LocalDateTime getLastStudyDate() { return lastStudyDate; }
     public void setLastStudyDate(LocalDateTime lastStudyDate) { this.lastStudyDate = lastStudyDate; }
 

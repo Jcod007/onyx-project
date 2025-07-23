@@ -1,8 +1,10 @@
 package com.onyx.app.controller;
 
+import com.onyx.app.model.StudyDeck;
+import com.onyx.app.model.Subject;
 import com.onyx.app.model.TimerConfigResult;
 import com.onyx.app.model.TimerModel;
-import com.onyx.app.model.Subject;
+import com.onyx.app.repository.SubjectRepository;
 import com.onyx.app.service.TimeFormatService;
 import com.onyx.app.service.TimerService;
 
@@ -14,11 +16,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
-import java.util.List;
-import com.onyx.app.model.StudyDeck;
-
-import com.onyx.app.repository.SubjectRepository;
 
 public class TimerConfigDialogController {
 
