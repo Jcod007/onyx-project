@@ -3,25 +3,18 @@
 /* ------------------------------- */
 
 .menu-bar {
-    -fx-background-color: #0D1B2A; /* Bleu nuit ONYX */
+    -fx-background-color: #34495E; /* Gris anthracite */
     -fx-padding: 20 10 20 10;
     -fx-spacing: 10;
 }
 
-.title
-{
-	-fx-graphic-text-grap:14px;
-}
-
-.title .ikonli-font-icon
-{
-	
+.title .ikonli-font-icon {
     -fx-icon-size: 30px;
-    -fx-icon-color : Aqua;
+    -fx-icon-color : #1ABC9C;
 }
 /* Title label ONYX */
 .menu-bar .title {
-    -fx-text-fill: #FFFFFF;                  /* Blanc pur */
+    -fx-text-fill: #F5F5F5;
     -fx-font-family: "Montserrat";
     -fx-font-size: 24px;
     -fx-font-weight: bold;
@@ -31,47 +24,55 @@
 /* Boutons du menu */
 .menu-button {
     -fx-background-color: transparent;
-    -fx-text-fill: #F3F6FD;                 /* Bleu pâle ONYX (texte) */
+    -fx-text-fill: #F5F5F5;
     -fx-font-family: "Montserrat";
     -fx-font-size: 14px;
     -fx-alignment: CENTER_LEFT;
-    -fx-content-display: left;               /* Icône à gauche */
-    -fx-graphic-text-gap: 10px;              /* Espace icône-texte */
+    -fx-content-display: left;
+    -fx-graphic-text-gap: 10px;
     -fx-padding: 8px 0 8px 15px;
     -fx-background-radius: 7px;
     -fx-cursor: hand;
     -fx-border-width: 0;
-   
 }
 
-/* Style de l'icône par défaut */
 .menu-button .ikonli-font-icon {
-    -fx-icon-color: #F3F6FD;                /* Même couleur que le texte */
+    -fx-icon-color: #F5F5F5;
     -fx-icon-size: 18px;
 }
 
-/* Effet de survol */
 .menu-button:hover {
-    -fx-background-color: #2A3A5B;        /* Bleu primaire, léger, 13% opacité */
-    -fx-text-fill: #09D3AC;                 /* Turquoise ONYX */
+    -fx-background-color: #159C88; /* Turquoise plus sombre */
+    -fx-text-fill: #F5F5F5;
     -fx-font-weight: bold;
-   
-    /* Ombre subtile en hover */
 }
 
-/* Changement couleur icône au survol */
 .menu-button:hover .ikonli-font-icon {
-    -fx-icon-color: #09D3AC !important;     /* Turquoise ONYX */
+    -fx-icon-color: #F5F5F5 !important;
     -fx-icon-size: 22px;
-    
 }
 
-/* Optionnel : bouton actif */
 .menu-button.active, .menu-button:selected {
-    -fx-background-color: #3366FF33;        /* Bleu primaire, plus visible */
-    -fx-text-fill: #3366FF;
+    -fx-background-color: #1ABC9C;
+    -fx-text-fill: #34495E;
     -fx-font-weight: bold;
 }
 .menu-button.active .ikonli-font-icon, .menu-button:selected .ikonli-font-icon {
-    -fx-icon-color: #3366FF !important;
+    -fx-icon-color: #34495E !important;
 }
+
+.menu-button:pressed {
+    -fx-background-color: #117A68; /* Turquoise encore plus sombre */
+    -fx-text-fill: #F5F5F5;
+    -fx-font-weight: bold;
+}
+
+.menu-button:pressed .ikonli-font-icon {
+    -fx-icon-color: #F5F5F5 !important;
+}
+
+/*
+Alternative :
+- Utiliser un effet d'opacité (ex : -fx-background-color: rgba(38,198,218,0.7);)
+- Utiliser un filtre CSS pour assombrir dynamiquement
+*/

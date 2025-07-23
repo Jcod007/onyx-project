@@ -6,15 +6,17 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.TilePane?>
 
+<StackPane xmlns="http://javafx.com/javafx/17" 
+           xmlns:fx="http://javafx.com/fxml/1" 
+           fx:controller="com.onyx.app.controller.StudyDeckController"
+           stylesheets="@/com/onyx/app/styles/studydeck-view.css">
+
 <VBox fx:id="coursesList" spacing="15" 
-      xmlns="http://javafx.com/javafx/17" 
-      xmlns:fx="http://javafx.com/fxml/1" 
-      fx:controller="com.onyx.app.controller.StudyDeckController"
-      styleClass="main-container"
-      stylesheets="@/com/onyx/app/styles/studydeck-view.css">
+      styleClass="main-container">
 
     <padding>
         <Insets bottom="20" left="20" right="20" top="20"/>
@@ -31,6 +33,10 @@
             <Label prefWidth="110" text="Objectif de temps par semaine"/>
             <TextField fx:id="courseDurationField" prefWidth="200" promptText="ex: 90 ou 1h30"/>
         </VBox>
+        <VBox spacing="10" alignment="CENTER_LEFT">
+            <Label prefWidth="110" text="Durée timer par défaut"/>
+            <TextField fx:id="defaultTimerDurationField" prefWidth="200" promptText="ex: 25 ou 1h30"/>
+        </VBox>
         <HBox spacing="10">
             <Button fx:id="validateButton" mnemonicParsing="false" 
                     onAction="#handleValidateButton" text="Valider"/>
@@ -42,3 +48,14 @@
             text="+ Ajouter un cours" styleClass="add-course-button"/>
 
 </VBox>
+
+<!-- Container pour le mini-timer flottant -->
+<VBox fx:id="miniTimerContainer" styleClass="mini-timer-floating" 
+      visible="false" managed="false"
+      StackPane.alignment="BOTTOM_RIGHT">
+    <StackPane.margin>
+        <Insets bottom="20" right="20"/>
+    </StackPane.margin>
+</VBox>
+
+</StackPane>

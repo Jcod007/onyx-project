@@ -1,11 +1,10 @@
 package com.onyx.app.controller;
 
-import com.onyx.app.model.TimerConfigResult;
-import com.onyx.app.service.TimerService;
-import com.onyx.app.model.Subject;
-import com.onyx.app.model.TimerModel;
 import com.onyx.app.Constants;
+import com.onyx.app.model.Subject;
+import com.onyx.app.model.TimerConfigResult;
 import com.onyx.app.repository.SubjectRepository;
+import com.onyx.app.service.TimerService;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -13,16 +12,13 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.media.AudioClip;
-import javafx.util.Duration;
-
 /**
  * Contrôleur principal du minuteur ONYX. Gère l'affichage et les interactions
  * utilisateur. La logique métier est déléguée au TimerService.
  */
 import javafx.scene.layout.VBox;
+import javafx.scene.media.AudioClip;
+import javafx.util.Duration;
 
 public class TimerController {
 

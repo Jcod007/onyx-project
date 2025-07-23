@@ -233,5 +233,12 @@ public class TimerModel {
     public byte getInitSeconds() {
         return initSeconds;
     }
+
+    /**
+     * Retourne le temps restant en secondes totales
+     */
+    public long getRemainingSeconds() {
+        return (long)hours * 3600 + (long)minutes * 60 + (long)seconds;
+    }
     
 }

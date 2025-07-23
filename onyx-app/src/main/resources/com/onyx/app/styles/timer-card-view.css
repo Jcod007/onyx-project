@@ -2,37 +2,30 @@
    CONTENEUR PRINCIPAL
    ================================ */
 
-
-
 .timer-card-root {
-    -fx-background-color: #0D1B2A;
+    -fx-background-color: #34495E;
     -fx-background-radius: 12;
     -fx-border-radius: 12;
-    /*-fx-border-color: Aqua;*/
+    -fx-border-color: #1abc9c;
     -fx-border-width: 2;
-    -fx-padding: 20;
-    -fx-min-width: 200px;
-    -fx-min-height: 200px;
-    -fx-pref-width: 300px;
-    -fx-pref-height: 300px;
-    -fx-max-width: 500px;
-    -fx-max-height: 500px;
-    -fx-effect: dropshadow(gaussian, rgba(0, 255, 255, 0.5), 20, 0.3, 0, 0);
-    
+    -fx-padding: 20px;
+    -fx-min-width: 250px;
+    -fx-min-height: 250px;
+    -fx-pref-width: 310px;
+    -fx-pref-height: 310px;
+    -fx-max-width: 400px;
+    -fx-max-height: 400px;
+    -fx-effect: dropshadow(gaussian, rgba(26,188,156,0.15), 5, 0.3, 0, 2);
 }
 .timer-card-root:pressed {
-    -fx-effect: dropshadow(gaussian, rgba(0, 255, 255, 0.3), 12, 0.2, 0, 2);
+    -fx-effect: dropshadow(gaussian, rgba(26,188,156,0.3), 12, 0.2, 0, 2);
     -fx-translate-y: 2;
-    -fx-background-color: #091727; /* Légèrement plus sombre */
-    /* Pour donner un effet "enfoncé" */
+    -fx-background-color: #22313A;
     transition: all 0.15s ease;
 }
 
-
 .timer-card-root:hover{
-   
-    -fx-effect: dropshadow(gaussian, rgba(0, 255, 255, 0.3), 12, 0.2, 0, 2);
-    
+    -fx-effect: dropshadow(gaussian, rgba(26,188,156,0.3), 12, 0.2, 0, 2);
 }
 
 #timeContainer {
@@ -48,7 +41,7 @@
 .digital-field {
     -fx-font-family: "Digital-7 Mono", monospace;
     -fx-font-size: 50.0px;
-    -fx-text-fill: white;
+    -fx-text-fill: #F5F5F5;
     -fx-alignment: center;
     -fx-text-alignment: center;
     -fx-padding: 0px;
@@ -65,18 +58,38 @@
     -fx-font-family: "Digital-7 Mono", monospace;
     -fx-background-color: transparent;
     -fx-font-size: 50.0px;
-    -fx-text-fill: white;
+    -fx-text-fill: #F5F5F5;
     -fx-padding: 0px;
     -fx-margin: 0px;
     -fx-border-width: 0px;
     -fx-background-insets: 0px;
     -fx-focus-color: transparent;
     -fx-faint-focus-color: transparent;
-    -fx-highlight-fill: rgba(255, 255, 255, 0.2);
-    -fx-highlight-text-fill: white;
+    -fx-highlight-fill: rgba(245, 245, 245, 0.2);
+    -fx-highlight-text-fill: #34495E;
     -fx-border-insets: 0px;
     -fx-control-inner-background: transparent;
-    -fx-text-inner-color: white;
+    -fx-text-inner-color: #34495E;
+}
+
+/* ================================
+   LABEL COURS LIÉ
+   ================================ */
+
+.course-linked-label {
+    -fx-font-family: "Roboto", "Montserrat", sans-serif;
+    -fx-font-size: 12px;
+    -fx-text-fill: #F5F5F5;
+    -fx-alignment: center;
+    -fx-text-alignment: center;
+    -fx-padding: 5px;
+    -fx-background-color: rgba(26, 188, 156, 0.1);
+    -fx-background-radius: 15px;
+    -fx-border-radius: 15px;
+    -fx-border-color: #1ABC9C;
+    -fx-border-width: 1px;
+    -fx-max-width: 200px;
+    -fx-wrap-text: true;
 }
 
 /* ================================
@@ -86,7 +99,7 @@
 .button {
     -fx-font-size: 14.0px;
     -fx-font-weight: bold;
-    -fx-text-fill: white;
+    -fx-text-fill: #F5F5F5;
     -fx-background-radius: 6.0;
     -fx-cursor: hand;
     -fx-padding: 10.0px 20.0px;
@@ -94,22 +107,45 @@
 }
 
 .button.pause-button {
-    -fx-background-color: #DC2626; /* Rouge normal */
+    -fx-background-color: #34495E;
 }
 
 .button.pause-button:hover {
-    -fx-background-color: #EF4444; /* Rouge plus clair au survol */
+    -fx-background-color: #22313A;
 }
 
 .button.pause-button:pressed {
-    -fx-background-color: #B91C1C; /* Rouge plus foncé quand pressé */
+    -fx-background-color: #1ABC9C;
+    -fx-text-fill: #34495E;
 }
 
+
+
+.button.delete-button {
+    -fx-background-color: #040450e3; /* Red color for delete */
+    -fx-pref-width: 34px; /* Adjusted width for icon */
+    -fx-pref-height: 34px; /* Adjusted height for icon */
+    -fx-padding: 5px; /* Reduced padding */
+}
+
+.button.delete-button:hover {
+    -fx-background-color: #040450e3;
+}
+
+.button.delete-button:pressed {
+    -fx-background-color: #040450e3;
+    -fx-text-fill: transparent;
+}
+
+.button.delete-button .ikonli-font-icon {
+    -fx-icon-color: red !important;
+    -fx-icon-size: 16px;
+}
 
 /* Autres boutons */
 .demarrer-button,
 .reset-button {
-    -fx-background-color: #2A3A5B;
+    -fx-background-color: #1ABC9C;
 }
 
 
@@ -117,12 +153,12 @@
 
 .button.demarrer-button:pressed,
 .button.reset-button:pressed{
-    -fx-background-color: #2C3F5F;
+    -fx-background-color: #159C88;
 }
 
 .demarrer-button:hover,
 .reset-button:hover{
-    -fx-background-color: #3B4F73;
+    -fx-background-color: #159C88;
 }
 /* Focus */
 /* .button:focused {

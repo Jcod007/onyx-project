@@ -50,36 +50,29 @@ public class MainController {
 	}
 
 	private Pane loadFXML(String fxml, TimersManagerService timersManagerService) {
-	    String resourcePath = PATH + fxml + ".fxml";
-	    URL resource = MainController.class.getResource(resourcePath);
-	    
-	    if (resource == null) {
-	        System.err.println("Ressource FXML introuvable : " + resourcePath);
-	        return new Pane(); // Vue par défaut
-	    }
-	    
-	    try {
-	        FXMLLoader fxmlLoader = new FXMLLoader(resource);
-	        fxmlLoader.setControllerFactory(controllerClass -> {
-	            if (controllerClass == com.onyx.app.controller.TimersController.class) {
-	                return new com.onyx.app.controller.TimersController(timersManagerService);
-	            } else if (controllerClass == com.onyx.app.controller.StudyDeckController.class) {
-	                return new com.onyx.app.controller.StudyDeckController(timersManagerService.getSubjectRepository());
-	            } else {
-	                // default behavior for other controllers
-	                try {
-	                    return controllerClass.newInstance();
-	                } catch (Exception e) {
-	                    throw new RuntimeException(e);
-	                }
-	            }
-	        });
-	        return fxmlLoader.load();
-	    } catch (IOException e) {
-	        System.err.println("Erreur de chargement : " + e.getMessage());
-	        return new Pane();
-	    }
-	}
+        try {
+            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/com/onyx/app/view/" + fxml + ".fxml"));
+            fxmlLoader.setControllerFactory(controllerClass -> {
+                if (controllerClass == com.onyx.app.controller.TimersController.class) {
+                    return new com.onyx.app.controller.TimersController(timersManagerService);
+                } else if (controllerClass == com.onyx.app.controller.StudyDeckController.class) {
+                    return new com.onyx.app.controller.StudyDeckController(timersManagerService.getSubjectRepository());
+                } else {
+                    // default behavior for other controllers
+                    try {
+                        return controllerClass.getDeclaredConstructor().newInstance();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            });
+            return fxmlLoader.load();
+        } catch (IOException e) {
+            System.err.println("Ressource FXML introuvable : " + "/com/onyx/app/view/" + fxml + ".fxml");
+            e.printStackTrace();
+            return new Pane();
+        }
+    }
 
 	private void setActiveMenuButton(Button activeButton) {
         dashboardButton.getStyleClass().remove("active");

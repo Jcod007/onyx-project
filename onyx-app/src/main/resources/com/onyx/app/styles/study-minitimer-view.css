@@ -1,0 +1,165 @@
+/* Les animations seront gérées par le contrôleur JavaFX, pas par CSS */
+
+/* Container principal du mini-timer */
+.mini-timer-container {
+    -fx-background-color: linear-gradient(135deg, rgba(45, 45, 45, 0.95), rgba(35, 35, 35, 0.95));
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 20, 0.4, 0, 8);
+    -fx-max-width: 280;
+    -fx-min-width: 280;
+    -fx-pref-width: 280;
+    /* Widget flottant non-bloquant */
+}
+
+/* Header du mini-timer */
+.mini-timer-header {
+    -fx-padding: 0;
+}
+
+.subject-name {
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+}
+
+.close-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 12;
+    -fx-border-color: transparent;
+    -fx-cursor: hand;
+    -fx-padding: 4;
+    -fx-min-width: 24;
+    -fx-min-height: 24;
+    -fx-pref-width: 24;
+    -fx-pref-height: 24;
+}
+
+.close-button:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.2);
+}
+
+.close-button:pressed {
+    -fx-background-color: rgba(255, 255, 255, 0.3);
+}
+
+.close-button .ikonli-font-icon {
+    -fx-icon-color: white;
+}
+
+/* Affichage du temps */
+.time-display {
+    -fx-padding: 4 0 4 0;
+}
+
+.timer-icon {
+    -fx-icon-color: rgba(255, 255, 255, 0.9);
+}
+
+.time-label {
+    -fx-text-fill: white;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Segoe UI", "Consolas", monospace;
+}
+
+/* Barre de progression */
+.progress-bar {
+    -fx-pref-height: 6;
+    -fx-background-color: rgba(255, 255, 255, 0.2);
+    -fx-background-radius: 3;
+}
+
+.progress-bar .track {
+    -fx-background-color: rgba(255, 255, 255, 0.2);
+    -fx-background-radius: 3;
+}
+
+.progress-bar .bar {
+    -fx-background-color: linear-gradient(to right, #00ff88, #00cc6a);
+    -fx-background-radius: 3;
+    -fx-padding: 0;
+}
+
+/* Contrôles */
+.controls {
+    -fx-padding: 4 0 0 0;
+}
+
+.control-button {
+    -fx-background-color: rgba(255, 255, 255, 0.15);
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(255, 255, 255, 0.3);
+    -fx-border-radius: 20;
+    -fx-border-width: 1;
+    -fx-cursor: hand;
+    -fx-padding: 6;
+    -fx-min-width: 32;
+    -fx-min-height: 32;
+    -fx-pref-width: 32;
+    -fx-pref-height: 32;
+}
+
+.control-button:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.25);
+    -fx-border-color: rgba(255, 255, 255, 0.5);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+.control-button:pressed {
+    -fx-background-color: rgba(255, 255, 255, 0.35);
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+}
+
+.control-button .ikonli-font-icon {
+    -fx-icon-color: white;
+}
+
+/* Bouton play/pause avec état spécial */
+.control-button.playing {
+    -fx-background-color: rgba(0, 255, 136, 0.3);
+    -fx-border-color: rgba(0, 255, 136, 0.6);
+}
+
+.control-button.playing:hover {
+    -fx-background-color: rgba(0, 255, 136, 0.4);
+    -fx-border-color: rgba(0, 255, 136, 0.8);
+}
+
+/* Label du temps de session */
+.session-time {
+    -fx-text-fill: rgba(255, 255, 255, 0.8);
+    -fx-font-size: 11px;
+    -fx-font-family: "Segoe UI", Arial, sans-serif;
+    -fx-alignment: center;
+}
+
+/* États visuels - animations gérées par JavaFX */
+
+/* Responsive design */
+.mini-timer-container:disabled {
+    -fx-opacity: 0.6;
+}
+
+/* Style pour le container flottant dans StudyDeck */
+.mini-timer-floating {
+    /* Position absolue pour ne pas affecter le layout */
+    -fx-cursor: default;
+}
+
+/* Pulse animation pour attirer l'attention */
+.mini-timer-container.pulse {
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+}
+
+/* Style pour les transitions */
+.mini-timer-container,
+.control-button {
+    -fx-cursor: hand;
+}

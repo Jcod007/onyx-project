@@ -1,10 +1,14 @@
 package com.onyx.app.service;
 
-import com.onyx.app.Constants;
-import com.onyx.app.model.TimerModel;
-import com.onyx.app.model.Subject;
-import com.onyx.app.repository.SubjectRepository;
 import java.time.Duration;
+
+import com.onyx.app.Constants;
+import com.onyx.app.model.Subject;
+import com.onyx.app.model.TimerModel;
+import com.onyx.app.repository.SubjectRepository;
+
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 
 /**
  * Service pour gérer la logique métier des timers
@@ -17,6 +21,9 @@ public class TimerService {
     private boolean canReset;
     private SubjectRepository subjectRepository;
     
+    // Timeline pour le décompte automatique
+    private Timeline timeline;
+    
     // Callbacks pour notifier l'interface utilisateur
     private Runnable onTimerFinished;
     private Runnable onStateChanged;
@@ -24,11 +31,20 @@ public class TimerService {
     public TimerService(SubjectRepository subjectRepository) {
         this.subjectRepository = subjectRepository;
         setDefaultTimer();
+        initializeTimeline();
     }
     
     public TimerService(byte hours, byte minutes, byte seconds, TimerModel.TimerType timerType, Subject linkedSubject, SubjectRepository subjectRepository) {
         this(subjectRepository); // Call primary constructor to set subjectRepository
         setTimer(hours, minutes, seconds, timerType, linkedSubject, subjectRepository);
+    }
+    
+    /**
+     * Initialise la Timeline pour le décompte automatique
+     */
+    private void initializeTimeline() {
+        timeline = new Timeline(new KeyFrame(javafx.util.Duration.seconds(1), e -> decrement()));
+        timeline.setCycleCount(Timeline.INDEFINITE);
     }
     
     /**
@@ -43,7 +59,8 @@ public class TimerService {
      */
         public void setTimer(byte hours, byte minutes, byte seconds, TimerModel.TimerType timerType, Subject linkedSubject, SubjectRepository subjectRepository) {
         this.subjectRepository = subjectRepository;
-        this.timerModel = new TimerModel(hours, minutes, seconds, timerType, linkedSubject);
+        String id = (this.timerModel != null) ? this.timerModel.getId() : null;
+        this.timerModel = new TimerModel(id, hours, minutes, seconds, timerType, linkedSubject);
         this.isRunning = false;
         this.canReset = false;
         notifyStateChanged();
@@ -77,6 +94,7 @@ public class TimerService {
         if (!timerModel.isFinished()) {
             isRunning = true;
             canReset = true;
+            timeline.play();
             notifyStateChanged();
         }
     }
@@ -86,6 +104,7 @@ public class TimerService {
      */
     public void pauseTimer() {
         isRunning = false;
+        timeline.pause();
         notifyStateChanged();
     }
     
@@ -95,6 +114,7 @@ public class TimerService {
     public void stopTimer() {
         isRunning = false;
         canReset = false;
+        timeline.stop();
         notifyStateChanged();
     }
     
@@ -130,7 +150,7 @@ public class TimerService {
 
         Subject linkedSubject = timerModel.getLinkedSubject();
         if (linkedSubject != null) {
-            Duration sessionDuration = timerModel.getInitialDuration();
+            java.time.Duration sessionDuration = timerModel.getInitialDuration();
             linkedSubject.addTimeSpent(sessionDuration);
             if (subjectRepository != null) {
                 subjectRepository.save(linkedSubject);
@@ -245,6 +265,9 @@ public class TimerService {
      * Nettoie les ressources
      */
     public void dispose() {
-        // Plus rien à nettoyer ici
+        if (timeline != null) {
+            timeline.stop();
+            timeline = null;
+        }
     }
 } 
