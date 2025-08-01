@@ -40,7 +40,8 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
     return 'bg-gray-400';
   };
 
-  const handleQuickTimer = () => {
+  const handleQuickTimer = (e: React.MouseEvent) => {
+    e.stopPropagation();
     onStartTimer?.(subject);
   };
 
