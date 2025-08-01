@@ -48,6 +48,9 @@ export interface TimerData {
   state: TimerState;
   mode: TimerMode;
   sessionCount: number;
+  currentCycle?: number;
+  maxCycles?: number;
+  isPomodoroMode?: boolean;
 }
 
 export interface StudySession {

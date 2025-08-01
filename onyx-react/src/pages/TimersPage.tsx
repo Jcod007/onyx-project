@@ -34,18 +34,42 @@ export const TimersPage: React.FC = () => {
     seconds: number;
     timerType: string;
     linkedSubject?: Subject;
-  }) => {
-    const timerConfig: TimerConfig = {
-      workDuration: config.hours * 3600 + config.minutes * 60 + config.seconds,
-      shortBreakDuration: 300, // 5 minutes par défaut
-      longBreakDuration: 900,  // 15 minutes par défaut
-      longBreakInterval: 4
+    mode?: 'simple' | 'pomodoro';
+    pomodoroConfig?: {
+      workDuration: number;
+      breakDuration: number;
+      longBreakDuration: number;
+      cycles: number;
     };
+  }) => {
+    let timerConfig: TimerConfig;
+    let isPomodoroMode = false;
+    let maxCycles = 0;
+
+    if (config.mode === 'pomodoro' && config.pomodoroConfig) {
+      timerConfig = {
+        workDuration: config.pomodoroConfig.workDuration,
+        shortBreakDuration: config.pomodoroConfig.breakDuration,
+        longBreakDuration: config.pomodoroConfig.longBreakDuration,
+        longBreakInterval: 4
+      };
+      isPomodoroMode = true;
+      maxCycles = config.pomodoroConfig.cycles;
+    } else {
+      timerConfig = {
+        workDuration: config.hours * 3600 + config.minutes * 60 + config.seconds,
+        shortBreakDuration: 300,
+        longBreakDuration: 900,
+        longBreakInterval: 4
+      };
+    }
 
     addTimer({
       title: config.name || `Timer ${timerCounter}`,
       config: timerConfig,
-      linkedSubject: config.linkedSubject
+      linkedSubject: config.linkedSubject,
+      isPomodoroMode,
+      maxCycles
     });
     
     setTimerCounter(prev => prev + 1);
@@ -110,20 +134,44 @@ export const TimersPage: React.FC = () => {
     seconds: number;
     timerType: string;
     linkedSubject?: Subject;
+    mode?: 'simple' | 'pomodoro';
+    pomodoroConfig?: {
+      workDuration: number;
+      breakDuration: number;
+      longBreakDuration: number;
+      cycles: number;
+    };
   }) => {
     if (!editingTimer) return;
 
-    const timerConfig: TimerConfig = {
-      workDuration: config.hours * 3600 + config.minutes * 60 + config.seconds,
-      shortBreakDuration: 300,
-      longBreakDuration: 900,
-      longBreakInterval: 4
-    };
+    let timerConfig: TimerConfig;
+    let isPomodoroMode = false;
+    let maxCycles = 0;
+
+    if (config.mode === 'pomodoro' && config.pomodoroConfig) {
+      timerConfig = {
+        workDuration: config.pomodoroConfig.workDuration,
+        shortBreakDuration: config.pomodoroConfig.breakDuration,
+        longBreakDuration: config.pomodoroConfig.longBreakDuration,
+        longBreakInterval: 4
+      };
+      isPomodoroMode = true;
+      maxCycles = config.pomodoroConfig.cycles;
+    } else {
+      timerConfig = {
+        workDuration: config.hours * 3600 + config.minutes * 60 + config.seconds,
+        shortBreakDuration: 300,
+        longBreakDuration: 900,
+        longBreakInterval: 4
+      };
+    }
 
     updateTimer(editingTimer.id, {
       title: config.name || editingTimer.title,
       config: timerConfig,
-      linkedSubject: config.linkedSubject
+      linkedSubject: config.linkedSubject,
+      isPomodoroMode,
+      maxCycles
     });
 
     setShowConfigDialog(false);
@@ -210,14 +258,20 @@ export const TimersPage: React.FC = () => {
               {/* Action Buttons - Positioned above Timer - Style uniforme avec SubjectCard */}
               <div className="absolute top-3 right-3 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
-                  onClick={() => editTimer(timer)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    editTimer(timer);
+                  }}
                   className="p-2 bg-white text-blue-600 rounded-lg shadow-sm hover:bg-blue-50 transition-colors border border-gray-200"
                   title="Modifier ce timer"
                 >
                   <Edit3 size={16} />
                 </button>
                 <button
-                  onClick={() => handleRemoveTimer(timer.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemoveTimer(timer.id);
+                  }}
                   className="p-2 bg-white text-red-600 rounded-lg shadow-sm hover:bg-red-50 transition-colors border border-gray-200"
                   title="Supprimer ce timer"
                 >
@@ -228,10 +282,19 @@ export const TimersPage: React.FC = () => {
               <Timer
                 config={timer.config}
                 title={timer.title}
+                isPomodoroMode={timer.isPomodoroMode || false}
+                maxCycles={timer.maxCycles || 0}
+                enableSounds={soundEnabled}
                 onSessionComplete={() => handleSessionComplete(timer.id)}
                 onModeChange={(mode) => handleModeChange(mode, timer.id)}
                 onTimerFinish={(totalTime) => handleTimerFinish(totalTime, timer.id)}
-                showModeButtons={true}
+                onCycleComplete={() => {
+                  console.log(`Pomodoro session completed for timer ${timer.id}`);
+                  if (soundEnabled) {
+                    playNotificationSound();
+                  }
+                }}
+                showModeButtons={!timer.isPomodoroMode}
               />
               
               {/* Timer Info - Simplified */}

@@ -18,18 +18,26 @@ export class TimerService {
   private sessionCount: number = 0;
   private intervalId: NodeJS.Timeout | null = null;
   private config: TimerConfig;
+  private isPomodoroMode: boolean = false;
+  private currentCycle: number = 0;
+  private maxCycles: number = 0;
+  private autoTransitionTimeout: NodeJS.Timeout | null = null;
   
   private onTickCallback?: TimerCallback;
   private onStateChangedCallback?: TimerCallback;
   private onFinishedCallback?: TimerCallback;
+  private onModeChangeCallback?: TimerCallback;
+  private onCycleCompleteCallback?: TimerCallback;
 
   constructor(config: TimerConfig = {
     workDuration: POMODORO_CONFIG.WORK_DURATION,
     shortBreakDuration: POMODORO_CONFIG.SHORT_BREAK_DURATION,
     longBreakDuration: POMODORO_CONFIG.LONG_BREAK_DURATION,
     longBreakInterval: POMODORO_CONFIG.LONG_BREAK_INTERVAL
-  }) {
+  }, isPomodoroMode: boolean = false, maxCycles: number = 0) {
     this.config = config;
+    this.isPomodoroMode = isPomodoroMode;
+    this.maxCycles = maxCycles;
     this.reset();
   }
 
@@ -66,8 +74,10 @@ export class TimerService {
 
   reset(): void {
     this.clearInterval();
+    this.clearAutoTransition();
     this.state = 'idle';
     this.mode = 'work';
+    this.currentCycle = 0;
     this.timeRemaining = this.getCurrentModeDuration();
     this.totalTime = this.timeRemaining;
     this.notifyStateChanged();
@@ -104,7 +114,10 @@ export class TimerService {
       totalTime: this.totalTime,
       state: this.state,
       mode: this.mode,
-      sessionCount: this.sessionCount
+      sessionCount: this.sessionCount,
+      currentCycle: this.currentCycle,
+      maxCycles: this.maxCycles,
+      isPomodoroMode: this.isPomodoroMode
     };
   }
 
@@ -183,6 +196,14 @@ export class TimerService {
     this.onFinishedCallback = callback;
   }
 
+  onModeChange(callback: TimerCallback): void {
+    this.onModeChangeCallback = callback;
+  }
+
+  onCycleComplete(callback: TimerCallback): void {
+    this.onCycleCompleteCallback = callback;
+  }
+
   // Méthodes privées
   private tick(): void {
     if (this.timeRemaining > 0) {
@@ -199,23 +220,44 @@ export class TimerService {
     
     if (this.mode === 'work') {
       this.sessionCount++;
+      this.currentCycle++;
     }
     
     this.onFinishedCallback?.(this.getTimerData());
     this.notifyStateChanged();
     
-    // Auto-transition après 3 secondes
-    setTimeout(() => {
-      this.autoSwitchToNextMode();
-    }, 3000);
+    // Auto-transition pour le mode Pomodoro
+    if (this.isPomodoroMode) {
+      this.autoTransitionTimeout = setTimeout(() => {
+        this.autoSwitchToNextMode();
+      }, 3000);
+    }
   }
 
   private autoSwitchToNextMode(): void {
+    if (!this.isPomodoroMode) return;
+    
+    // Vérifier si on a atteint le nombre maximum de cycles
+    if (this.maxCycles > 0 && this.currentCycle >= this.maxCycles) {
+      // Session Pomodoro terminée
+      this.onCycleCompleteCallback?.(this.getTimerData());
+      return;
+    }
+    
     if (this.mode === 'work') {
+      // Passer en pause
       const isLongBreakTime = this.sessionCount % this.config.longBreakInterval === 0;
-      this.switchMode(isLongBreakTime ? 'longBreak' : 'break');
+      const nextMode = isLongBreakTime ? 'longBreak' : 'break';
+      this.switchMode(nextMode);
+      this.onModeChangeCallback?.(this.getTimerData());
+      // Auto-démarrer la pause
+      setTimeout(() => this.start(), 1000);
     } else {
+      // Passer au travail
       this.switchMode('work');
+      this.onModeChangeCallback?.(this.getTimerData());
+      // Auto-démarrer le travail
+      setTimeout(() => this.start(), 1000);
     }
   }
 
@@ -226,21 +268,52 @@ export class TimerService {
     }
   }
 
+  private clearAutoTransition(): void {
+    if (this.autoTransitionTimeout) {
+      clearTimeout(this.autoTransitionTimeout);
+      this.autoTransitionTimeout = null;
+    }
+  }
+
   private notifyStateChanged(): void {
     this.onStateChangedCallback?.(this.getTimerData());
+  }
+
+  // Configuration Pomodoro
+  setPomodoroMode(isPomodoroMode: boolean, maxCycles?: number): void {
+    this.isPomodoroMode = isPomodoroMode;
+    if (maxCycles !== undefined) {
+      this.maxCycles = maxCycles;
+    }
+    this.reset();
+  }
+
+  getCurrentCycle(): number {
+    return this.currentCycle;
+  }
+
+  getMaxCycles(): number {
+    return this.maxCycles;
+  }
+
+  getRemainingCycles(): number {
+    return Math.max(0, this.maxCycles - this.currentCycle);
   }
 
   // Nettoyage
   destroy(): void {
     this.clearInterval();
+    this.clearAutoTransition();
     this.onTickCallback = undefined;
     this.onStateChangedCallback = undefined;
     this.onFinishedCallback = undefined;
+    this.onModeChangeCallback = undefined;
+    this.onCycleCompleteCallback = undefined;
   }
 }
 
 // Factory pour créer des instances de timer
-export function createTimer(config?: Partial<TimerConfig>): TimerService {
+export function createTimer(config?: Partial<TimerConfig>, isPomodoroMode?: boolean, maxCycles?: number): TimerService {
   const fullConfig = {
     workDuration: POMODORO_CONFIG.WORK_DURATION,
     shortBreakDuration: POMODORO_CONFIG.SHORT_BREAK_DURATION,
@@ -249,19 +322,29 @@ export function createTimer(config?: Partial<TimerConfig>): TimerService {
     ...config
   };
   
-  return new TimerService(fullConfig);
+  return new TimerService(fullConfig, isPomodoroMode || false, maxCycles || 0);
 }
 
 // Utilitaires
-export function createPomodoroTimer(): TimerService {
-  return createTimer();
+export function createPomodoroTimer(maxCycles: number = 4): TimerService {
+  return createTimer(undefined, true, maxCycles);
 }
 
-export function createCustomTimer(workMinutes: number, breakMinutes: number): TimerService {
+export function createCustomTimer(workMinutes: number, breakMinutes: number, longBreakMinutes: number = 0, maxCycles: number = 0): TimerService {
+  const isPomodoroMode = maxCycles > 0;
   return createTimer({
     workDuration: workMinutes * 60,
     shortBreakDuration: breakMinutes * 60,
-    longBreakDuration: breakMinutes * 2 * 60,
+    longBreakDuration: (longBreakMinutes || breakMinutes * 2) * 60,
     longBreakInterval: 4
-  });
+  }, isPomodoroMode, maxCycles);
+}
+
+export function createSimpleTimer(minutes: number): TimerService {
+  return createTimer({
+    workDuration: minutes * 60,
+    shortBreakDuration: 300,
+    longBreakDuration: 900,
+    longBreakInterval: 4
+  }, false, 0);
 }

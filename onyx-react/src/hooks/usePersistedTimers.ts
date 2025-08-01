@@ -7,6 +7,8 @@ export interface ActiveTimer {
   title: string;
   config: TimerConfig;
   linkedSubject?: Subject;
+  isPomodoroMode?: boolean;
+  maxCycles?: number;
   createdAt: Date;
   lastUsed: Date;
 }
