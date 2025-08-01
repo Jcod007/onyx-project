@@ -4,28 +4,31 @@ import { TimerConfigDialog } from '@/components/TimerConfigDialog';
 import { TimerConfig, TimerMode } from '@/services/timerService';
 import { Subject } from '@/types/Subject';
 import { subjectService } from '@/services/subjectService';
+import { usePersistedTimers, ActiveTimer } from '@/hooks/usePersistedTimers';
 import { Plus, Settings, Volume2, VolumeX, Edit3, Trash2 } from 'lucide-react';
 
-interface ActiveTimer {
-  id: string;
-  title: string;
-  config: TimerConfig;
-  linkedSubject?: Subject;
-}
-
 export const TimersPage: React.FC = () => {
-  const [timers, setTimers] = useState<ActiveTimer[]>([]);
+  const {
+    timers,
+    timerCounter,
+    setTimerCounter,
+    addTimer,
+    updateTimer,
+    removeTimer: removeTimerFromStorage,
+    updateTimerLastUsed
+  } = usePersistedTimers();
+  
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [editingTimer, setEditingTimer] = useState<ActiveTimer | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [completedSessions, setCompletedSessions] = useState(0);
-  const [timerCounter, setTimerCounter] = useState(1);
 
   const handleCreateTimer = () => {
     setShowConfigDialog(true);
   };
 
   const handleTimerConfigConfirm = async (config: {
+    name?: string;
     hours: number;
     minutes: number;
     seconds: number;
@@ -39,20 +42,19 @@ export const TimersPage: React.FC = () => {
       longBreakInterval: 4
     };
 
-    const newTimer: ActiveTimer = {
-      id: crypto.randomUUID(),
-      title: `Timer ${timerCounter}`,
+    addTimer({
+      title: config.name || `Timer ${timerCounter}`,
       config: timerConfig,
       linkedSubject: config.linkedSubject
-    };
-
-    setTimers(prev => [...prev, newTimer]);
+    });
+    
     setTimerCounter(prev => prev + 1);
     setShowConfigDialog(false);
   };
 
   const handleSessionComplete = useCallback(async (timerId: string) => {
     setCompletedSessions(prev => prev + 1);
+    updateTimerLastUsed(timerId);
     
     // Trouver le timer correspondant pour ajouter le temps à la matière
     const timer = timers.find(t => t.id === timerId);
@@ -71,9 +73,10 @@ export const TimersPage: React.FC = () => {
     if (soundEnabled) {
       playNotificationSound();
     }
-  }, [timers, soundEnabled]);
+  }, [timers, soundEnabled, updateTimerLastUsed]);
 
   const handleTimerFinish = useCallback(async (totalTime: number, timerId: string) => {
+    updateTimerLastUsed(timerId);
     const timer = timers.find(t => t.id === timerId);
     if (timer?.linkedSubject) {
       try {
@@ -82,15 +85,16 @@ export const TimersPage: React.FC = () => {
         console.error('Erreur lors de l\'ajout du temps d\'étude:', error);
       }
     }
-  }, [timers]);
+  }, [timers, updateTimerLastUsed]);
 
   const handleModeChange = (mode: TimerMode, timerId: string) => {
+    updateTimerLastUsed(timerId);
     console.log(`Timer ${timerId} switched to ${mode}`);
   };
 
-  const removeTimer = (timerId: string) => {
+  const handleRemoveTimer = (timerId: string) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce timer ?')) {
-      setTimers(prev => prev.filter(t => t.id !== timerId));
+      removeTimerFromStorage(timerId);
     }
   };
 
@@ -100,6 +104,7 @@ export const TimersPage: React.FC = () => {
   };
 
   const handleEditTimerConfirm = async (config: {
+    name?: string;
     hours: number;
     minutes: number;
     seconds: number;
@@ -115,13 +120,12 @@ export const TimersPage: React.FC = () => {
       longBreakInterval: 4
     };
 
-    const updatedTimer: ActiveTimer = {
-      ...editingTimer,
+    updateTimer(editingTimer.id, {
+      title: config.name || editingTimer.title,
       config: timerConfig,
       linkedSubject: config.linkedSubject
-    };
+    });
 
-    setTimers(prev => prev.map(t => t.id === editingTimer.id ? updatedTimer : t));
     setShowConfigDialog(false);
     setEditingTimer(null);
   };
@@ -213,7 +217,7 @@ export const TimersPage: React.FC = () => {
                   <Edit3 size={16} />
                 </button>
                 <button
-                  onClick={() => removeTimer(timer.id)}
+                  onClick={() => handleRemoveTimer(timer.id)}
                   className="p-2 bg-white text-red-600 rounded-lg shadow-sm hover:bg-red-50 transition-colors border border-gray-200"
                   title="Supprimer ce timer"
                 >
@@ -294,6 +298,7 @@ export const TimersPage: React.FC = () => {
           minutes: Math.floor((editingTimer.config.workDuration % 3600) / 60),
           seconds: editingTimer.config.workDuration % 60
         } : { hours: 0, minutes: 25, seconds: 0 }}
+        defaultName={editingTimer?.title}
         preselectedSubject={editingTimer?.linkedSubject}
       />
     </div>

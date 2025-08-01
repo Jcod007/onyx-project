@@ -9,6 +9,7 @@ interface TimerConfigDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (config: {
+    name?: string;
     hours: number;
     minutes: number;
     seconds: number;
@@ -20,6 +21,7 @@ interface TimerConfigDialogProps {
     minutes: number;
     seconds: number;
   };
+  defaultName?: string;
   preselectedSubject?: Subject;
 }
 
@@ -28,8 +30,10 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
   onClose,
   onConfirm,
   defaultDuration = { hours: 0, minutes: 25, seconds: 0 },
+  defaultName = '',
   preselectedSubject
 }) => {
+  const [name, setName] = useState(defaultName);
   const [hours, setHours] = useState(defaultDuration.hours);
   const [minutes, setMinutes] = useState(defaultDuration.minutes);
   const [seconds, setSeconds] = useState(defaultDuration.seconds);
@@ -41,6 +45,7 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
   useEffect(() => {
     if (isOpen) {
       loadSubjects();
+      setName(defaultName);
       setHours(defaultDuration.hours);
       setMinutes(defaultDuration.minutes);
       setSeconds(defaultDuration.seconds);
@@ -48,7 +53,7 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
       setTimerType(preselectedSubject ? 'STUDY_SESSION' : 'FREE_SESSION');
       setErrors([]);
     }
-  }, [isOpen, defaultDuration, preselectedSubject]);
+  }, [isOpen, defaultDuration, defaultName, preselectedSubject]);
 
   const loadSubjects = async () => {
     try {
@@ -80,6 +85,7 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
     if (validateForm()) {
       const normalizedTime = normalizeTime(hours, minutes, seconds);
       onConfirm({
+        name: name.trim() || undefined,
         hours: normalizedTime.hours,
         minutes: normalizedTime.minutes,
         seconds: normalizedTime.seconds,
@@ -136,6 +142,23 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
               </ul>
             </div>
           )}
+
+          {/* Nom du timer */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Nom du timer (optionnel)
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="ex: Session de travail, Timer Pomodoro..."
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Si vide, un nom sera généré automatiquement (Timer 1, Timer 2...)
+            </p>
+          </div>
 
           {/* Durée */}
           <div>

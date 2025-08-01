@@ -120,9 +120,9 @@ export const Timer: React.FC<TimerProps> = ({
   return (
     <div className={`w-full max-w-2xl mx-auto p-4 bg-white rounded-lg shadow-md border-2 ${getModeColor(timerData.mode)} ${className}`}>
       {/* Header */}
-      <div className="flex flex-col items-center mb-4 relative">
+      <div className="mb-4 relative">
         {title && (
-          <h2 className="text-lg font-bold text-gray-800 mb-2 pr-20">
+          <h2 className="text-lg font-bold text-gray-800 mb-3 text-left pr-20">
             {title}
           </h2>
         )}
@@ -137,11 +137,11 @@ export const Timer: React.FC<TimerProps> = ({
       </div>
 
       {/* Time Display */}
-      <div className="text-center mb-4">
-        <div className={`text-4xl font-mono font-bold text-gray-800 mb-3 ${timerData.state === 'running' ? 'timer-pulse' : ''}`}>
+      <div className="text-center mb-6 py-6">
+        <div className={`text-5xl font-mono font-bold text-gray-800 mb-4 ${timerData.state === 'running' ? 'timer-pulse' : ''}`}>
           {formatTime(timerData.timeRemaining)}
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+        <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
           <div 
             className="h-full rounded-full transition-all duration-1000 bg-gradient-to-r from-blue-500 to-blue-600"
             style={{ width: `${getProgress()}%` }}
@@ -156,46 +156,61 @@ export const Timer: React.FC<TimerProps> = ({
       </div>
 
       {/* Controls */}
-      <div className="flex justify-center flex-wrap gap-2 mb-4 px-2">
+      <div className="flex justify-center flex-wrap gap-3 mb-4 px-2">
         {timerData.state === 'finished' ? (
-          // Quand le timer est terminé, afficher seulement Reset
+          // État terminé : seul Reset est visible
           <button 
-            className="flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+            className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
             onClick={handleReset}
           >
-            <RotateCcw size={16} />
-            Nouveau cycle
+            <RotateCcw size={18} />
+            Reset
           </button>
         ) : timerData.state === 'running' ? (
-          // Quand le timer tourne, afficher seulement Arrêter
-          <button 
-            className="flex items-center gap-1.5 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
-            onClick={handleStop}
-          >
-            <Square size={16} />
-            Arrêter
-          </button>
-        ) : (
-          // Quand le timer est idle ou en pause, afficher Démarrer/Reprendre et Reset
+          // État en cours : Arrêter + Reset
           <>
             <button 
-              className="flex items-center gap-1.5 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
+              className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+              onClick={handleStop}
+            >
+              <Square size={18} />
+              Arrêter
+            </button>
+            <button 
+              className="flex items-center gap-2 px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
+              onClick={handleReset}
+            >
+              <RotateCcw size={18} />
+              Reset
+            </button>
+          </>
+        ) : timerData.state === 'paused' ? (
+          // État en pause : Reprendre + Reset
+          <>
+            <button 
+              className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
               onClick={handleStart}
             >
-              <Play size={16} />
-              {timerData.state === 'paused' ? 'Reprendre' : 'Démarrer'}
+              <Play size={18} />
+              Reprendre
             </button>
-            
-            {timerData.state === 'paused' && (
-              <button 
-                className="flex items-center gap-1.5 px-3 py-2.5 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium text-sm"
-                onClick={handleReset}
-              >
-                <RotateCcw size={16} />
-                Reset
-              </button>
-            )}
+            <button 
+              className="flex items-center gap-2 px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
+              onClick={handleReset}
+            >
+              <RotateCcw size={18} />
+              Reset
+            </button>
           </>
+        ) : (
+          // État initial : seulement Démarrer
+          <button 
+            className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+            onClick={handleStart}
+          >
+            <Play size={18} />
+            Démarrer
+          </button>
         )}
       </div>
 
