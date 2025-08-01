@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<!--
+    Professional Responsive Card Item Template
+    
+    Features:
+    - Responsive card sizing across breakpoints
+    - Professional visual hierarchy
+    - Interactive hover/press states
+    - Flexible content areas
+    - Status indicators and badges
+    - Action buttons with proper spacing
+-->
+
+<VBox fx:id="cardItemContainer"
+      styleClass="responsive-card-item, responsive-scale-animation, desktop-layout"
+      stylesheets="@/com/onyx/app/styles/global.css, 
+                  @/com/onyx/app/styles/responsive-system.css,
+                  @/com/onyx/app/styles/responsive-extensions.css"
+      xmlns="http://javafx.com/javafx/23.0.1" 
+      xmlns:fx="http://javafx.com/fxml/1"
+      spacing="12" alignment="TOP_LEFT">
+
+    <!-- Card Header -->
+    <HBox fx:id="cardHeader" 
+          styleClass="spacing-sm"
+          alignment="TOP_LEFT">
+        
+        <!-- Status Indicator -->
+        <Region fx:id="statusIndicator" 
+               prefWidth="4" prefHeight="20"
+               style="-fx-background-color: #00B4A6; -fx-background-radius: 2;"
+               managed="false" visible="false"/>
+        
+        <!-- Icon (optional) -->
+        <StackPane fx:id="iconContainer" 
+                  styleClass="hide-on-mobile"
+                  managed="false" visible="false">
+            <FontIcon fx:id="cardIcon" 
+                     iconLiteral="fas-clock" 
+                     iconSize="18" 
+                     iconColor="#00B4A6"
+                     styleClass="icon-responsive"/>
+        </StackPane>
+        
+        <!-- Title and Subtitle -->
+        <VBox fx:id="titleContainer" 
+              styleClass="spacing-xs"
+              HBox.hgrow="ALWAYS">
+            
+            <Label fx:id="cardTitle" 
+                   text="Card Title" 
+                   styleClass="title-small"
+                   wrapText="true"/>
+            
+            <Label fx:id="cardSubtitle" 
+                   text="Subtitle or description" 
+                   styleClass="caption-text"
+                   wrapText="true"
+                   managed="false" visible="false"/>
+        </VBox>
+        
+        <!-- Header Actions -->
+        <HBox fx:id="headerActions" 
+              styleClass="spacing-xs"
+              alignment="TOP_RIGHT">
+            
+            <!-- Badge/Status Label -->
+            <Label fx:id="statusBadge" 
+                   text="Active" 
+                   styleClass="label-success"
+                   managed="false" visible="false"/>
+            
+            <!-- More Actions Button -->
+            <Button fx:id="moreActionsButton" 
+                    styleClass="btn-circle"
+                    managed="false" visible="false">
+                <graphic>
+                    <FontIcon iconLiteral="fas-ellipsis-v" iconSize="12"/>
+                </graphic>
+            </Button>
+        </HBox>
+    </HBox>
+
+    <!-- Card Content Area -->
+    <VBox fx:id="cardContent" 
+          styleClass="spacing-sm"
+          VBox.vgrow="SOMETIMES">
+        
+        <!-- Primary Content -->
+        <VBox fx:id="primaryContent" styleClass="spacing-xs">
+            
+            <!-- Main Display (e.g., time, value, etc.) -->
+            <StackPane fx:id="displayContainer" alignment="CENTER">
+                <Label fx:id="mainDisplay" 
+                       text="00:25:00" 
+                       styleClass="timer-display, text-2xl"
+                       textAlignment="CENTER"/>
+            </StackPane>
+            
+            <!-- Secondary Info -->
+            <HBox fx:id="secondaryInfo" 
+                  styleClass="spacing-sm"
+                  alignment="CENTER"
+                  managed="false" visible="false">
+                
+                <Label fx:id="leftInfo" 
+                       text="Target: 2h" 
+                       styleClass="caption-text"/>
+                
+                <!-- Spacer -->
+                <Region HBox.hgrow="ALWAYS"/>
+                
+                <Label fx:id="rightInfo" 
+                       text="Progress: 45%" 
+                       styleClass="caption-text"/>
+            </HBox>
+        </VBox>
+        
+        <!-- Progress Indicator (optional) -->
+        <StackPane fx:id="progressContainer" 
+                  managed="false" visible="false">
+            <ProgressBar fx:id="progressBar" 
+                        styleClass="progress-responsive"
+                        progress="0.45" 
+                        maxWidth="10000"/>
+        </StackPane>
+        
+        <!-- Additional Content Area -->
+        <VBox fx:id="additionalContent" 
+              styleClass="spacing-xs"
+              managed="false" visible="false">
+            
+            <!-- Custom content can be added here -->
+            <Label fx:id="additionalInfo" 
+                   text="Additional information" 
+                   styleClass="body-text"
+                   wrapText="true"/>
+        </VBox>
+    </VBox>
+
+    <!-- Card Footer with Actions -->
+    <HBox fx:id="cardFooter" 
+          styleClass="spacing-sm"
+          alignment="CENTER">
+        
+        <!-- Primary Action Button -->
+        <Button fx:id="primaryActionButton" 
+                text="Start" 
+                styleClass="btn-primary, grow-sometimes"
+                HBox.hgrow="SOMETIMES"/>
+        
+        <!-- Quick Actions -->
+        <HBox fx:id="quickActions" 
+              styleClass="spacing-xs"
+              alignment="CENTER_RIGHT">
+            
+            <!-- Quick Action 1 -->
+            <Button fx:id="quickAction1Button" 
+                    styleClass="btn-circle"
+                    managed="false" visible="false">
+                <graphic>
+                    <FontIcon iconLiteral="fas-play" iconSize="12"/>
+                </graphic>
+            </Button>
+            
+            <!-- Quick Action 2 -->
+            <Button fx:id="quickAction2Button" 
+                    styleClass="btn-circle"
+                    managed="false" visible="false">
+                <graphic>
+                    <FontIcon iconLiteral="fas-stop" iconSize="12"/>
+                </graphic>
+            </Button>
+            
+            <!-- Delete Action -->
+            <Button fx:id="deleteButton" 
+                    styleClass="btn-circle"
+                    managed="false" visible="false">
+                <graphic>
+                    <FontIcon iconLiteral="mdi2d-delete" iconSize="12"/>
+                </graphic>
+            </Button>
+        </HBox>
+    </HBox>
+
+    <!-- Overlay for Loading State -->
+    <StackPane fx:id="loadingOverlay" 
+               styleClass="center-content"
+               alignment="CENTER"
+               managed="false" visible="false"
+               style="-fx-background-color: rgba(45, 45, 45, 0.8); -fx-background-radius: 12;">
+        
+        <!-- Loading indicator -->
+        <VBox styleClass="spacing-xs, center-content" alignment="CENTER">
+            <FontIcon iconLiteral="fas-spinner" 
+                     iconSize="20" 
+                     iconColor="#00B4A6"/>
+            <Label text="Processing..." 
+                   styleClass="caption-text"/>
+        </VBox>
+    </StackPane>
+
+</VBox>

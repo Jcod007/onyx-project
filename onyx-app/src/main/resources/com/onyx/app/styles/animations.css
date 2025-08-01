@@ -1,0 +1,451 @@
+/*
+ * ONYX Professional Animation System
+ * Smooth transitions and micro-interactions for enhanced UX
+ * JavaFX-compatible CSS animations and transitions
+ */
+
+/* ===== SMOOTH TRANSITION BASE ===== */
+
+/* Base transition class - apply to elements that need smooth state changes */
+.smooth-transition {
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+    -fx-opacity: 1.0;
+}
+
+/* ===== HOVER ANIMATIONS ===== */
+
+/* Subtle scale animation for cards and interactive elements */
+.hover-lift {
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+}
+
+.hover-lift:hover {
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 12, 0.4, 0, 4);
+}
+
+/* Dramatic lift for important actions */
+.hover-lift-dramatic {
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+}
+
+.hover-lift-dramatic:hover {
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 16, 0.4, 0, 6);
+}
+
+/* Glow animation for primary actions */
+.hover-glow:hover {
+    -fx-effect: dropshadow(gaussian, rgba(0, 180, 166, 0.5), 16, 0.5, 0, 0);
+}
+
+/* Subtle background color shift */
+.hover-brighten:hover {
+    -fx-opacity: 0.9;
+}
+
+/* ===== PRESS ANIMATIONS ===== */
+
+/* Tactile feedback for button presses */
+.press-feedback:pressed {
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
+}
+
+/* Strong press feedback for important actions */
+.press-strong:pressed {
+    -fx-scale-x: 0.93;
+    -fx-scale-y: 0.93;
+}
+
+/* ===== FOCUS ANIMATIONS ===== */
+
+/* Smooth focus ring animation */
+.focus-smooth:focused {
+    -fx-effect: dropshadow(gaussian, rgba(0, 180, 166, 0.4), 12, 0.5, 0, 0);
+}
+
+/* ===== LOADING ANIMATIONS ===== */
+
+/* Pulsing animation for loading states */
+.loading-pulse {
+    -fx-opacity: 0.6;
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+}
+
+/* Rotating animation for spinners */
+.loading-spin {
+    -fx-rotate: 0;
+}
+
+/* ===== ENTRANCE ANIMATIONS ===== */
+
+/* Fade in animation */
+.fade-in {
+    -fx-opacity: 0;
+}
+
+.fade-in.animate {
+    -fx-opacity: 1;
+}
+
+/* Scale in animation */
+.scale-in {
+    -fx-scale-x: 0.8;
+    -fx-scale-y: 0.8;
+    -fx-opacity: 0;
+}
+
+.scale-in.animate {
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+    -fx-opacity: 1;
+}
+
+/* Slide in from top */
+.slide-in-top {
+    -fx-translate-y: -20;
+    -fx-opacity: 0;
+}
+
+.slide-in-top.animate {
+    -fx-translate-y: 0;
+    -fx-opacity: 1;
+}
+
+/* Slide in from bottom */
+.slide-in-bottom {
+    -fx-translate-y: 20;
+    -fx-opacity: 0;
+}
+
+.slide-in-bottom.animate {
+    -fx-translate-y: 0;
+    -fx-opacity: 1;
+}
+
+/* Slide in from left */
+.slide-in-left {
+    -fx-translate-x: -20;
+    -fx-opacity: 0;
+}
+
+.slide-in-left.animate {
+    -fx-translate-x: 0;
+    -fx-opacity: 1;
+}
+
+/* Slide in from right */
+.slide-in-right {
+    -fx-translate-x: 20;
+    -fx-opacity: 0;
+}
+
+.slide-in-right.animate {
+    -fx-translate-x: 0;
+    -fx-opacity: 1;
+}
+
+/* ===== EXIT ANIMATIONS ===== */
+
+/* Fade out animation */
+.fade-out {
+    -fx-opacity: 1;
+}
+
+.fade-out.animate {
+    -fx-opacity: 0;
+}
+
+/* Scale out animation */
+.scale-out {
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+    -fx-opacity: 1;
+}
+
+.scale-out.animate {
+    -fx-scale-x: 0.8;
+    -fx-scale-y: 0.8;
+    -fx-opacity: 0;
+}
+
+/* ===== SPECIAL EFFECTS ===== */
+
+/* Shake animation for errors */
+.shake {
+    -fx-translate-x: 0;
+}
+
+.shake.animate {
+    -fx-translate-x: 2;
+}
+
+/* Wobble animation for attention */
+.wobble {
+    -fx-rotate: 0;
+}
+
+.wobble.animate {
+    -fx-rotate: 2;
+}
+
+/* ===== TIMER-SPECIFIC ANIMATIONS ===== */
+
+/* Timer countdown pulse */
+.timer-pulse {
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+}
+
+.timer-pulse.urgent {
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+    -fx-effect: dropshadow(gaussian, rgba(239, 68, 68, 0.4), 12, 0.5, 0, 0);
+}
+
+/* Timer completion celebration */
+.timer-complete {
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+    -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.6), 20, 0.6, 0, 0);
+}
+
+/* Progress bar smooth filling */
+.progress-smooth .bar {
+    -fx-background-color: linear-gradient(to right, #00B4A6, #4DD0C7);
+}
+
+.progress-smooth.completing .bar {
+    -fx-effect: dropshadow(gaussian, rgba(0, 180, 166, 0.4), 8, 0.4, 0, 0);
+}
+
+/* ===== RESPONSIVE BREAKPOINT ANIMATIONS ===== */
+
+/* Smooth transitions between responsive states */
+.responsive-smooth {
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+}
+
+/* Mobile layout animations */
+.mobile-entering {
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+    -fx-opacity: 0.8;
+}
+
+.mobile-entering.animate {
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+    -fx-opacity: 1.0;
+}
+
+/* Desktop layout animations */
+.desktop-entering {
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+    -fx-opacity: 0.8;
+}
+
+.desktop-entering.animate {
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+    -fx-opacity: 1.0;
+}
+
+/* ===== CARD ANIMATIONS ===== */
+
+/* Card hover animation with shadow enhancement */
+.card-hover {
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 8, 0.3, 0, 2);
+}
+
+.card-hover:hover {
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 16, 0.4, 0, 6);
+}
+
+/* Course card specific animations */
+.course-card-appear {
+    -fx-translate-y: 10;
+    -fx-opacity: 0;
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
+
+.course-card-appear.animate {
+    -fx-translate-y: 0;
+    -fx-opacity: 1;
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+}
+
+/* Timer card specific animations */
+.timer-card-appear {
+    -fx-scale-x: 0.9;
+    -fx-scale-y: 0.9;
+    -fx-opacity: 0;
+    -fx-rotate: -2;
+}
+
+.timer-card-appear.animate {
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+    -fx-opacity: 1;
+    -fx-rotate: 0;
+}
+
+/* ===== BUTTON ANIMATIONS ===== */
+
+/* Primary button animation enhancement */
+.btn-primary-animated {
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+    -fx-effect: dropshadow(gaussian, rgba(0, 180, 166, 0.25), 8, 0.3, 0, 2);
+}
+
+.btn-primary-animated:hover {
+    -fx-scale-x: 1.03;
+    -fx-scale-y: 1.03;
+    -fx-effect: dropshadow(gaussian, rgba(0, 180, 166, 0.4), 12, 0.4, 0, 4);
+}
+
+.btn-primary-animated:pressed {
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
+    -fx-effect: dropshadow(gaussian, rgba(0, 180, 166, 0.2), 4, 0.2, 0, 1);
+}
+
+/* FAB animation enhancement */
+.fab-animated {
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+    -fx-effect: dropshadow(gaussian, rgba(255, 107, 71, 0.4), 16, 0.4, 0, 6);
+}
+
+.fab-animated:hover {
+    -fx-scale-x: 1.1;
+    -fx-scale-y: 1.1;
+    -fx-effect: dropshadow(gaussian, rgba(255, 107, 71, 0.6), 20, 0.5, 0, 8);
+}
+
+.fab-animated:pressed {
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+    -fx-effect: dropshadow(gaussian, rgba(255, 107, 71, 0.3), 8, 0.3, 0, 2);
+}
+
+/* ===== NAVIGATION ANIMATIONS ===== */
+
+/* Navigation item selection animation */
+.nav-item-animated {
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+    -fx-translate-x: 0;
+}
+
+.nav-item-animated:hover {
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+    -fx-translate-x: 2;
+}
+
+.nav-item-animated.active {
+    -fx-translate-x: 4;
+    -fx-effect: dropshadow(gaussian, rgba(0, 180, 166, 0.3), 8, 0.3, 0, 2);
+}
+
+/* ===== MODAL & DIALOG ANIMATIONS ===== */
+
+/* Modal backdrop fade in */
+.modal-backdrop {
+    -fx-opacity: 0;
+}
+
+.modal-backdrop.show {
+    -fx-opacity: 1;
+}
+
+/* Dialog slide in from center */
+.dialog-animated {
+    -fx-scale-x: 0.9;
+    -fx-scale-y: 0.9;
+    -fx-opacity: 0;
+}
+
+.dialog-animated.show {
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+    -fx-opacity: 1;
+}
+
+/* ===== MINI TIMER ANIMATIONS ===== */
+
+/* Mini timer appearance animation */
+.mini-timer-appear {
+    -fx-translate-x: 20;
+    -fx-opacity: 0;
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+}
+
+.mini-timer-appear.animate {
+    -fx-translate-x: 0;
+    -fx-opacity: 1;
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+}
+
+/* Mini timer completion celebration */
+.mini-timer-complete {
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+}
+
+.mini-timer-complete.celebrate {
+    -fx-scale-x: 1.1;
+    -fx-scale-y: 1.1;
+    -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.6), 16, 0.6, 0, 0);
+}
+
+/* ===== STAGGERED ANIMATIONS ===== */
+
+/* Staggered list item animations */
+.stagger-item-1 { -fx-opacity: 0; -fx-translate-y: 10; }
+.stagger-item-2 { -fx-opacity: 0; -fx-translate-y: 10; }
+.stagger-item-3 { -fx-opacity: 0; -fx-translate-y: 10; }
+.stagger-item-4 { -fx-opacity: 0; -fx-translate-y: 10; }
+.stagger-item-5 { -fx-opacity: 0; -fx-translate-y: 10; }
+
+.stagger-item-1.animate { -fx-opacity: 1; -fx-translate-y: 0; }
+.stagger-item-2.animate { -fx-opacity: 1; -fx-translate-y: 0; }
+.stagger-item-3.animate { -fx-opacity: 1; -fx-translate-y: 0; }
+.stagger-item-4.animate { -fx-opacity: 1; -fx-translate-y: 0; }
+.stagger-item-5.animate { -fx-opacity: 1; -fx-translate-y: 0; }
+
+/* ===== PERFORMANCE OPTIMIZED ANIMATIONS ===== */
+
+/* GPU-accelerated animation base */
+.gpu-animated {
+    -fx-cache: true;
+    -fx-cache-hint: speed;
+}
+
+/* Smooth 60fps animation class */
+.smooth-60fps {
+    -fx-smooth: true;
+    -fx-cache: true;
+    -fx-cache-hint: quality;
+}
+
+/* === END OF ANIMATION SYSTEM === */

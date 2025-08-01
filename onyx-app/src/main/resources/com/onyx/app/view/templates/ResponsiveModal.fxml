@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<!--
+    Professional Responsive Modal Template
+    
+    Features:
+    - Responsive modal sizing across breakpoints
+    - Professional form layout with consistent spacing
+    - Accessible button arrangement
+    - ScrollPane integration for content overflow
+    - Modern glassmorphism design
+    - Proper focus management
+-->
+
+<VBox fx:id="modalContainer"
+      styleClass="responsive-modal-content, desktop-layout"
+      stylesheets="@/com/onyx/app/styles/global.css, 
+                  @/com/onyx/app/styles/responsive-system.css,
+                  @/com/onyx/app/styles/responsive-extensions.css"
+      xmlns="http://javafx.com/javafx/23.0.1" 
+      xmlns:fx="http://javafx.com/fxml/1"
+      spacing="16" maxWidth="500" minWidth="300">
+
+    <!-- Modal Header -->
+    <HBox fx:id="modalHeader" 
+          styleClass="spacing-base"
+          alignment="CENTER_LEFT">
+        
+        <!-- Icon (optional) -->
+        <FontIcon fx:id="modalIcon" 
+                 iconLiteral="fas-edit" 
+                 iconSize="20" 
+                 iconColor="#00B4A6"
+                 styleClass="icon-responsive"/>
+        
+        <!-- Title -->
+        <Label fx:id="modalTitle" 
+               text="Modal Title" 
+               styleClass="title-medium"
+               HBox.hgrow="ALWAYS"/>
+        
+        <!-- Close Button -->
+        <Button fx:id="closeButton" 
+                styleClass="btn-circle">
+            <graphic>
+                <FontIcon iconLiteral="fas-times" iconSize="14"/>
+            </graphic>
+        </Button>
+    </HBox>
+
+    <!-- Modal Content Container -->
+    <ScrollPane fx:id="contentScrollPane" 
+                styleClass="responsive-scroll-container"
+                fitToWidth="true" 
+                hbarPolicy="NEVER" 
+                vbarPolicy="AS_NEEDED"
+                VBox.vgrow="ALWAYS"
+                maxHeight="400">
+        
+        <VBox fx:id="modalContent" 
+              styleClass="spacing-base, padding-sm">
+            
+            <!-- Form Fields Example -->
+            <VBox fx:id="formSection" styleClass="spacing-sm">
+                
+                <!-- Name Field -->
+                <VBox styleClass="spacing-xs">
+                    <Label text="Name" styleClass="body-text"/>
+                    <TextField fx:id="nameField" 
+                              styleClass="responsive-form-field"
+                              promptText="Enter name..."/>
+                </VBox>
+                
+                <!-- Duration Field -->
+                <VBox styleClass="spacing-xs">
+                    <Label text="Duration" styleClass="body-text"/>
+                    <TextField fx:id="durationField" 
+                              styleClass="responsive-form-field"
+                              promptText="e.g., 25 min or 1h30"/>
+                </VBox>
+                
+                <!-- Description Field -->
+                <VBox styleClass="spacing-xs">
+                    <Label text="Description" styleClass="body-text"/>
+                    <TextArea fx:id="descriptionField" 
+                             styleClass="responsive-form-field"
+                             promptText="Optional description..."
+                             prefRowCount="3"
+                             wrapText="true"/>
+                </VBox>
+                
+                <!-- Options Section -->
+                <VBox fx:id="optionsSection" 
+                      styleClass="spacing-xs"
+                      managed="false" 
+                      visible="false">
+                    
+                    <Label text="Options" styleClass="body-text"/>
+                    
+                    <!-- Option buttons or checkboxes would go here -->
+                    <HBox styleClass="spacing-sm">
+                        <Button fx:id="option1Button" 
+                                text="Option 1" 
+                                styleClass="btn-glass"/>
+                        <Button fx:id="option2Button" 
+                                text="Option 2" 
+                                styleClass="btn-glass"/>
+                    </HBox>
+                </VBox>
+            </VBox>
+        </VBox>
+    </ScrollPane>
+
+    <!-- Modal Footer with Actions -->
+    <HBox fx:id="modalFooter" 
+          styleClass="spacing-sm"
+          alignment="CENTER_RIGHT">
+        
+        <!-- Secondary Actions (left side) -->
+        <HBox fx:id="secondaryActions" 
+              styleClass="spacing-xs"
+              alignment="CENTER_LEFT">
+            
+            <Button fx:id="helpButton" 
+                    text="Help" 
+                    styleClass="btn-glass, hide-on-mobile"
+                    managed="false" 
+                    visible="false">
+                <graphic>
+                    <FontIcon iconLiteral="fas-question-circle" iconSize="14"/>
+                </graphic>
+            </Button>
+        </HBox>
+        
+        <!-- Spacer -->
+        <Region HBox.hgrow="ALWAYS"/>
+        
+        <!-- Primary Actions (right side) -->
+        <HBox fx:id="primaryActions" 
+              styleClass="spacing-sm"
+              alignment="CENTER_RIGHT">
+            
+            <!-- Cancel Button -->
+            <Button fx:id="cancelButton" 
+                    text="Cancel" 
+                    styleClass="btn-glass"/>
+            
+            <!-- Confirm Button -->
+            <Button fx:id="confirmButton" 
+                    text="Confirm" 
+                    styleClass="btn-primary"
+                    defaultButton="true"/>
+        </HBox>
+    </HBox>
+
+    <!-- Loading/Processing Overlay (optional) -->
+    <VBox fx:id="loadingOverlay" 
+          styleClass="center-content, spacing-base"
+          alignment="CENTER"
+          managed="false" 
+          visible="false"
+          style="-fx-background-color: rgba(45, 45, 45, 0.95);">
+        
+        <!-- Custom loading spinner would go here -->
+        <Label text="Processing..." styleClass="body-text"/>
+        
+        <!-- Progress indicator -->
+        <Region prefHeight="20" prefWidth="40" 
+               style="-fx-background-color: #00B4A6; -fx-background-radius: 10;"/>
+    </VBox>
+
+</VBox>

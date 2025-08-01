@@ -4,10 +4,11 @@ import { TimerConfigDialog } from '@/components/TimerConfigDialog';
 import { TimerConfig, TimerMode } from '@/services/timerService';
 import { Subject } from '@/types/Subject';
 import { subjectService } from '@/services/subjectService';
-import { Plus, Settings, Volume2, VolumeX } from 'lucide-react';
+import { Plus, Settings, Volume2, VolumeX, Edit3, Trash2 } from 'lucide-react';
 
 interface ActiveTimer {
   id: string;
+  title: string;
   config: TimerConfig;
   linkedSubject?: Subject;
 }
@@ -15,8 +16,10 @@ interface ActiveTimer {
 export const TimersPage: React.FC = () => {
   const [timers, setTimers] = useState<ActiveTimer[]>([]);
   const [showConfigDialog, setShowConfigDialog] = useState(false);
+  const [editingTimer, setEditingTimer] = useState<ActiveTimer | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [completedSessions, setCompletedSessions] = useState(0);
+  const [timerCounter, setTimerCounter] = useState(1);
 
   const handleCreateTimer = () => {
     setShowConfigDialog(true);
@@ -38,11 +41,13 @@ export const TimersPage: React.FC = () => {
 
     const newTimer: ActiveTimer = {
       id: crypto.randomUUID(),
+      title: `Timer ${timerCounter}`,
       config: timerConfig,
       linkedSubject: config.linkedSubject
     };
 
     setTimers(prev => [...prev, newTimer]);
+    setTimerCounter(prev => prev + 1);
     setShowConfigDialog(false);
   };
 
@@ -84,7 +89,41 @@ export const TimersPage: React.FC = () => {
   };
 
   const removeTimer = (timerId: string) => {
-    setTimers(prev => prev.filter(t => t.id !== timerId));
+    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce timer ?')) {
+      setTimers(prev => prev.filter(t => t.id !== timerId));
+    }
+  };
+
+  const editTimer = (timer: ActiveTimer) => {
+    setEditingTimer(timer);
+    setShowConfigDialog(true);
+  };
+
+  const handleEditTimerConfirm = async (config: {
+    hours: number;
+    minutes: number;
+    seconds: number;
+    timerType: string;
+    linkedSubject?: Subject;
+  }) => {
+    if (!editingTimer) return;
+
+    const timerConfig: TimerConfig = {
+      workDuration: config.hours * 3600 + config.minutes * 60 + config.seconds,
+      shortBreakDuration: 300,
+      longBreakDuration: 900,
+      longBreakInterval: 4
+    };
+
+    const updatedTimer: ActiveTimer = {
+      ...editingTimer,
+      config: timerConfig,
+      linkedSubject: config.linkedSubject
+    };
+
+    setTimers(prev => prev.map(t => t.id === editingTimer.id ? updatedTimer : t));
+    setShowConfigDialog(false);
+    setEditingTimer(null);
   };
 
   const playNotificationSound = () => {
@@ -163,32 +202,47 @@ export const TimersPage: React.FC = () => {
       {timers.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {timers.map((timer) => (
-            <div key={timer.id} className="relative">
+            <div key={timer.id} className="relative group">
+              {/* Action Buttons - Positioned above Timer - Style uniforme avec SubjectCard */}
+              <div className="absolute top-3 right-3 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={() => editTimer(timer)}
+                  className="p-2 bg-white text-blue-600 rounded-lg shadow-sm hover:bg-blue-50 transition-colors border border-gray-200"
+                  title="Modifier ce timer"
+                >
+                  <Edit3 size={16} />
+                </button>
+                <button
+                  onClick={() => removeTimer(timer.id)}
+                  className="p-2 bg-white text-red-600 rounded-lg shadow-sm hover:bg-red-50 transition-colors border border-gray-200"
+                  title="Supprimer ce timer"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+
               <Timer
                 config={timer.config}
+                title={timer.title}
                 onSessionComplete={() => handleSessionComplete(timer.id)}
                 onModeChange={(mode) => handleModeChange(mode, timer.id)}
                 onTimerFinish={(totalTime) => handleTimerFinish(totalTime, timer.id)}
                 showModeButtons={true}
               />
               
-              {/* Timer Info */}
-              {timer.linkedSubject && (
-                <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-700">
-                    <span className="font-medium">Matière:</span> {timer.linkedSubject.name}
+              {/* Timer Info - Simplified */}
+              <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm font-medium text-gray-700 text-center">
+                  {Math.floor(timer.config.workDuration / 3600) > 0 && `${Math.floor(timer.config.workDuration / 3600)}h `}
+                  {Math.floor((timer.config.workDuration % 3600) / 60)}min
+                  {timer.config.workDuration % 60 > 0 && ` ${timer.config.workDuration % 60}s`}
+                </p>
+                {timer.linkedSubject && (
+                  <p className="text-xs text-blue-600 text-center mt-1">
+                    📚 {timer.linkedSubject.name}
                   </p>
-                </div>
-              )}
-              
-              {/* Remove Button */}
-              <button
-                onClick={() => removeTimer(timer.id)}
-                className="absolute top-2 right-2 p-2 bg-red-100 text-red-600 rounded-full opacity-0 group-hover:opacity-100 hover:bg-red-200 transition-all"
-                title="Supprimer ce timer"
-              >
-                ×
-              </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -230,9 +284,17 @@ export const TimersPage: React.FC = () => {
       {/* Timer Configuration Dialog */}
       <TimerConfigDialog
         isOpen={showConfigDialog}
-        onClose={() => setShowConfigDialog(false)}
-        onConfirm={handleTimerConfigConfirm}
-        defaultDuration={{ hours: 0, minutes: 25, seconds: 0 }}
+        onClose={() => {
+          setShowConfigDialog(false);
+          setEditingTimer(null);
+        }}
+        onConfirm={editingTimer ? handleEditTimerConfirm : handleTimerConfigConfirm}
+        defaultDuration={editingTimer ? {
+          hours: Math.floor(editingTimer.config.workDuration / 3600),
+          minutes: Math.floor((editingTimer.config.workDuration % 3600) / 60),
+          seconds: editingTimer.config.workDuration % 60
+        } : { hours: 0, minutes: 25, seconds: 0 }}
+        preselectedSubject={editingTimer?.linkedSubject}
       />
     </div>
   );

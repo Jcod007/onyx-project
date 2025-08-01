@@ -1,6 +1,6 @@
 /* Les animations seront gérées par le contrôleur JavaFX, pas par CSS */
 
-/* Container principal du mini-timer */
+/* Container principal du mini-timer - Maintenant responsive */
 .mini-timer-container {
     -fx-background-color: linear-gradient(to bottom right, rgba(45, 45, 45, 0.95), rgba(35, 35, 35, 0.95));
     -fx-background-radius: 16;
@@ -8,10 +8,7 @@
     -fx-border-color: rgba(255, 255, 255, 0.2);
     -fx-border-width: 1;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 20, 0.4, 0, 8);
-    -fx-max-width: 280;
-    -fx-min-width: 280;
-    -fx-pref-width: 280;
-    /* Widget flottant non-bloquant */
+    /* Dimensions responsives supprimées - gérées par responsive-system.css via .mini-timer-widget */
 }
 
 /* Header du mini-timer */

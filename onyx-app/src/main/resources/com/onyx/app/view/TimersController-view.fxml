@@ -3,31 +3,49 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.geometry.Insets?>
 
-<StackPane
-	stylesheets="@/com/onyx/app/styles/timerscontroller-view.css"
+<StackPane fx:id="timersRoot"
+	stylesheets="@/com/onyx/app/styles/responsive-unified.css"
 	xmlns="http://javafx.com/javafx/23.0.1"
-	xmlns:fx="http://javafx.com/fxml/1"
+	xmlns:fx="http://javafx.com/fxml/1"  
 	fx:controller="com.onyx.app.controller.TimersController"
-	styleClass = "timercontroller-root">
+	styleClass="flexible-width,flexible-height,hardware-accelerated">
 	
-	<ScrollPane fitToWidth="true" fitToHeight="true" styleClass = "timer-card-contener">
+	<!-- Main Timer Grid Container -->
+	<ScrollPane fx:id="timerScrollPane" fitToWidth="true" fitToHeight="true" 
+	           styleClass="scroll-pane-responsive,hardware-accelerated" 
+	           hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
 		<content>
-			<FlowPane fx:id="timersList" hgap="24.0" vgap="24.0"
-				styleClass="timers-card-list-view">
-				<padding>
-					<Insets bottom="80.0" left="20.0" right="20.0" top="20.0" />
-				</padding>
-			</FlowPane>
+			<VBox fx:id="timerContentWrapper" styleClass="main-content-area">
+				<children>
+					<!-- Responsive Timer Grid -->
+					<FlowPane fx:id="timersList" 
+					         styleClass="timer-card-grid,center-content,hardware-accelerated">
+						<padding>
+							<Insets bottom="100.0" />
+						</padding>
+					</FlowPane>
+				</children>
+			</VBox>
 		</content>
 	</ScrollPane>
 
+	<!-- Floating Action Button with Responsive Positioning -->
 	<Button fx:id="addTimerButton" onAction="#handleCreateTimer"
-		styleClass="fab-button" text="+" />
+		styleClass="btn-responsive,btn-primary,smooth-animation" 
+		text="+" StackPane.alignment="BOTTOM_RIGHT">
+		<StackPane.margin>
+			<Insets bottom="24.0" right="24.0" />
+		</StackPane.margin>
+	</Button>
 
-    <StackPane fx:id="configOverlay" visible="false" managed = "false" pickOnBounds="false" style="-fx-background-color: rgba(0,0,0,0.25);">
-        <!-- Le contenu de la config sera injecté ici dynamiquement -->
+    <!-- Configuration Overlay with Responsive Design -->
+    <StackPane fx:id="configOverlay" visible="false" managed="false" pickOnBounds="false" 
+              styleClass="hardware-accelerated" 
+              style="-fx-background-color: rgba(0,0,0,0.4);">
+        <!-- Dynamic config content injected here -->
     </StackPane>
 </StackPane>

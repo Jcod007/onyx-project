@@ -1,0 +1,517 @@
+/*
+ * ONYX Responsive Layout Extensions
+ * Advanced responsive patterns for professional JavaFX applications
+ * Complements the base responsive-system.css with specialized components
+ */
+
+/* =============================================
+   FLOWPANE RESPONSIVE GRID SYSTEM
+   Professional card layouts with natural wrapping
+   ============================================= */
+
+.responsive-flow-grid {
+    -fx-alignment: top-left;
+    -fx-row-valignment: top;
+    -fx-column-halignment: left;
+}
+
+/* Mobile: Single column grid */
+.mobile-layout .responsive-flow-grid {
+    -fx-hgap: 8;
+    -fx-vgap: 8;
+    -fx-pref-tile-width: 280;
+    -fx-pref-tile-height: 200;
+}
+
+/* Tablet: Two column grid */
+.tablet-layout .responsive-flow-grid {
+    -fx-hgap: 12;
+    -fx-vgap: 12;
+    -fx-pref-tile-width: 300;
+    -fx-pref-tile-height: 220;
+}
+
+/* Desktop: Three column grid */
+.desktop-layout .responsive-flow-grid {
+    -fx-hgap: 16;
+    -fx-vgap: 16;
+    -fx-pref-tile-width: 320;
+    -fx-pref-tile-height: 240;
+}
+
+/* Large Desktop: Four column grid */
+.large-desktop-layout .responsive-flow-grid {
+    -fx-hgap: 20;
+    -fx-vgap: 20;
+    -fx-pref-tile-width: 340;
+    -fx-pref-tile-height: 260;
+}
+
+/* Ultra Wide: Five+ column grid */
+.ultra-wide-layout .responsive-flow-grid {
+    -fx-hgap: 24;
+    -fx-vgap: 24;
+    -fx-pref-tile-width: 360;
+    -fx-pref-tile-height: 280;
+}
+
+/* =============================================
+   ADAPTIVE BORDERPANE LAYOUTS
+   Professional regions with flexible content
+   ============================================= */
+
+.responsive-border-layout {
+    -fx-background-color: transparent;
+}
+
+/* Mobile: Hide sidebar, full-width center */
+.mobile-layout .responsive-border-layout .left {
+    -fx-min-width: 0;
+    -fx-pref-width: 0;
+    -fx-max-width: 0;
+}
+
+.mobile-layout .responsive-border-layout .center {
+    -fx-padding: 8;
+}
+
+/* Tablet: Collapsed sidebar */
+.tablet-layout .responsive-border-layout .left {
+    -fx-min-width: 60;
+    -fx-pref-width: 60;
+    -fx-max-width: 60;
+}
+
+.tablet-layout .responsive-border-layout .center {
+    -fx-padding: 12;
+}
+
+/* Desktop and larger: Full sidebar */
+.desktop-layout .responsive-border-layout .left,
+.large-desktop-layout .responsive-border-layout .left,
+.ultra-wide-layout .responsive-border-layout .left {
+    -fx-min-width: 220;
+    -fx-pref-width: 220;
+    -fx-max-width: 220;
+}
+
+.desktop-layout .responsive-border-layout .center,
+.large-desktop-layout .responsive-border-layout .center,
+.ultra-wide-layout .responsive-border-layout .center {
+    -fx-padding: 16;
+}
+
+/* =============================================
+   STACKPANE OVERLAY MANAGEMENT
+   Professional modal and dialog handling
+   ============================================= */
+
+.responsive-overlay-container {
+    -fx-alignment: center;
+    -fx-background-color: rgba(0, 0, 0, 0.4);
+}
+
+.responsive-modal-content {
+    -fx-background-color: linear-gradient(to bottom right, 
+        rgba(45, 45, 45, 0.98), 
+        rgba(35, 35, 35, 0.98));
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 24, 0.4, 0, 8);
+}
+
+/* Mobile modals: Full width with margins */
+.mobile-layout .responsive-modal-content {
+    -fx-max-width: 300;
+    -fx-pref-width: 300;
+    -fx-padding: 16;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+}
+
+/* Tablet modals: Comfortable sizing */
+.tablet-layout .responsive-modal-content {
+    -fx-max-width: 400;
+    -fx-pref-width: 400;
+    -fx-padding: 20;
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+}
+
+/* Desktop and larger modals: Spacious */
+.desktop-layout .responsive-modal-content,
+.large-desktop-layout .responsive-modal-content,
+.ultra-wide-layout .responsive-modal-content {
+    -fx-max-width: 500;
+    -fx-pref-width: 500;
+    -fx-padding: 24;
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+}
+
+/* =============================================
+   SCROLLPANE RESPONSIVE INTEGRATION
+   Handle content overflow gracefully
+   ============================================= */
+
+.responsive-scroll-container {
+    -fx-background-color: transparent;
+    -fx-fit-to-width: true;
+    -fx-fit-to-height: false;
+    -fx-hbar-policy: never;
+    -fx-vbar-policy: as-needed;
+}
+
+.responsive-scroll-container .viewport {
+    -fx-background-color: transparent;
+}
+
+/* Custom scrollbar styling */
+.responsive-scroll-container .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-background-radius: 4;
+}
+
+.responsive-scroll-container .scroll-bar:vertical .track {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-background-radius: 4;
+}
+
+.responsive-scroll-container .scroll-bar:vertical .thumb {
+    -fx-background-color: rgba(255, 255, 255, 0.3);
+    -fx-background-radius: 4;
+}
+
+.responsive-scroll-container .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Mobile: Thinner scrollbars */
+.mobile-layout .responsive-scroll-container .scroll-bar:vertical {
+    -fx-pref-width: 6;
+}
+
+/* Desktop and larger: Standard scrollbars */
+.desktop-layout .responsive-scroll-container .scroll-bar:vertical,
+.large-desktop-layout .responsive-scroll-container .scroll-bar:vertical,
+.ultra-wide-layout .responsive-scroll-container .scroll-bar:vertical {
+    -fx-pref-width: 12;
+}
+
+/* =============================================
+   PERFORMANCE-OPTIMIZED ANIMATIONS
+   Smooth transitions without layout lag
+   ============================================= */
+
+.responsive-scale-animation {
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+}
+
+/* Subtle animations on mobile for performance */
+.mobile-layout .responsive-scale-animation:hover {
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+}
+
+.mobile-layout .responsive-scale-animation:pressed {
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
+
+/* Full animations on desktop and larger */
+.desktop-layout .responsive-scale-animation:hover,
+.large-desktop-layout .responsive-scale-animation:hover,
+.ultra-wide-layout .responsive-scale-animation:hover {
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+.desktop-layout .responsive-scale-animation:pressed,
+.large-desktop-layout .responsive-scale-animation:pressed,
+.ultra-wide-layout .responsive-scale-animation:pressed {
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+}
+
+/* =============================================
+   COMMERCIAL COMPONENT PATTERNS
+   Ready-to-use professional components
+   ============================================= */
+
+/* Responsive navigation menu */
+.responsive-nav-menu {
+    -fx-background-color: #1E293B;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-width: 0 1 0 0;
+}
+
+.responsive-nav-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #CBD5E1;
+    -fx-cursor: hand;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+}
+
+.responsive-nav-button:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-text-fill: #F8FAFC;
+}
+
+.responsive-nav-button.active {
+    -fx-background-color: #00B4A6;
+    -fx-text-fill: white;
+}
+
+/* Mobile navigation: Icon-only */
+.mobile-layout .responsive-nav-button {
+    -fx-content-display: graphic-only;
+    -fx-alignment: center;
+    -fx-padding: 8;
+    -fx-pref-width: 40;
+}
+
+/* Tablet navigation: Collapsed */
+.tablet-layout .responsive-nav-button {
+    -fx-content-display: graphic-only;
+    -fx-alignment: center;
+    -fx-padding: 10;
+    -fx-pref-width: 40;
+}
+
+/* Desktop navigation: Full text + icon */
+.desktop-layout .responsive-nav-button,
+.large-desktop-layout .responsive-nav-button,
+.ultra-wide-layout .responsive-nav-button {
+    -fx-content-display: left;
+    -fx-alignment: center-left;
+    -fx-graphic-text-gap: 12;
+    -fx-padding: 12 16;
+    -fx-pref-width: 200;
+}
+
+/* =============================================
+   RESPONSIVE FORM COMPONENTS
+   Professional input handling across breakpoints
+   ============================================= */
+
+.responsive-form-field {
+    -fx-background-color: #334155;
+    -fx-text-fill: #F8FAFC;
+    -fx-prompt-text-fill: #94A3B8;
+    -fx-background-radius: 8;
+    -fx-border-color: transparent;
+    -fx-border-radius: 8;
+}
+
+.responsive-form-field:focused {
+    -fx-border-color: #00B4A6;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(gaussian, rgba(0, 180, 166, 0.3), 6, 0.4, 0, 0);
+}
+
+/* Mobile forms: Compact */
+.mobile-layout .responsive-form-field {
+    -fx-padding: 8 12;
+    -fx-font-size: 12px;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+}
+
+/* Tablet forms: Medium */
+.tablet-layout .responsive-form-field {
+    -fx-padding: 10 14;
+    -fx-font-size: 13px;
+    -fx-background-radius: 7;
+    -fx-border-radius: 7;
+}
+
+/* Desktop forms: Comfortable */
+.desktop-layout .responsive-form-field,
+.large-desktop-layout .responsive-form-field,
+.ultra-wide-layout .responsive-form-field {
+    -fx-padding: 12 16;
+    -fx-font-size: 14px;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+}
+
+/* =============================================
+   RESPONSIVE CARD LAYOUTS
+   Professional card grids that adapt naturally
+   ============================================= */
+
+.responsive-card-grid {
+    -fx-alignment: top-left;
+    -fx-row-valignment: top;
+}
+
+.responsive-card-item {
+    -fx-background-color: linear-gradient(to bottom right, 
+        rgba(45, 45, 45, 0.95), 
+        rgba(35, 35, 35, 0.95));
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 12, 0.3, 0, 4);
+    -fx-cursor: hand;
+}
+
+.responsive-card-item:hover {
+    -fx-border-color: rgba(255, 255, 255, 0.3);
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+}
+
+.responsive-card-item:pressed {
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
+
+/* Mobile cards: Full width */
+.mobile-layout .responsive-card-item {
+    -fx-min-width: 280;
+    -fx-pref-width: 300;
+    -fx-max-width: 320;
+    -fx-min-height: 140;
+    -fx-pref-height: 160;
+    -fx-padding: 12;
+}
+
+/* Tablet cards: Medium */
+.tablet-layout .responsive-card-item {
+    -fx-min-width: 300;
+    -fx-pref-width: 320;
+    -fx-max-width: 340;
+    -fx-min-height: 160;
+    -fx-pref-height: 180;
+    -fx-padding: 16;
+}
+
+/* Desktop and larger cards: Comfortable */
+.desktop-layout .responsive-card-item,
+.large-desktop-layout .responsive-card-item,
+.ultra-wide-layout .responsive-card-item {
+    -fx-min-width: 320;
+    -fx-pref-width: 340;
+    -fx-max-width: 380;
+    -fx-min-height: 180;
+    -fx-pref-height: 200;
+    -fx-padding: 20;
+}
+
+/* =============================================
+   ADAPTIVE SIDEBAR SYSTEM
+   Professional navigation that scales
+   ============================================= */
+
+.adaptive-responsive-sidebar {
+    -fx-background-color: #1E293B;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-width: 0 1 0 0;
+}
+
+/* Mobile: Hidden sidebar (overlay mode) */
+.mobile-layout .adaptive-responsive-sidebar {
+    -fx-pref-width: 0;
+    -fx-min-width: 0;
+    -fx-max-width: 0;
+}
+
+/* Tablet: Icon-only sidebar */
+.tablet-layout .adaptive-responsive-sidebar {
+    -fx-pref-width: 60;
+    -fx-min-width: 60;
+    -fx-max-width: 60;
+}
+
+/* Desktop and larger: Full sidebar */
+.desktop-layout .adaptive-responsive-sidebar,
+.large-desktop-layout .adaptive-responsive-sidebar,
+.ultra-wide-layout .adaptive-responsive-sidebar {
+    -fx-pref-width: 220;
+    -fx-min-width: 220;
+    -fx-max-width: 220;
+}
+
+/* Sidebar content adaptation */
+.adaptive-sidebar-content {
+    -fx-spacing: 8;
+    -fx-padding: 16;
+}
+
+/* Mobile overlay sidebar (when shown) */
+.mobile-sidebar-overlay {
+    -fx-background-color: rgba(0, 0, 0, 0.5);
+    -fx-alignment: center-left;
+}
+
+.mobile-sidebar-panel {
+    -fx-background-color: #1E293B;
+    -fx-pref-width: 280;
+    -fx-max-width: 280;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.6), 20, 0.5, 5, 0);
+    -fx-background-radius: 0 16 16 0;
+    -fx-border-radius: 0 16 16 0;
+}
+
+/* =============================================
+   UTILITY CLASSES FOR RESPONSIVE BEHAVIOR
+   Helper classes for fine-tuned control
+   ============================================= */
+
+/* Visibility control per breakpoint */
+.hide-on-mobile { }
+.hide-on-tablet { }
+.hide-on-desktop { }
+.hide-on-large-desktop { }
+.hide-on-ultra-wide { }
+
+.show-on-mobile-only { }
+.show-on-tablet-only { }
+.show-on-desktop-only { }
+.show-on-large-desktop-only { }
+.show-on-ultra-wide-only { }
+
+/* Content flexibility */
+.flexible-width {
+    -fx-max-width: 10000;
+}
+
+.flexible-height {
+    -fx-max-height: 10000;
+}
+
+/* HBox/VBox grow priorities (applied via Java) */
+.grow-always { }
+.grow-sometimes { }
+.grow-never { }
+
+/* Alignment utilities */
+.center-content { -fx-alignment: center; }
+.left-content { -fx-alignment: center-left; }
+.right-content { -fx-alignment: center-right; }
+.top-content { -fx-alignment: top-center; }
+.bottom-content { -fx-alignment: bottom-center; }
+
+/* Text overflow handling */
+.text-ellipsis { -fx-text-overrun: ellipsis; }
+.text-clip { -fx-text-overrun: clip; }
+.text-center-ellipsis { -fx-text-overrun: center-ellipsis; }
+
+/* Performance optimization */
+.cache-hint { -fx-cache-hint: speed; }
+.smooth-rendering { -fx-smooth: true; }
+
+/* Layout optimization */
+.snap-to-pixel { -fx-snap-to-pixel: true; }
+.disable-animation { -fx-disable-animation: true; }
+
+/* Content priority classes */
+.priority-high { }    /* Applied via Priority.ALWAYS in Java */
+.priority-medium { }  /* Applied via Priority.SOMETIMES in Java */
+.priority-low { }     /* Applied via Priority.NEVER in Java */

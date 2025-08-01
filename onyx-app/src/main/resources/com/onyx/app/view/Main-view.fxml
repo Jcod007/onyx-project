@@ -6,42 +6,79 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<BorderPane fx:id="mainPane" prefHeight="400.0" prefWidth="600.0" stylesheets="@/com/onyx/app/styles/global.css, @/com/onyx/app/styles/main-view.css" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.onyx.app.controller.MainController">
+<BorderPane fx:id="mainPane" minHeight="500.0" minWidth="600.0" prefHeight="700.0" prefWidth="1000.0" 
+           styleClass="main-layout-container,responsive-layout-root,desktop-layout,hardware-accelerated" 
+           stylesheets="@/com/onyx/app/styles/responsive-unified.css" 
+           xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" 
+           fx:controller="com.onyx.app.controller.MainController">
 
-	<!-- Sidebar gauche -->
+	<!-- Professional Responsive Sidebar -->
 	<left>
-		<VBox prefHeight="400.0" prefWidth="186.0" styleClass="menu-bar" BorderPane.alignment="CENTER">
+		<VBox fx:id="sidebarContainer" 
+		      styleClass="sidebar-container,smooth-animation,hardware-accelerated" 
+		      BorderPane.alignment="CENTER">
 			<children>
-				<Label prefHeight="79.0" prefWidth="158.0" styleClass="title" text="ONYX">
-					<graphic>
-						<FontIcon iconColor="#F5F7FA" iconLiteral="mdi2d-diamond-outline" />
-					</graphic>
-				</Label>
-				<Button fx:id="dashboardButton" mnemonicParsing="false" prefHeight="50.0" prefWidth="175.0" styleClass="menu-button" text="Dashboard">
-					<graphic>
-						<FontIcon iconColor="WHITE" iconLiteral="fas-tachometer-alt" iconSize="18" styleClass="icon-menu" />
-					</graphic>
-					<opaqueInsets>
-						<Insets />
-					</opaqueInsets>
-				</Button>
-				<Button fx:id="timerButton" mnemonicParsing="false" onAction="#handleTimer" prefHeight="50.0" prefWidth="171.0" styleClass="menu-button" text="Timer">
-					<graphic>
-						<FontIcon iconColor="WHITE" iconLiteral="fas-clock" iconSize="18" styleClass="icon-menu" />
-					</graphic>
-				</Button>
-				<Button fx:id="studyDeckButton" mnemonicParsing="false" onAction="#handleStudyDeck" prefHeight="50.0" prefWidth="173.0" styleClass="menu-button" text="Study Deck">
-					<graphic>
-						<FontIcon iconColor="WHITE" iconLiteral="fas-clone" iconSize="18" styleClass="icon-menu" />
-					</graphic>
-				</Button>
+				<!-- App Title with Adaptive Sizing -->
+				<HBox fx:id="titleContainer" styleClass="title-container" alignment="CENTER_LEFT">
+					<children>
+						<FontIcon fx:id="titleIcon" iconColor="#F5F7FA" iconLiteral="mdi2d-diamond-outline" 
+						         styleClass="icon-responsive,icon-primary,smooth-animation" />
+						<Label fx:id="titleLabel" text="ONYX" 
+						       styleClass="title-large,smooth-animation" />
+					</children>
+				</HBox>
+				
+				<!-- Navigation Buttons with Responsive Design -->
+				<VBox fx:id="navigationContainer" styleClass="navigation-container" 
+				      VBox.vgrow="ALWAYS">
+					<children>
+						<Button fx:id="dashboardButton" mnemonicParsing="false" 
+						        styleClass="sidebar-button,smooth-animation" 
+						        text="Dashboard" maxWidth="10000" contentDisplay="LEFT">
+							<graphic>
+								<FontIcon iconColor="WHITE" iconLiteral="fas-tachometer-alt" 
+								         styleClass="icon-menu,smooth-animation" />
+							</graphic>
+						</Button>
+						
+						<Button fx:id="timerButton" mnemonicParsing="false" onAction="#handleTimer"
+						        styleClass="sidebar-button,smooth-animation" 
+						        text="Timer" maxWidth="10000" contentDisplay="LEFT">
+							<graphic>
+								<FontIcon iconColor="WHITE" iconLiteral="fas-clock" 
+								         styleClass="icon-menu,smooth-animation" />
+							</graphic>
+						</Button>
+						
+						<Button fx:id="studyDeckButton" mnemonicParsing="false" onAction="#handleStudyDeck"
+						        styleClass="sidebar-button,smooth-animation" 
+						        text="Study Deck" maxWidth="10000" contentDisplay="LEFT">
+							<graphic>
+								<FontIcon iconColor="WHITE" iconLiteral="fas-clone" 
+								         styleClass="icon-menu,smooth-animation" />
+							</graphic>
+						</Button>
+					</children>
+				</VBox>
+				
+				<!-- Sidebar Footer (Spacer for future features) -->
+				<VBox fx:id="sidebarFooter" styleClass="sidebar-footer,padding-base" />
 			</children>
 		</VBox>
 	</left>
+	
+	<!-- Main Content Area with Responsive Wrapper -->
 	<center>
-		<Pane prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER" />
+		<StackPane fx:id="contentWrapper" styleClass="content-wrapper,flexible-width,flexible-height,hardware-accelerated" 
+		           BorderPane.alignment="CENTER">
+			<children>
+				<Pane fx:id="contentPane" styleClass="content-pane,flexible-width,flexible-height,main-content-area" />
+			</children>
+		</StackPane>
 	</center>
 
 </BorderPane>

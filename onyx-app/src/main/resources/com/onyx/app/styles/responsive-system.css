@@ -1,0 +1,737 @@
+/*
+ * COMMERCIAL-GRADE RESPONSIVE SYSTEM FOR JAVAFX
+ * 
+ * STRICT JAVAFX CSS COMPATIBILITY:
+ * - NO var() variables (not supported)
+ * - NO calc() functions (not supported)
+ * - NO CSS Grid or Flexbox (not supported)
+ * - NO media queries (not supported)
+ * - ONLY JavaFX-supported properties: -fx-*, px, %, basic selectors
+ * 
+ * PROFESSIONAL RESPONSIVE ARCHITECTURE:
+ * - Breakpoint-based class system managed via Java Scene Graph API
+ * - Performance-optimized resize handling with debounced updates
+ * - Cross-platform compatibility (Windows/Mac/Linux)
+ * - Commercial-grade component scaling strategies
+ */
+
+/* =============================================
+   CORE RESPONSIVE BREAKPOINT SYSTEM
+   Managed dynamically by ResponsiveController
+   ============================================= */
+
+/* === MOBILE BREAKPOINT (320-767px) === */
+.mobile-layout {
+    -fx-font-size: 12px;
+}
+
+/* === TABLET BREAKPOINT (768-1023px) === */
+.tablet-layout {
+    -fx-font-size: 14px;
+}
+
+/* === DESKTOP BREAKPOINT (1024-1439px) === */
+.desktop-layout {
+    -fx-font-size: 16px;
+}
+
+/* === LARGE DESKTOP BREAKPOINT (1440-1919px) === */
+.large-desktop-layout {
+    -fx-font-size: 18px;
+}
+
+/* === ULTRA WIDE BREAKPOINT (1920px+) === */
+.ultra-wide-layout {
+    -fx-font-size: 20px;
+}
+
+/* =============================================
+   PROFESSIONAL TYPOGRAPHY SYSTEM
+   Scales proportionally across all breakpoints
+   ============================================= */
+
+/* Mobile Typography */
+.mobile-layout .text-xs { -fx-font-size: 9px; }
+.mobile-layout .text-sm { -fx-font-size: 11px; }
+.mobile-layout .text-base { -fx-font-size: 12px; }
+.mobile-layout .text-lg { -fx-font-size: 14px; }
+.mobile-layout .text-xl { -fx-font-size: 16px; }
+.mobile-layout .text-2xl { -fx-font-size: 18px; }
+.mobile-layout .text-3xl { -fx-font-size: 22px; }
+.mobile-layout .text-4xl { -fx-font-size: 28px; }
+.mobile-layout .text-5xl { -fx-font-size: 32px; }
+
+/* Tablet Typography */
+.tablet-layout .text-xs { -fx-font-size: 10px; }
+.tablet-layout .text-sm { -fx-font-size: 12px; }
+.tablet-layout .text-base { -fx-font-size: 14px; }
+.tablet-layout .text-lg { -fx-font-size: 16px; }
+.tablet-layout .text-xl { -fx-font-size: 18px; }
+.tablet-layout .text-2xl { -fx-font-size: 22px; }
+.tablet-layout .text-3xl { -fx-font-size: 28px; }
+.tablet-layout .text-4xl { -fx-font-size: 36px; }
+.tablet-layout .text-5xl { -fx-font-size: 42px; }
+
+/* Desktop Typography */
+.desktop-layout .text-xs { -fx-font-size: 12px; }
+.desktop-layout .text-sm { -fx-font-size: 14px; }
+.desktop-layout .text-base { -fx-font-size: 16px; }
+.desktop-layout .text-lg { -fx-font-size: 18px; }
+.desktop-layout .text-xl { -fx-font-size: 20px; }
+.desktop-layout .text-2xl { -fx-font-size: 24px; }
+.desktop-layout .text-3xl { -fx-font-size: 32px; }
+.desktop-layout .text-4xl { -fx-font-size: 44px; }
+.desktop-layout .text-5xl { -fx-font-size: 52px; }
+
+/* Large Desktop Typography */
+.large-desktop-layout .text-xs { -fx-font-size: 14px; }
+.large-desktop-layout .text-sm { -fx-font-size: 16px; }
+.large-desktop-layout .text-base { -fx-font-size: 18px; }
+.large-desktop-layout .text-lg { -fx-font-size: 20px; }
+.large-desktop-layout .text-xl { -fx-font-size: 24px; }
+.large-desktop-layout .text-2xl { -fx-font-size: 28px; }
+.large-desktop-layout .text-3xl { -fx-font-size: 36px; }
+.large-desktop-layout .text-4xl { -fx-font-size: 48px; }
+.large-desktop-layout .text-5xl { -fx-font-size: 58px; }
+
+/* Ultra Wide Typography */
+.ultra-wide-layout .text-xs { -fx-font-size: 16px; }
+.ultra-wide-layout .text-sm { -fx-font-size: 18px; }
+.ultra-wide-layout .text-base { -fx-font-size: 20px; }
+.ultra-wide-layout .text-lg { -fx-font-size: 24px; }
+.ultra-wide-layout .text-xl { -fx-font-size: 28px; }
+.ultra-wide-layout .text-2xl { -fx-font-size: 32px; }
+.ultra-wide-layout .text-3xl { -fx-font-size: 40px; }
+.ultra-wide-layout .text-4xl { -fx-font-size: 54px; }
+.ultra-wide-layout .text-5xl { -fx-font-size: 64px; }
+
+/* =============================================
+   PROFESSIONAL SPACING SYSTEM
+   Consistent spacing scales across breakpoints
+   ============================================= */
+
+/* Mobile Spacing */
+.mobile-layout .spacing-xs { -fx-spacing: 2; }
+.mobile-layout .spacing-sm { -fx-spacing: 4; }
+.mobile-layout .spacing-base { -fx-spacing: 8; }
+.mobile-layout .spacing-lg { -fx-spacing: 12; }
+.mobile-layout .spacing-xl { -fx-spacing: 16; }
+.mobile-layout .spacing-2xl { -fx-spacing: 20; }
+
+.mobile-layout .padding-xs { -fx-padding: 2; }
+.mobile-layout .padding-sm { -fx-padding: 4; }
+.mobile-layout .padding-base { -fx-padding: 8; }
+.mobile-layout .padding-lg { -fx-padding: 12; }
+.mobile-layout .padding-xl { -fx-padding: 16; }
+.mobile-layout .padding-2xl { -fx-padding: 20; }
+
+/* Tablet Spacing */
+.tablet-layout .spacing-xs { -fx-spacing: 4; }
+.tablet-layout .spacing-sm { -fx-spacing: 6; }
+.tablet-layout .spacing-base { -fx-spacing: 12; }
+.tablet-layout .spacing-lg { -fx-spacing: 16; }
+.tablet-layout .spacing-xl { -fx-spacing: 24; }
+.tablet-layout .spacing-2xl { -fx-spacing: 32; }
+
+.tablet-layout .padding-xs { -fx-padding: 4; }
+.tablet-layout .padding-sm { -fx-padding: 6; }
+.tablet-layout .padding-base { -fx-padding: 12; }
+.tablet-layout .padding-lg { -fx-padding: 16; }
+.tablet-layout .padding-xl { -fx-padding: 24; }
+.tablet-layout .padding-2xl { -fx-padding: 32; }
+
+/* Desktop Spacing */
+.desktop-layout .spacing-xs { -fx-spacing: 6; }
+.desktop-layout .spacing-sm { -fx-spacing: 8; }
+.desktop-layout .spacing-base { -fx-spacing: 16; }
+.desktop-layout .spacing-lg { -fx-spacing: 24; }
+.desktop-layout .spacing-xl { -fx-spacing: 32; }
+.desktop-layout .spacing-2xl { -fx-spacing: 48; }
+
+.desktop-layout .padding-xs { -fx-padding: 6; }
+.desktop-layout .padding-sm { -fx-padding: 8; }
+.desktop-layout .padding-base { -fx-padding: 16; }
+.desktop-layout .padding-lg { -fx-padding: 24; }
+.desktop-layout .padding-xl { -fx-padding: 32; }
+.desktop-layout .padding-2xl { -fx-padding: 48; }
+
+/* Large Desktop Spacing */
+.large-desktop-layout .spacing-xs { -fx-spacing: 8; }
+.large-desktop-layout .spacing-sm { -fx-spacing: 12; }
+.large-desktop-layout .spacing-base { -fx-spacing: 20; }
+.large-desktop-layout .spacing-lg { -fx-spacing: 32; }
+.large-desktop-layout .spacing-xl { -fx-spacing: 40; }
+.large-desktop-layout .spacing-2xl { -fx-spacing: 56; }
+
+.large-desktop-layout .padding-xs { -fx-padding: 8; }
+.large-desktop-layout .padding-sm { -fx-padding: 12; }
+.large-desktop-layout .padding-base { -fx-padding: 20; }
+.large-desktop-layout .padding-lg { -fx-padding: 32; }
+.large-desktop-layout .padding-xl { -fx-padding: 40; }
+.large-desktop-layout .padding-2xl { -fx-padding: 56; }
+
+/* Ultra Wide Spacing */
+.ultra-wide-layout .spacing-xs { -fx-spacing: 10; }
+.ultra-wide-layout .spacing-sm { -fx-spacing: 16; }
+.ultra-wide-layout .spacing-base { -fx-spacing: 24; }
+.ultra-wide-layout .spacing-lg { -fx-spacing: 40; }
+.ultra-wide-layout .spacing-xl { -fx-spacing: 48; }
+.ultra-wide-layout .spacing-2xl { -fx-spacing: 64; }
+
+.ultra-wide-layout .padding-xs { -fx-padding: 10; }
+.ultra-wide-layout .padding-sm { -fx-padding: 16; }
+.ultra-wide-layout .padding-base { -fx-padding: 24; }
+.ultra-wide-layout .padding-lg { -fx-padding: 40; }
+.ultra-wide-layout .padding-xl { -fx-padding: 48; }
+.ultra-wide-layout .padding-2xl { -fx-padding: 64; }
+
+/* =============================================
+   COMMERCIAL COMPONENT SCALING SYSTEM
+   Optimal sizing strategies for all screen sizes
+   ============================================= */
+
+/* Timer Card Components */
+.mobile-layout .timer-card {
+    -fx-min-width: 140;
+    -fx-pref-width: 180;
+    -fx-max-width: 220;
+    -fx-min-height: 140;
+    -fx-pref-height: 180;
+    -fx-max-height: 220;
+    -fx-padding: 8;
+}
+
+.tablet-layout .timer-card {
+    -fx-min-width: 180;
+    -fx-pref-width: 220;
+    -fx-max-width: 260;
+    -fx-min-height: 180;
+    -fx-pref-height: 220;
+    -fx-max-height: 260;
+    -fx-padding: 12;
+}
+
+.desktop-layout .timer-card {
+    -fx-min-width: 220;
+    -fx-pref-width: 280;
+    -fx-max-width: 340;
+    -fx-min-height: 220;
+    -fx-pref-height: 280;
+    -fx-max-height: 340;
+    -fx-padding: 16;
+}
+
+.large-desktop-layout .timer-card {
+    -fx-min-width: 260;
+    -fx-pref-width: 320;
+    -fx-max-width: 400;
+    -fx-min-height: 260;
+    -fx-pref-height: 320;
+    -fx-max-height: 400;
+    -fx-padding: 20;
+}
+
+.ultra-wide-layout .timer-card {
+    -fx-min-width: 300;
+    -fx-pref-width: 360;
+    -fx-max-width: 440;
+    -fx-min-height: 300;
+    -fx-pref-height: 360;
+    -fx-max-height: 440;
+    -fx-padding: 24;
+}
+
+/* Mini Timer Widget Components */
+.mobile-layout .mini-timer-widget {
+    -fx-min-width: 160;
+    -fx-pref-width: 200;
+    -fx-max-width: 240;
+    -fx-padding: 8;
+}
+
+.tablet-layout .mini-timer-widget {
+    -fx-min-width: 200;
+    -fx-pref-width: 240;
+    -fx-max-width: 280;
+    -fx-padding: 12;
+}
+
+.desktop-layout .mini-timer-widget {
+    -fx-min-width: 240;
+    -fx-pref-width: 280;
+    -fx-max-width: 320;
+    -fx-padding: 16;
+}
+
+.large-desktop-layout .mini-timer-widget {
+    -fx-min-width: 280;
+    -fx-pref-width: 320;
+    -fx-max-width: 380;
+    -fx-padding: 20;
+}
+
+.ultra-wide-layout .mini-timer-widget {
+    -fx-min-width: 320;
+    -fx-pref-width: 360;
+    -fx-max-width: 420;
+    -fx-padding: 24;
+}
+
+/* Sidebar Navigation Components */
+.mobile-layout .sidebar-container {
+    -fx-pref-width: 60;
+    -fx-min-width: 50;
+}
+
+.tablet-layout .sidebar-container {
+    -fx-pref-width: 120;
+    -fx-min-width: 100;
+}
+
+.desktop-layout .sidebar-container {
+    -fx-pref-width: 186;
+    -fx-min-width: 160;
+}
+
+.large-desktop-layout .sidebar-container {
+    -fx-pref-width: 220;
+    -fx-min-width: 180;
+}
+
+.ultra-wide-layout .sidebar-container {
+    -fx-pref-width: 260;
+    -fx-min-width: 220;
+}
+
+/* Dialog Container Components */
+.mobile-layout .dialog-container {
+    -fx-max-width: 280;
+    -fx-pref-width: 280;
+    -fx-max-height: 240;
+    -fx-pref-height: 240;
+}
+
+.tablet-layout .dialog-container {
+    -fx-max-width: 320;
+    -fx-pref-width: 320;
+    -fx-max-height: 280;
+    -fx-pref-height: 280;
+}
+
+.desktop-layout .dialog-container {
+    -fx-max-width: 400;
+    -fx-pref-width: 400;
+    -fx-max-height: 350;
+    -fx-pref-height: 350;
+}
+
+.large-desktop-layout .dialog-container {
+    -fx-max-width: 480;
+    -fx-pref-width: 480;
+    -fx-max-height: 420;
+    -fx-pref-height: 420;
+}
+
+.ultra-wide-layout .dialog-container {
+    -fx-max-width: 560;
+    -fx-pref-width: 560;
+    -fx-max-height: 480;
+    -fx-pref-height: 480;
+}
+
+
+
+/* =============================================
+   PROFESSIONAL INTERACTIVE COMPONENTS
+   Buttons, inputs, and form elements
+   ============================================= */
+
+/* Responsive Button System */
+.btn-responsive {
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-alignment: center;
+    -fx-font-family: "Segoe UI", "Inter", system-ui, sans-serif;
+    -fx-font-weight: 500;
+}
+
+.mobile-layout .btn-responsive {
+    -fx-min-height: 24;
+    -fx-pref-height: 24;
+    -fx-padding: 4 8;
+    -fx-font-size: 11px;
+}
+
+.tablet-layout .btn-responsive {
+    -fx-min-height: 28;
+    -fx-pref-height: 28;
+    -fx-padding: 6 12;
+    -fx-font-size: 12px;
+}
+
+.desktop-layout .btn-responsive {
+    -fx-min-height: 36;
+    -fx-pref-height: 36;
+    -fx-padding: 8 16;
+    -fx-font-size: 14px;
+}
+
+.large-desktop-layout .btn-responsive {
+    -fx-min-height: 44;
+    -fx-pref-height: 44;
+    -fx-padding: 10 20;
+    -fx-font-size: 16px;
+}
+
+.ultra-wide-layout .btn-responsive {
+    -fx-min-height: 52;
+    -fx-pref-height: 52;
+    -fx-padding: 12 24;
+    -fx-font-size: 18px;
+}
+
+/* Responsive Input System */
+.input-responsive {
+    -fx-background-radius: 6;
+    -fx-font-family: "Segoe UI", "Inter", system-ui, sans-serif;
+    -fx-border-width: 1;
+    -fx-border-color: rgba(0, 0, 0, 0.2);
+    -fx-border-radius: 6;
+}
+
+.mobile-layout .input-responsive {
+    -fx-min-height: 24;
+    -fx-pref-height: 24;
+    -fx-padding: 4;
+    -fx-font-size: 11px;
+}
+
+.tablet-layout .input-responsive {
+    -fx-min-height: 28;
+    -fx-pref-height: 28;
+    -fx-padding: 6;
+    -fx-font-size: 12px;
+}
+
+.desktop-layout .input-responsive {
+    -fx-min-height: 36;
+    -fx-pref-height: 36;
+    -fx-padding: 8;
+    -fx-font-size: 14px;
+}
+
+.large-desktop-layout .input-responsive {
+    -fx-min-height: 44;
+    -fx-pref-height: 44;
+    -fx-padding: 10;
+    -fx-font-size: 16px;
+}
+
+.ultra-wide-layout .input-responsive {
+    -fx-min-height: 52;
+    -fx-pref-height: 52;
+    -fx-padding: 12;
+    -fx-font-size: 18px;
+}
+
+.input-responsive:focused {
+    -fx-border-color: #00B4A6;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(gaussian, rgba(0, 180, 166, 0.25), 4, 0.5, 0, 0);
+}
+
+/* Generic Card System */
+.card-responsive {
+    -fx-background-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 8, 0.3, 0, 2);
+    -fx-background-color: white;
+    -fx-border-color: rgba(0, 0, 0, 0.1);
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+}
+
+.card-responsive:hover {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 12, 0.4, 0, 4);
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+}
+
+/* =============================================
+   SPECIALIZED COMPONENT STYLING
+   Application-specific component behaviors
+   ============================================= */
+
+/* Professional Timer Display */
+.timer-display {
+    -fx-font-family: "SF Mono", "Consolas", "Monaco", "Roboto Mono", monospace;
+    -fx-font-weight: bold;
+    -fx-alignment: center;
+    -fx-text-fill: #1E293B;
+}
+
+.mobile-layout .timer-display { -fx-font-size: 24px; }
+.tablet-layout .timer-display { -fx-font-size: 32px; }
+.desktop-layout .timer-display { -fx-font-size: 42px; }
+.large-desktop-layout .timer-display { -fx-font-size: 52px; }
+.ultra-wide-layout .timer-display { -fx-font-size: 62px; }
+
+/* Timer Display States */
+.timer-display.running {
+    -fx-text-fill: #00B4A6;
+}
+
+.timer-display.paused {
+    -fx-text-fill: #F59E0B;
+}
+
+.timer-display.finished {
+    -fx-text-fill: #EF4444;
+    -fx-effect: dropshadow(gaussian, rgba(239, 68, 68, 0.3), 6, 0.5, 0, 0);
+}
+
+/* Professional Icon System */
+.icon-xs { -fx-icon-size: 10; }
+.icon-sm { -fx-icon-size: 14; }
+.icon-base { -fx-icon-size: 18; }
+.icon-lg { -fx-icon-size: 22; }
+.icon-xl { -fx-icon-size: 28; }
+.icon-2xl { -fx-icon-size: 36; }
+
+.mobile-layout .icon-responsive { -fx-icon-size: 14; }
+.tablet-layout .icon-responsive { -fx-icon-size: 16; }
+.desktop-layout .icon-responsive { -fx-icon-size: 20; }
+.large-desktop-layout .icon-responsive { -fx-icon-size: 24; }
+.ultra-wide-layout .icon-responsive { -fx-icon-size: 28; }
+
+/* Icon State Colors */
+.icon-primary { -fx-icon-color: #00B4A6; }
+.icon-secondary { -fx-icon-color: #64748B; }
+.icon-success { -fx-icon-color: #10B981; }
+.icon-warning { -fx-icon-color: #F59E0B; }
+.icon-danger { -fx-icon-color: #EF4444; }
+
+/* Professional Progress Bar System */
+.progress-responsive {
+    -fx-background-radius: 4;
+    -fx-background-color: rgba(0, 0, 0, 0.1);
+}
+
+.progress-responsive .bar {
+    -fx-background-color: linear-gradient(to right, #00B4A6, #10B981);
+    -fx-background-radius: 4;
+}
+
+.mobile-layout .progress-responsive { -fx-pref-height: 3; }
+.tablet-layout .progress-responsive { -fx-pref-height: 4; }
+.desktop-layout .progress-responsive { -fx-pref-height: 6; }
+.large-desktop-layout .progress-responsive { -fx-pref-height: 8; }
+.ultra-wide-layout .progress-responsive { -fx-pref-height: 10; }
+
+/* =============================================
+   PROFESSIONAL SCROLL SYSTEM
+   Native-feeling scrollbars across all platforms
+   ============================================= */
+
+.scroll-pane-responsive {
+    -fx-background-color: transparent;
+    -fx-fit-to-width: true;
+    -fx-fit-to-height: true;
+}
+
+/* Mobile Scrollbars - Minimal */
+.mobile-layout .scroll-pane-responsive .scroll-bar:horizontal,
+.mobile-layout .scroll-pane-responsive .scroll-bar:vertical {
+    -fx-pref-width: 6;
+    -fx-pref-height: 6;
+}
+
+/* Tablet Scrollbars */
+.tablet-layout .scroll-pane-responsive .scroll-bar:horizontal,
+.tablet-layout .scroll-pane-responsive .scroll-bar:vertical {
+    -fx-pref-width: 8;
+    -fx-pref-height: 8;
+}
+
+/* Desktop Scrollbars */
+.desktop-layout .scroll-pane-responsive .scroll-bar:horizontal,
+.desktop-layout .scroll-pane-responsive .scroll-bar:vertical {
+    -fx-pref-width: 12;
+    -fx-pref-height: 12;
+}
+
+/* Large Desktop Scrollbars */
+.large-desktop-layout .scroll-pane-responsive .scroll-bar:horizontal,
+.large-desktop-layout .scroll-pane-responsive .scroll-bar:vertical {
+    -fx-pref-width: 16;
+    -fx-pref-height: 16;
+}
+
+/* Ultra Wide Scrollbars */
+.ultra-wide-layout .scroll-pane-responsive .scroll-bar:horizontal,
+.ultra-wide-layout .scroll-pane-responsive .scroll-bar:vertical {
+    -fx-pref-width: 20;
+    -fx-pref-height: 20;
+}
+
+/* Scrollbar Styling */
+.scroll-pane-responsive .scroll-bar .track {
+    -fx-background-color: rgba(0, 0, 0, 0.05);
+    -fx-background-radius: 8;
+}
+
+.scroll-pane-responsive .scroll-bar .thumb {
+    -fx-background-color: rgba(0, 0, 0, 0.2);
+    -fx-background-radius: 8;
+}
+
+.scroll-pane-responsive .scroll-bar .thumb:hover {
+    -fx-background-color: rgba(0, 0, 0, 0.4);
+}
+
+.scroll-pane-responsive .scroll-bar .thumb:pressed {
+    -fx-background-color: #00B4A6;
+}
+
+/* =============================================
+   PROFESSIONAL UTILITY CLASSES
+   Layout helpers and responsive utilities
+   ============================================= */
+
+/* Layout Flexibility */
+.flexible-width {
+    -fx-max-width: 10000;
+    -fx-hgrow: always;
+}
+
+.flexible-height {
+    -fx-max-height: 10000;
+    -fx-vgrow: always;
+}
+
+.fill-width {
+    -fx-pref-width: 10000;
+    -fx-max-width: 10000;
+}
+
+.fill-height {
+    -fx-pref-height: 10000;
+    -fx-max-height: 10000;
+}
+
+/* Responsive Visibility Control (managed by ResponsiveController) */
+.hide-on-mobile { }
+.hide-on-tablet { }
+.hide-on-desktop { }
+.hide-on-large-desktop { }
+.hide-on-ultra-wide { }
+
+.show-only-mobile { }
+.show-only-tablet { }
+.show-only-desktop { }
+.show-only-large-desktop { }
+.show-only-ultra-wide { }
+
+/* Professional Alignment Classes */
+.center-content {
+    -fx-alignment: center;
+}
+
+.left-content {
+    -fx-alignment: center-left;
+}
+
+.right-content {
+    -fx-alignment: center-right;
+}
+
+.top-content {
+    -fx-alignment: top-center;
+}
+
+.bottom-content {
+    -fx-alignment: bottom-center;
+}
+
+.top-left-content {
+    -fx-alignment: top-left;
+}
+
+.top-right-content {
+    -fx-alignment: top-right;
+}
+
+.bottom-left-content {
+    -fx-alignment: bottom-left;
+}
+
+.bottom-right-content {
+    -fx-alignment: bottom-right;
+}
+
+/* Content Distribution */
+.space-between {
+    -fx-alignment: center;
+}
+
+.space-around {
+    -fx-alignment: center;
+}
+
+/* Responsive Grid Support */
+.grid-responsive {
+    -fx-alignment: top-left;
+}
+
+.mobile-layout .grid-responsive {
+    -fx-hgap: 8;
+    -fx-vgap: 8;
+}
+
+.tablet-layout .grid-responsive {
+    -fx-hgap: 12;
+    -fx-vgap: 12;
+}
+
+.desktop-layout .grid-responsive {
+    -fx-hgap: 16;
+    -fx-vgap: 16;
+}
+
+.large-desktop-layout .grid-responsive {
+    -fx-hgap: 20;
+    -fx-vgap: 20;
+}
+
+.ultra-wide-layout .grid-responsive {
+    -fx-hgap: 24;
+    -fx-vgap: 24;
+}
+
+/* =============================================
+   PERFORMANCE OPTIMIZATION CLASSES
+   For smooth animations and transitions
+   ============================================= */
+
+.smooth-resize {
+    -fx-cache-hint: speed;
+}
+
+.hardware-accelerated {
+    -fx-cache: true;
+    -fx-cache-hint: speed;
+}
+
+/* Animation-ready components */
+.animatable {
+    -fx-cache: true;
+    -fx-cache-hint: quality;
+}
+
+/* High-DPI optimization */
+.crisp-edges {
+    -fx-smooth: false;
+}
+
+.smooth-edges {
+    -fx-smooth: true;
+}

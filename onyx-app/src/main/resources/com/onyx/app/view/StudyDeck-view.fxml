@@ -52,12 +52,13 @@
 </VBox>
 </ScrollPane>
 
-<!-- Container pour la pile de mini-timers avec scroll -->
+<!-- Container pour la pile de mini-timers avec scroll si nécessaire -->
 <ScrollPane fx:id="timerScrollPane" styleClass="timer-scroll-pane"
-            visible="false" managed="false"
+            visible="false" managed="true"
             StackPane.alignment="BOTTOM_LEFT"
             hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
-            fitToWidth="true" prefHeight="400" maxHeight="400">
+            fitToWidth="true" maxWidth="300" prefWidth="300"
+            maxHeight="400" prefHeight="400">
     <StackPane.margin>
         <Insets bottom="20" left="20"/>
     </StackPane.margin>

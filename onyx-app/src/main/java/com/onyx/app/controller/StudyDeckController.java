@@ -25,6 +25,11 @@ import javafx.scene.layout.VBox;
 
 public class StudyDeckController {
 
+    // Constantes pour la configuration des timers
+    private static final double TIMER_STACK_MARGIN = 20.0;
+    private static final double TIMER_STACK_MAX_HEIGHT = 400.0;
+    private static final double TIMER_STACK_OPACITY = 0.95;
+
     @FXML private VBox coursesList;
     @FXML private VBox addCoursePane;
     @FXML private Button addCourseButton;
@@ -227,32 +232,14 @@ public class StudyDeckController {
             );
             timerService.setTimerModel(timerModel);
             
-            // Configurer le mini-timer
-            newMiniTimer.setupTimer(timerService, subject, timerDuration);
+            // Configurer le mini-timer et ses callbacks
+            setupMiniTimer(newMiniTimer, timerService, subject, timerDuration);
             
-            // Configurer les callbacks
-            newMiniTimer.setOnTimerFinished(this::handleMiniTimerFinished);
-            newMiniTimer.setOnClose(this::handleMiniTimerClosed);
+            // Ajouter le timer à la pile et à la liste active
+            addTimerToStack(newMiniTimer, miniTimerView);
             
-            // Ajouter à la liste des timers actifs
-            activeTimers.add(newMiniTimer);
-            
-            // Ajouter le timer à la pile
-            timerStackContainer.getChildren().add(miniTimerView);
-            
-            // Configurer les propriétés du conteneur principal
-            updateTimerStackVisibility();
-            
-            // Configurer le widget pour qu'il soit interactif
-            miniTimerView.setMouseTransparent(false);
-            miniTimerView.setPickOnBounds(true);
-            miniTimerView.setFocusTraversable(false);
-            
-            // Démarrer le timer
-            Platform.runLater(() -> {
-                // Permettre au système de terminer le layout avant de démarrer
-                timerService.startTimer();
-            });
+            // Démarrer le timer après configuration complète
+            Platform.runLater(timerService::startTimer);
             
         } catch (IOException e) {
             e.printStackTrace();
@@ -261,30 +248,83 @@ public class StudyDeckController {
     }
 
     /**
+     * Configure un mini-timer avec le service et les callbacks
+     */
+    private void setupMiniTimer(StudyMiniTimerController miniTimer, TimerService timerService, 
+                               Subject subject, Duration timerDuration) {
+        miniTimer.setupTimer(timerService, subject, timerDuration);
+        miniTimer.setOnTimerFinished(this::handleMiniTimerFinished);
+        miniTimer.setOnClose(this::handleMiniTimerClosed);
+    }
+    
+    /**
+     * Ajoute un timer à la pile et configure ses propriétés d'interaction
+     */
+    private void addTimerToStack(StudyMiniTimerController miniTimer, VBox miniTimerView) {
+        // Configurer les propriétés d'interaction du widget
+        configureTimerViewInteraction(miniTimerView);
+        
+        // Ajouter aux collections
+        activeTimers.add(miniTimer);
+        timerStackContainer.getChildren().add(miniTimerView);
+        
+        // Mettre à jour l'affichage
+        updateTimerStackVisibility();
+    }
+    
+    /**
+     * Configure les propriétés d'interaction d'un widget timer
+     */
+    private void configureTimerViewInteraction(VBox timerView) {
+        timerView.setMouseTransparent(false);
+        timerView.setPickOnBounds(true);
+        timerView.setFocusTraversable(false);
+    }
+
+    /**
      * Met à jour la visibilité et le positionnement du conteneur de pile de timers
      */
     private void updateTimerStackVisibility() {
         if (activeTimers.isEmpty()) {
-            timerScrollPane.setVisible(false);
-            timerScrollPane.setManaged(false);
+            hideTimerStack();
         } else {
-            timerScrollPane.setVisible(true);
-            timerScrollPane.setManaged(false); // Reste en position absolue
-            timerScrollPane.setMouseTransparent(false);
-            timerScrollPane.setPickOnBounds(false);
-            timerScrollPane.setFocusTraversable(false);
-            timerScrollPane.setOpacity(0.95);
-            
-            // Positionner en bas à gauche
-            Platform.runLater(() -> {
-                timerScrollPane.setLayoutX(20);
-                
-                // Calculer position Y dynamiquement - le ScrollPane a une hauteur fixe
-                double parentHeight = timerScrollPane.getParent().getBoundsInLocal().getHeight();
-                double scrollHeight = 400; // Hauteur fixe du ScrollPane
-                timerScrollPane.setLayoutY(Math.max(20, parentHeight - scrollHeight - 20));
-            });
+            showTimerStack();
         }
+    }
+    
+    /**
+     * Affiche le conteneur de timers et le positionne en bas à gauche
+     */
+    private void showTimerStack() {
+        timerScrollPane.setVisible(true);
+        configureScrollPaneProperties();
+        positionTimerStack();
+    }
+    
+    /**
+     * Masque le conteneur de timers
+     */
+    private void hideTimerStack() {
+        timerScrollPane.setVisible(false);
+    }
+    
+    /**
+     * Configure les propriétés du ScrollPane
+     */
+    private void configureScrollPaneProperties() {
+        timerScrollPane.setVisible(true);
+        timerScrollPane.setMouseTransparent(false);
+        timerScrollPane.setPickOnBounds(false);
+        timerScrollPane.setFocusTraversable(false);
+        timerScrollPane.setOpacity(TIMER_STACK_OPACITY);
+    }
+    
+    /**
+     * Calcule et applique la position du conteneur de timers en bas à gauche
+     */
+    private void positionTimerStack() {
+        // Le positionnement se fait maintenant via le FXML avec StackPane.alignment et margin
+        // Pas de positionnement manuel nécessaire
     }
     
     /**

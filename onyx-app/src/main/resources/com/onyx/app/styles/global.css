@@ -1,435 +1,1338 @@
 /* 
- * ONYX Global Design System
- * Système de design moderne et unifié pour l'application ONYX
- * Basé sur le style du mini-timer avec palette de couleurs moderne
+ * ONYX Professional Design System v2.0
+ * Modern, cohesive styling system for productivity applications
+ * Featuring smooth animations, professional color palette, and responsive design
  */
 
-/* ===== COULEURS ET VARIABLES ===== */
+/* ===== PROFESSIONAL COLOR PALETTE & DESIGN TOKENS ===== */
 .root {
-    /* Palette de couleurs moderne pour ONYX */
+    /* === PRIMARY BRAND COLORS === */
+    -fx-primary: #00B4A6;           /* Teal - Primary brand color */
+    -fx-primary-50: #EDFFFE;        /* Ultra light teal background */
+    -fx-primary-100: #D1FAF7;       /* Light teal accent */
+    -fx-primary-200: #A7F3E8;       /* Soft teal highlight */
+    -fx-primary-300: #6EE7DA;       /* Medium teal */
+    -fx-primary-400: #4DD0C7;       /* Bright teal - hover states */
+    -fx-primary-500: #00B4A6;       /* Primary teal */
+    -fx-primary-600: #0A9F92;       /* Deep teal */
+    -fx-primary-700: #008B7F;       /* Dark teal - pressed states */
+    -fx-primary-800: #0F766E;       /* Darker teal */
+    -fx-primary-900: #134E4A;       /* Deepest teal */
     
-    /* Couleurs principales */
-    -fx-primary: #00B4A6;           /* Teal moderne */
-    -fx-primary-light: #4DD0C7;     /* Teal clair pour hover */
-    -fx-primary-dark: #008B7F;      /* Teal foncé pour pressed */
+    /* === SECONDARY COLORS === */
+    -fx-secondary: #667EEA;         /* Purple-blue */
+    -fx-secondary-light: #A5B4FC;   /* Light purple */
+    -fx-secondary-dark: #5B6FE8;    /* Dark purple */
     
-    /* Couleurs secondaires */
-    -fx-secondary: #667EEA;         /* Purple-blue moderne */
-    -fx-secondary-light: #A5B4FC;   /* Lavande clair */
+    /* === ACCENT COLORS === */
+    -fx-accent: #FF6B47;            /* Coral - Call-to-action */
+    -fx-accent-light: #FF8A73;      /* Light coral */
+    -fx-accent-dark: #E5412A;       /* Dark coral */
     
-    /* Couleur d'accent */
-    -fx-accent: #FF6B47;            /* Coral chaleureux */
+    /* === SEMANTIC COLORS === */
+    -fx-success: #10B981;           /* Emerald green */
+    -fx-success-light: #34D399;     /* Light green */
+    -fx-success-dark: #059669;      /* Dark green */
     
-    /* Couleurs d'état sémantiques */
-    -fx-success: #10B981;           /* Vert émeraude */
-    -fx-warning: #F59E0B;           /* Ambre */
-    -fx-error: #EF4444;             /* Rouge moderne */
-    -fx-info: #3B82F6;              /* Bleu clair */
+    -fx-warning: #F59E0B;           /* Amber */
+    -fx-warning-light: #FBBF24;     /* Light amber */
+    -fx-warning-dark: #D97706;      /* Dark amber */
     
-    /* Backgrounds sombres (thème actuel) */
-    -fx-bg-primary: #0F172A;        /* Slate 900 */
-    -fx-bg-secondary: #1E293B;      /* Slate 800 */
-    -fx-bg-card: #334155;           /* Slate 700 */
-    -fx-bg-sidebar: #1E293B;        /* Slate 800 */
+    -fx-error: #EF4444;             /* Red */
+    -fx-error-light: #F87171;       /* Light red */
+    -fx-error-dark: #DC2626;        /* Dark red */
     
-    /* Textes pour thème sombre */
-    -fx-text-primary: #F8FAFC;      /* Slate 50 */
-    -fx-text-secondary: #CBD5E1;    /* Slate 300 */
-    -fx-text-muted: #94A3B8;        /* Slate 400 */
+    -fx-info: #3B82F6;              /* Blue */
+    -fx-info-light: #60A5FA;        /* Light blue */
+    -fx-info-dark: #2563EB;         /* Dark blue */
     
-    /* Typographie */
-    -fx-font-family: "Segoe UI", "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-    -fx-font-size: 14px;
+    /* === NEUTRAL GRAYS (Dark Theme) === */
+    -fx-slate-50: #F8FAFC;          /* Lightest text */
+    -fx-slate-100: #F1F5F9;         /* Very light text */
+    -fx-slate-200: #E2E8F0;         /* Light text */
+    -fx-slate-300: #CBD5E1;         /* Secondary text */
+    -fx-slate-400: #94A3B8;         /* Muted text */
+    -fx-slate-500: #64748B;         /* Placeholder text */
+    -fx-slate-600: #475569;         /* Subtle borders */
+    -fx-slate-700: #334155;         /* Card backgrounds */
+    -fx-slate-800: #1E293B;         /* Secondary backgrounds */
+    -fx-slate-900: #0F172A;         /* Primary backgrounds */
+    
+    /* === BACKGROUND HIERARCHY === */
+    -fx-bg-primary: #0F172A;        /* Main app background */
+    -fx-bg-secondary: #1E293B;      /* Sidebar, secondary areas */
+    -fx-bg-elevated: #334155;       /* Cards, elevated surfaces */
+    -fx-bg-overlay: #475569;        /* Overlays, modals */
+    
+    /* === TEXT HIERARCHY === */
+    -fx-text-primary: #F8FAFC;      /* Primary text */
+    -fx-text-secondary: #CBD5E1;    /* Secondary text */
+    -fx-text-muted: #94A3B8;        /* Muted text */
+    -fx-text-placeholder: #64748B;  /* Placeholder text */
+    -fx-text-on-primary: #FFFFFF;   /* Text on primary colors */
+    
+    /* === TYPOGRAPHY SYSTEM === */
+    -fx-font-family-primary: "Segoe UI", "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    -fx-font-family-mono: "SF Mono", "Consolas", "Monaco", "Roboto Mono", "JetBrains Mono", monospace;
+    
+    /* === ELEVATION SHADOWS === */
+    -fx-shadow-xs: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 3, 0.2, 0, 1);
+    -fx-shadow-sm: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 6, 0.3, 0, 2);
+    -fx-shadow-md: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 12, 0.4, 0, 4);
+    -fx-shadow-lg: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 20, 0.4, 0, 8);
+    -fx-shadow-xl: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 32, 0.5, 0, 12);
+    
+    /* === BORDER RADIUS SYSTEM === */
+    -fx-radius-xs: 4px;
+    -fx-radius-sm: 8px;
+    -fx-radius-md: 12px;
+    -fx-radius-lg: 16px;
+    -fx-radius-xl: 20px;
+    -fx-radius-2xl: 24px;
+    -fx-radius-full: 50%;
+    
+    /* === SPACING SCALE === */
+    -fx-space-1: 4px;
+    -fx-space-2: 8px;
+    -fx-space-3: 12px;
+    -fx-space-4: 16px;
+    -fx-space-5: 20px;
+    -fx-space-6: 24px;
+    -fx-space-8: 32px;
+    -fx-space-10: 40px;
+    -fx-space-12: 48px;
+    -fx-space-16: 64px;
+    -fx-space-20: 80px;
 }
 
-/* ===== STYLES DE BASE ===== */
+/* ===== FOUNDATIONAL STYLES ===== */
 .root {
-    -fx-font-family: "Segoe UI", "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    -fx-font-family: "Segoe UI", "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     -fx-background-color: #0F172A;
+    -fx-text-fill: #F8FAFC;
+    -fx-font-smoothing-type: lcd;
+}
+
+/* === PROFESSIONAL TYPOGRAPHY SCALE === */
+.text-display-2xl {
+    -fx-font-size: 72px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #F8FAFC;
+    -fx-line-spacing: -4px;
+}
+
+.text-display-xl {
+    -fx-font-size: 60px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #F8FAFC;
+    -fx-line-spacing: -2px;
+}
+
+.text-display-lg {
+    -fx-font-size: 48px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #F8FAFC;
+    -fx-line-spacing: -1px;
+}
+
+.text-display-md {
+    -fx-font-size: 36px;
+    -fx-font-weight: 700;
     -fx-text-fill: #F8FAFC;
 }
 
-/* ===== SYSTÈME DE CARTES UNIFIÉ (Style Mini-Timer) ===== */
+.text-display-sm {
+    -fx-font-size: 30px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #F8FAFC;
+}
 
-/* Carte de base inspirée du mini-timer */
+.text-display-xs {
+    -fx-font-size: 24px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #F8FAFC;
+}
+
+.heading-1 {
+    -fx-font-size: 30px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #F8FAFC;
+}
+
+.heading-2 {
+    -fx-font-size: 24px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #F8FAFC;
+}
+
+.heading-3 {
+    -fx-font-size: 20px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #F8FAFC;
+}
+
+.heading-4 {
+    -fx-font-size: 18px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #F8FAFC;
+}
+
+.heading-5 {
+    -fx-font-size: 16px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #F8FAFC;
+}
+
+.heading-6 {
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #F8FAFC;
+}
+
+.body-xl {
+    -fx-font-size: 20px;
+    -fx-text-fill: #CBD5E1;
+    -fx-line-spacing: 2px;
+}
+
+.body-lg {
+    -fx-font-size: 18px;
+    -fx-text-fill: #CBD5E1;
+    -fx-line-spacing: 1px;
+}
+
+.body-md {
+    -fx-font-size: 16px;
+    -fx-text-fill: #CBD5E1;
+}
+
+.body-sm {
+    -fx-font-size: 14px;
+    -fx-text-fill: #CBD5E1;
+}
+
+.body-xs {
+    -fx-font-size: 12px;
+    -fx-text-fill: #94A3B8;
+}
+
+.caption {
+    -fx-font-size: 12px;
+    -fx-text-fill: #94A3B8;
+    -fx-font-weight: 500;
+}
+
+.overline {
+    -fx-font-size: 10px;
+    -fx-text-fill: #64748B;
+    -fx-font-weight: 600;
+    -fx-text-transform: uppercase;
+}
+
+/* === MONOSPACE TEXT === */
+.mono-lg {
+    -fx-font-family: "SF Mono", "Consolas", "Monaco", "Roboto Mono", monospace;
+    -fx-font-size: 18px;
+    -fx-text-fill: #F8FAFC;
+}
+
+.mono-md {
+    -fx-font-family: "SF Mono", "Consolas", "Monaco", "Roboto Mono", monospace;
+    -fx-font-size: 16px;
+    -fx-text-fill: #F8FAFC;
+}
+
+.mono-sm {
+    -fx-font-family: "SF Mono", "Consolas", "Monaco", "Roboto Mono", monospace;
+    -fx-font-size: 14px;
+    -fx-text-fill: #F8FAFC;
+}
+
+.mono-xs {
+    -fx-font-family: "SF Mono", "Consolas", "Monaco", "Roboto Mono", monospace;
+    -fx-font-size: 12px;
+    -fx-text-fill: #94A3B8;
+}
+
+/* ===== PROFESSIONAL CARD SYSTEM ===== */
+
+/* === CARD ELEVATION LEVELS === */
 .card-base {
-    -fx-background-color: linear-gradient(to bottom right, 
-        rgba(45, 45, 45, 0.95), 
-        rgba(35, 35, 35, 0.95));
+    -fx-background-color: linear-gradient(to bottom right, #334155, #2a3544);
     -fx-background-radius: 16;
     -fx-border-radius: 16;
-    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-color: rgba(255, 255, 255, 0.1);
     -fx-border-width: 1;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 15, 0.3, 0, 5);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 8, 0.3, 0, 2);
     -fx-padding: 16;
 }
 
-/* Carte moderne pour cours et timers */
-.modern-card {
+.card-elevated {
     -fx-background-color: linear-gradient(to bottom right, 
-        rgba(45, 45, 45, 0.95), 
-        rgba(35, 35, 35, 0.95));
+        rgba(51, 65, 85, 0.98), 
+        rgba(42, 53, 68, 0.98));
     -fx-background-radius: 16;
     -fx-border-radius: 16;
+    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 12, 0.4, 0, 4);
+    -fx-padding: 20;
+}
+
+.card-floating {
+    -fx-background-color: linear-gradient(to bottom right, 
+        rgba(51, 65, 85, 0.95), 
+        rgba(42, 53, 68, 0.95));
+    -fx-background-radius: 20;
+    -fx-border-radius: 20;
     -fx-border-color: rgba(255, 255, 255, 0.2);
     -fx-border-width: 1;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 15, 0.3, 0, 5);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 20, 0.4, 0, 8);
+    -fx-padding: 24;
+}
+
+/* === INTERACTIVE CARD STATES === */
+.card-interactive {
+    -fx-background-color: linear-gradient(to bottom right, #334155, #2a3544);
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 8, 0.3, 0, 2);
     -fx-padding: 16;
     -fx-cursor: hand;
 }
 
-.modern-card:hover {
+.card-interactive:hover {
     -fx-background-color: linear-gradient(to bottom right, 
-        rgba(55, 55, 55, 0.95), 
-        rgba(45, 45, 45, 0.95));
-    -fx-border-color: rgba(255, 255, 255, 0.25);
+        rgba(71, 85, 105, 0.98), 
+        rgba(51, 65, 85, 0.98));
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 12, 0.4, 0, 4);
     -fx-scale-x: 1.02;
     -fx-scale-y: 1.02;
 }
 
-.modern-card:pressed {
+.card-interactive:pressed {
     -fx-scale-x: 0.98;
     -fx-scale-y: 0.98;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 6, 0.3, 0, 1);
 }
 
-/* ===== SYSTÈME DE BOUTONS UNIFIÉ ===== */
+/* === GLASSMORPHISM CARDS === */
+.card-glass {
+    -fx-background-color: rgba(255, 255, 255, 0.05);
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 8, 0.3, 0, 2);
+    -fx-padding: 20;
+}
 
-/* Bouton primaire */
-.btn-primary {
-    -fx-background-color: #00B4A6;
-    -fx-text-fill: white;
-    -fx-font-weight: bold;
+.card-glass:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* === CARD VARIANTS === */
+.card-primary {
+    -fx-background-color: linear-gradient(to bottom right, 
+        rgba(0, 180, 166, 0.15), 
+        rgba(0, 139, 127, 0.15));
+    -fx-border-color: rgba(0, 180, 166, 0.3);
+}
+
+.card-success {
+    -fx-background-color: linear-gradient(to bottom right, 
+        rgba(16, 185, 129, 0.15), 
+        rgba(5, 150, 105, 0.15));
+    -fx-border-color: rgba(16, 185, 129, 0.3);
+}
+
+.card-warning {
+    -fx-background-color: linear-gradient(to bottom right, 
+        rgba(245, 158, 11, 0.15), 
+        rgba(217, 119, 6, 0.15));
+    -fx-border-color: rgba(245, 158, 11, 0.3);
+}
+
+.card-error {
+    -fx-background-color: linear-gradient(to bottom right, 
+        rgba(239, 68, 68, 0.15), 
+        rgba(220, 38, 38, 0.15));
+    -fx-border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* ===== PROFESSIONAL BUTTON SYSTEM ===== */
+
+/* === BUTTON BASE STYLES === */
+.btn-base {
+    -fx-font-family: "Segoe UI", "Inter", system-ui, sans-serif;
+    -fx-font-weight: 500;
+    -fx-cursor: hand;
+    -fx-alignment: center;
+    -fx-border-width: 0;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+/* === SIZE VARIANTS === */
+.btn-xs {
+    -fx-font-size: 12px;
+    -fx-padding: 4 8;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-min-height: 24;
+}
+
+.btn-sm {
+    -fx-font-size: 14px;
+    -fx-padding: 6 12;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-min-height: 32;
+}
+
+.btn-md {
+    -fx-font-size: 14px;
+    -fx-padding: 10 16;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-min-height: 40;
+}
+
+.btn-lg {
+    -fx-font-size: 16px;
+    -fx-padding: 12 24;
     -fx-background-radius: 12;
     -fx-border-radius: 12;
-    -fx-padding: 10 20;
-    -fx-cursor: hand;
-    -fx-border-width: 0;
-    -fx-effect: dropshadow(gaussian, rgba(0,180,166,0.3), 8, 0.3, 0, 2);
+    -fx-min-height: 48;
+}
+
+.btn-xl {
+    -fx-font-size: 18px;
+    -fx-padding: 16 32;
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-min-height: 56;
+}
+
+/* === PRIMARY BUTTON === */
+.btn-primary {
+    -fx-background-color: linear-gradient(to bottom, #00B4A6, #0A9F92);
+    -fx-text-fill: white;
+    -fx-font-weight: 600;
+    -fx-effect: dropshadow(gaussian, rgba(0, 180, 166, 0.25), 8, 0.3, 0, 2);
 }
 
 .btn-primary:hover {
-    -fx-background-color: #4DD0C7;
-    -fx-scale-x: 1.05;
-    -fx-scale-y: 1.05;
+    -fx-background-color: linear-gradient(to bottom, #4DD0C7, #00B4A6);
+    -fx-effect: dropshadow(gaussian, rgba(0, 180, 166, 0.4), 12, 0.4, 0, 4);
+    -fx-scale-x: 1.03;
+    -fx-scale-y: 1.03;
 }
 
 .btn-primary:pressed {
-    -fx-background-color: #008B7F;
-    -fx-scale-x: 0.95;
-    -fx-scale-y: 0.95;
+    -fx-background-color: linear-gradient(to bottom, #008B7F, #0F766E);
+    -fx-effect: dropshadow(gaussian, rgba(0, 180, 166, 0.2), 4, 0.2, 0, 1);
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
 }
 
-/* Bouton secondaire */
+.btn-primary:focused {
+    -fx-border-color: #4DD0C7;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(gaussian, rgba(77, 208, 199, 0.5), 8, 0.5, 0, 0);
+}
+
+/* === SECONDARY BUTTON === */
 .btn-secondary {
-    -fx-background-color: #667EEA;
+    -fx-background-color: linear-gradient(to bottom, #667EEA, #5B6FE8);
     -fx-text-fill: white;
-    -fx-font-weight: bold;
-    -fx-background-radius: 12;
-    -fx-border-radius: 12;
-    -fx-padding: 10 20;
-    -fx-cursor: hand;
-    -fx-border-width: 0;
-    -fx-effect: dropshadow(gaussian, rgba(102,126,234,0.3), 8, 0.3, 0, 2);
+    -fx-font-weight: 600;
+    -fx-effect: dropshadow(gaussian, rgba(102, 126, 234, 0.25), 8, 0.3, 0, 2);
 }
 
 .btn-secondary:hover {
-    -fx-background-color: #A5B4FC;
-    -fx-scale-x: 1.05;
-    -fx-scale-y: 1.05;
+    -fx-background-color: linear-gradient(to bottom, #A5B4FC, #667EEA);
+    -fx-effect: dropshadow(gaussian, rgba(102, 126, 234, 0.4), 12, 0.4, 0, 4);
+    -fx-scale-x: 1.03;
+    -fx-scale-y: 1.03;
 }
 
-/* Bouton accent/CTA */
+.btn-secondary:pressed {
+    -fx-background-color: linear-gradient(to bottom, #5B6FE8, #4F46E5);
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
+}
+
+/* === ACCENT/CTA BUTTON === */
 .btn-accent {
-    -fx-background-color: #FF6B47;
+    -fx-background-color: linear-gradient(to bottom, #FF6B47, #E5412A);
     -fx-text-fill: white;
-    -fx-font-weight: bold;
-    -fx-background-radius: 12;
-    -fx-border-radius: 12;
-    -fx-padding: 10 20;
-    -fx-cursor: hand;
-    -fx-border-width: 0;
-    -fx-effect: dropshadow(gaussian, rgba(255,107,71,0.3), 8, 0.3, 0, 2);
+    -fx-font-weight: 600;
+    -fx-effect: dropshadow(gaussian, rgba(255, 107, 71, 0.3), 8, 0.3, 0, 2);
 }
 
 .btn-accent:hover {
-    -fx-background-color: #FF8A73;
+    -fx-background-color: linear-gradient(to bottom, #FF8A73, #FF6B47);
+    -fx-effect: dropshadow(gaussian, rgba(255, 107, 71, 0.5), 12, 0.4, 0, 4);
     -fx-scale-x: 1.05;
     -fx-scale-y: 1.05;
 }
 
 .btn-accent:pressed {
-    -fx-background-color: #E5412A;
+    -fx-background-color: linear-gradient(to bottom, #E5412A, #DC2626);
     -fx-scale-x: 0.95;
     -fx-scale-y: 0.95;
 }
 
-/* Bouton glassmorphism (style mini-timer) */
-.btn-glass {
-    -fx-background-color: rgba(255, 255, 255, 0.15);
-    -fx-text-fill: white;
-    -fx-background-radius: 12;
-    -fx-border-color: rgba(255, 255, 255, 0.25);
-    -fx-border-radius: 12;
-    -fx-border-width: 1;
-    -fx-padding: 8 16;
-    -fx-cursor: hand;
-}
-
-.btn-glass:hover {
-    -fx-background-color: rgba(255, 255, 255, 0.25);
-    -fx-border-color: rgba(255, 255, 255, 0.35);
-    -fx-scale-x: 1.05;
-    -fx-scale-y: 1.05;
-}
-
-.btn-glass:pressed {
-    -fx-background-color: rgba(255, 255, 255, 0.35);
-    -fx-scale-x: 0.95;
-    -fx-scale-y: 0.95;
-}
-
-/* Bouton circulaire pour actions rapides */
-.btn-circle {
-    -fx-background-color: #FF6B47;
-    -fx-text-fill: white;
-    -fx-background-radius: 50%;
-    -fx-border-radius: 50%;
-    -fx-min-width: 36;
-    -fx-min-height: 36;
-    -fx-pref-width: 36;
-    -fx-pref-height: 36;
-    -fx-padding: 8;
-    -fx-cursor: hand;
-    -fx-border-width: 0;
-    -fx-effect: dropshadow(gaussian, rgba(255,107,71,0.3), 8, 0.3, 0, 2);
-}
-
-.btn-circle:hover {
-    -fx-background-color: #FF8A73;
-    -fx-scale-x: 1.1;
-    -fx-scale-y: 1.1;
-}
-
-.btn-circle:pressed {
-    -fx-scale-x: 0.9;
-    -fx-scale-y: 0.9;
-}
-
-/* ===== LABELS ET TYPOGRAPHIE ===== */
-
-.title-large {
-    -fx-font-size: 24px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #F8FAFC;
-}
-
-.title-medium {
-    -fx-font-size: 18px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #F8FAFC;
-}
-
-.title-small {
-    -fx-font-size: 16px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #F8FAFC;
-}
-
-.body-text {
-    -fx-font-size: 14px;
-    -fx-text-fill: #CBD5E1;
-}
-
-.caption-text {
-    -fx-font-size: 12px;
-    -fx-text-fill: #94A3B8;
-}
-
-/* Labels d'état */
-.label-success {
-    -fx-background-color: #10B981;
-    -fx-text-fill: white;
-    -fx-font-weight: bold;
-    -fx-padding: 4 12;
-    -fx-background-radius: 8;
-    -fx-font-size: 12px;
-}
-
-.label-warning {
-    -fx-background-color: #F59E0B;
-    -fx-text-fill: white;
-    -fx-font-weight: bold;
-    -fx-padding: 4 12;
-    -fx-background-radius: 8;
-    -fx-font-size: 12px;
-}
-
-.label-error {
-    -fx-background-color: #EF4444;
-    -fx-text-fill: white;
-    -fx-font-weight: bold;
-    -fx-padding: 4 12;
-    -fx-background-radius: 8;
-    -fx-font-size: 12px;
-}
-
-.label-info {
-    -fx-background-color: #3B82F6;
-    -fx-text-fill: white;
-    -fx-font-weight: bold;
-    -fx-padding: 4 12;
-    -fx-background-radius: 8;
-    -fx-font-size: 12px;
-}
-
-/* ===== CHAMPS DE SAISIE ===== */
-
-.text-field-modern {
-    -fx-background-color: #334155;
-    -fx-text-fill: #F8FAFC;
-    -fx-prompt-text-fill: #94A3B8;
-    -fx-background-radius: 12;
-    -fx-border-color: transparent;
-    -fx-border-radius: 12;
-    -fx-padding: 12 16;
-    -fx-font-size: 14px;
-}
-
-.text-field-modern:focused {
-    -fx-border-color: #00B4A6;
-    -fx-border-width: 2;
-    -fx-effect: dropshadow(gaussian, #00B4A6, 5, 0.4, 0, 0);
-}
-
-/* ===== SIDEBAR MODERNE ===== */
-
-.sidebar-modern {
-    -fx-background-color: #1E293B;
-    -fx-padding: 20;
-}
-
-.sidebar-button {
+/* === OUTLINE BUTTONS === */
+.btn-outline {
     -fx-background-color: transparent;
     -fx-text-fill: #CBD5E1;
-    -fx-font-size: 14px;
-    -fx-padding: 12 16;
-    -fx-background-radius: 12;
-    -fx-cursor: hand;
-    -fx-alignment: center-left;
+    -fx-border-color: rgba(203, 213, 225, 0.3);
+    -fx-border-width: 1.5;
+    -fx-font-weight: 500;
 }
 
-.sidebar-button:hover {
-    -fx-background-color: rgba(255, 255, 255, 0.1);
+.btn-outline:hover {
+    -fx-background-color: rgba(203, 213, 225, 0.1);
     -fx-text-fill: #F8FAFC;
+    -fx-border-color: #CBD5E1;
 }
 
-.sidebar-button.active {
+.btn-outline-primary {
+    -fx-background-color: transparent;
+    -fx-text-fill: #00B4A6;
+    -fx-border-color: #00B4A6;
+    -fx-border-width: 1.5;
+}
+
+.btn-outline-primary:hover {
     -fx-background-color: #00B4A6;
     -fx-text-fill: white;
 }
 
-/* ===== CONTENEURS ET LAYOUTS ===== */
-
-.container-main {
-    -fx-background-color: #0F172A;
-    -fx-padding: 20;
+/* === GHOST BUTTONS === */
+.btn-ghost {
+    -fx-background-color: transparent;
+    -fx-text-fill: #CBD5E1;
+    -fx-font-weight: 500;
 }
 
-.container-card {
-    -fx-background-color: linear-gradient(to bottom right, #334155, #2a3544);
-    -fx-background-radius: 16;
-    -fx-border-radius: 16;
+.btn-ghost:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-text-fill: #F8FAFC;
+}
+
+.btn-ghost:pressed {
+    -fx-background-color: rgba(255, 255, 255, 0.12);
+}
+
+/* === GLASSMORPHISM BUTTONS === */
+.btn-glass {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-text-fill: white;
     -fx-border-color: rgba(255, 255, 255, 0.2);
     -fx-border-width: 1;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 15, 0.3, 0, 5);
-    -fx-padding: 20;
+    -fx-font-weight: 500;
 }
 
-/* ===== PROGRESS BAR MODERNE ===== */
+.btn-glass:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.15);
+    -fx-border-color: rgba(255, 255, 255, 0.3);
+    -fx-scale-x: 1.03;
+    -fx-scale-y: 1.03;
+}
 
-.progress-bar-modern {
-    -fx-pref-height: 8;
+.btn-glass:pressed {
     -fx-background-color: rgba(255, 255, 255, 0.2);
-    -fx-background-radius: 4;
+    -fx-scale-x: 0.97;
+    -fx-scale-y: 0.97;
 }
 
-.progress-bar-modern .track {
-    -fx-background-color: rgba(255, 255, 255, 0.2);
-    -fx-background-radius: 4;
+/* === ICON BUTTONS === */
+.btn-icon {
+    -fx-background-color: transparent;
+    -fx-text-fill: #CBD5E1;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 8;
+    -fx-min-width: 36;
+    -fx-min-height: 36;
+    -fx-pref-width: 36;
+    -fx-pref-height: 36;
 }
 
-.progress-bar-modern .bar {
-    -fx-background-color: linear-gradient(to right, #00B4A6, #4DD0C7);
-    -fx-background-radius: 4;
-    -fx-padding: 0;
+.btn-icon:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-text-fill: #F8FAFC;
+    -fx-scale-x: 1.1;
+    -fx-scale-y: 1.1;
 }
 
-/* ===== UTILITIES ===== */
-
-.focus-indicator-hidden {
-    -fx-focus-color: transparent;
-    -fx-faint-focus-color: transparent;
+.btn-icon:pressed {
+    -fx-background-color: rgba(255, 255, 255, 0.15);
+    -fx-scale-x: 0.9;
+    -fx-scale-y: 0.9;
 }
 
-.non-blocking {
-    -fx-pick-on-bounds: false;
-    -fx-mouse-transparent: false;
+/* === FLOATING ACTION BUTTON === */
+.btn-fab {
+    -fx-background-color: linear-gradient(to bottom, #FF6B47, #E5412A);
+    -fx-text-fill: white;
+    -fx-background-radius: 50%;
+    -fx-border-radius: 50%;
+    -fx-min-width: 56;
+    -fx-min-height: 56;
+    -fx-pref-width: 56;
+    -fx-pref-height: 56;
+    -fx-effect: dropshadow(gaussian, rgba(255, 107, 71, 0.4), 16, 0.4, 0, 6);
 }
 
-.floating-widget {
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 20, 0.4, 0, 8);
-    -fx-view-order: -1;
+.btn-fab:hover {
+    -fx-background-color: linear-gradient(to bottom, #FF8A73, #FF6B47);
+    -fx-effect: dropshadow(gaussian, rgba(255, 107, 71, 0.6), 20, 0.5, 0, 8);
+    -fx-scale-x: 1.1;
+    -fx-scale-y: 1.1;
 }
 
-/* ===== ANIMATIONS ET INTERACTIONS ===== */
+.btn-fab:pressed {
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+    -fx-effect: dropshadow(gaussian, rgba(255, 107, 71, 0.3), 8, 0.3, 0, 2);
+}
 
-.animated-scale {
+/* === SEMANTIC BUTTON VARIANTS === */
+.btn-success {
+    -fx-background-color: linear-gradient(to bottom, #10B981, #059669);
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.25), 8, 0.3, 0, 2);
+}
+
+.btn-warning {
+    -fx-background-color: linear-gradient(to bottom, #F59E0B, #D97706);
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(gaussian, rgba(245, 158, 11, 0.25), 8, 0.3, 0, 2);
+}
+
+.btn-error {
+    -fx-background-color: linear-gradient(to bottom, #EF4444, #DC2626);
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(gaussian, rgba(239, 68, 68, 0.25), 8, 0.3, 0, 2);
+}
+
+/* === DISABLED STATE === */
+.btn-base:disabled {
+    -fx-opacity: 0.5;
+    -fx-cursor: default;
+}
+
+.btn-base:disabled:hover {
     -fx-scale-x: 1.0;
     -fx-scale-y: 1.0;
 }
 
-.animated-scale:hover {
+/* ===== PROFESSIONAL STATUS LABELS & BADGES ===== */
+
+/* === STATUS BADGES === */
+.badge-base {
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-padding: 4 12;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-alignment: center;
+}
+
+.badge-primary {
+    -fx-background-color: rgba(0, 180, 166, 0.15);
+    -fx-text-fill: #4DD0C7;
+    -fx-border-color: rgba(0, 180, 166, 0.3);
+    -fx-border-width: 1;
+}
+
+.badge-success {
+    -fx-background-color: rgba(16, 185, 129, 0.15);
+    -fx-text-fill: #34D399;
+    -fx-border-color: rgba(16, 185, 129, 0.3);
+    -fx-border-width: 1;
+}
+
+.badge-warning {
+    -fx-background-color: rgba(245, 158, 11, 0.15);
+    -fx-text-fill: #FBBF24;
+    -fx-border-color: rgba(245, 158, 11, 0.3);
+    -fx-border-width: 1;
+}
+
+.badge-error {
+    -fx-background-color: rgba(239, 68, 68, 0.15);
+    -fx-text-fill: #F87171;
+    -fx-border-color: rgba(239, 68, 68, 0.3);
+    -fx-border-width: 1;
+}
+
+.badge-info {
+    -fx-background-color: rgba(59, 130, 246, 0.15);
+    -fx-text-fill: #60A5FA;
+    -fx-border-color: rgba(59, 130, 246, 0.3);
+    -fx-border-width: 1;
+}
+
+.badge-neutral {
+    -fx-background-color: rgba(148, 163, 184, 0.15);
+    -fx-text-fill: #CBD5E1;
+    -fx-border-color: rgba(148, 163, 184, 0.3);
+    -fx-border-width: 1;
+}
+
+/* === SOLID BADGES === */
+.badge-solid-primary {
+    -fx-background-color: #00B4A6;
+    -fx-text-fill: white;
+}
+
+.badge-solid-success {
+    -fx-background-color: #10B981;
+    -fx-text-fill: white;
+}
+
+.badge-solid-warning {
+    -fx-background-color: #F59E0B;
+    -fx-text-fill: white;
+}
+
+.badge-solid-error {
+    -fx-background-color: #EF4444;
+    -fx-text-fill: white;
+}
+
+.badge-solid-info {
+    -fx-background-color: #3B82F6;
+    -fx-text-fill: white;
+}
+
+/* === DOT INDICATORS === */
+.status-dot {
+    -fx-background-radius: 50%;
+    -fx-border-radius: 50%;
+    -fx-min-width: 8;
+    -fx-min-height: 8;
+    -fx-pref-width: 8;
+    -fx-pref-height: 8;
+}
+
+.status-dot-online {
+    -fx-background-color: #10B981;
+}
+
+.status-dot-busy {
+    -fx-background-color: #F59E0B;
+}
+
+.status-dot-offline {
+    -fx-background-color: #64748B;
+}
+
+.status-dot-error {
+    -fx-background-color: #EF4444;
+}
+
+/* ===== PROFESSIONAL FORM INPUTS ===== */
+
+/* === TEXT FIELD BASE === */
+.input-base {
+    -fx-font-family: "Segoe UI", "Inter", system-ui, sans-serif;
+    -fx-font-size: 14px;
+    -fx-background-color: #334155;
+    -fx-text-fill: #F8FAFC;
+    -fx-prompt-text-fill: #64748B;
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-padding: 12 16;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.input-base:focused {
+    -fx-border-color: #00B4A6;
+    -fx-border-width: 2;
+    -fx-background-color: #475569;
+    -fx-effect: dropshadow(gaussian, rgba(0, 180, 166, 0.25), 8, 0.4, 0, 0);
+}
+
+.input-base:hover {
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-background-color: #3f4956;
+}
+
+/* === INPUT SIZES === */
+.input-sm {
+    -fx-font-size: 12px;
+    -fx-padding: 8 12;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+}
+
+.input-md {
+    -fx-font-size: 14px;
+    -fx-padding: 12 16;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+}
+
+.input-lg {
+    -fx-font-size: 16px;
+    -fx-padding: 16 20;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+}
+
+/* === INPUT VARIANTS === */
+.input-success {
+    -fx-border-color: #10B981;
+}
+
+.input-success:focused {
+    -fx-border-color: #10B981;
+    -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.25), 8, 0.4, 0, 0);
+}
+
+.input-warning {
+    -fx-border-color: #F59E0B;
+}
+
+.input-warning:focused {
+    -fx-border-color: #F59E0B;
+    -fx-effect: dropshadow(gaussian, rgba(245, 158, 11, 0.25), 8, 0.4, 0, 0);
+}
+
+.input-error {
+    -fx-border-color: #EF4444;
+}
+
+.input-error:focused {
+    -fx-border-color: #EF4444;
+    -fx-effect: dropshadow(gaussian, rgba(239, 68, 68, 0.25), 8, 0.4, 0, 0);
+}
+
+/* === SEARCH INPUT === */
+.input-search {
+    -fx-background-color: rgba(255, 255, 255, 0.05);
+    -fx-text-fill: #F8FAFC;
+    -fx-prompt-text-fill: #64748B;
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-radius: 20;
+    -fx-border-width: 1;
+    -fx-padding: 10 20;
+}
+
+.input-search:focused {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-border-color: #00B4A6;
+    -fx-border-width: 2;
+}
+
+/* ===== PROFESSIONAL NAVIGATION ===== */
+
+/* === SIDEBAR === */
+.nav-sidebar {
+    -fx-background-color: #1E293B;
+    -fx-padding: 24 16;
+}
+
+.nav-item {
+    -fx-background-color: transparent;
+    -fx-text-fill: #94A3B8;
+    -fx-font-size: 14px;
+    -fx-font-weight: 500;
+    -fx-padding: 12 16;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-cursor: hand;
+    -fx-alignment: center-left;
+    -fx-graphic-text-gap: 12;
+}
+
+.nav-item:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.05);
+    -fx-text-fill: #CBD5E1;
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+}
+
+.nav-item.active {
+    -fx-background-color: linear-gradient(to right, #00B4A6, #0A9F92);
+    -fx-text-fill: white;
+    -fx-font-weight: 600;
+    -fx-effect: dropshadow(gaussian, rgba(0, 180, 166, 0.3), 8, 0.3, 0, 2);
+}
+
+.nav-item.active:hover {
+    -fx-background-color: linear-gradient(to right, #4DD0C7, #00B4A6);
+}
+
+/* === BREADCRUMB === */
+.breadcrumb {
+    -fx-background-color: transparent;
+    -fx-padding: 12 0;
+}
+
+.breadcrumb-item {
+    -fx-text-fill: #64748B;
+    -fx-font-size: 14px;
+    -fx-cursor: hand;
+}
+
+.breadcrumb-item:hover {
+    -fx-text-fill: #94A3B8;
+}
+
+.breadcrumb-item.active {
+    -fx-text-fill: #F8FAFC;
+    -fx-font-weight: 500;
+}
+
+/* === TAB NAVIGATION === */
+.tab-nav {
+    -fx-background-color: rgba(255, 255, 255, 0.05);
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-padding: 4;
+}
+
+.tab-item {
+    -fx-background-color: transparent;
+    -fx-text-fill: #94A3B8;
+    -fx-font-size: 14px;
+    -fx-font-weight: 500;
+    -fx-padding: 8 16;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-cursor: hand;
+}
+
+.tab-item:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.05);
+    -fx-text-fill: #CBD5E1;
+}
+
+.tab-item.active {
+    -fx-background-color: white;
+    -fx-text-fill: #1E293B;
+    -fx-font-weight: 600;
+}
+
+/* ===== PROFESSIONAL LAYOUTS & CONTAINERS ===== */
+
+/* === MAIN CONTAINERS === */
+.layout-main {
+    -fx-background-color: #0F172A;
+    -fx-padding: 24;
+}
+
+.layout-section {
+    -fx-background-color: transparent;
+    -fx-spacing: 20;
+    -fx-padding: 0;
+}
+
+.layout-panel {
+    -fx-background-color: #1E293B;
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 8, 0.3, 0, 2);
+    -fx-padding: 24;
+}
+
+.layout-grid {
+    -fx-hgap: 16;
+    -fx-vgap: 16;
+    -fx-alignment: top-left;
+}
+
+/* === CONTENT AREAS === */
+.content-area {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.content-header {
+    -fx-background-color: transparent;
+    -fx-padding: 0 0 20 0;
+    -fx-spacing: 16;
+    -fx-alignment: center-left;
+}
+
+.content-body {
+    -fx-background-color: transparent;
+    -fx-spacing: 16;
+}
+
+.content-footer {
+    -fx-background-color: transparent;
+    -fx-padding: 20 0 0 0;
+    -fx-spacing: 12;
+    -fx-alignment: center-right;
+}
+
+/* ===== PROFESSIONAL PROGRESS SYSTEM ===== */
+
+/* === PROGRESS BARS === */
+.progress-base {
+    -fx-background-radius: 8;
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+}
+
+.progress-base .track {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-background-radius: 8;
+}
+
+.progress-base .bar {
+    -fx-background-radius: 8;
+    -fx-padding: 0;
+}
+
+/* === PROGRESS SIZES === */
+.progress-xs {
+    -fx-pref-height: 2;
+}
+
+.progress-sm {
+    -fx-pref-height: 4;
+}
+
+.progress-md {
+    -fx-pref-height: 6;
+}
+
+.progress-lg {
+    -fx-pref-height: 8;
+}
+
+.progress-xl {
+    -fx-pref-height: 12;
+}
+
+/* === PROGRESS VARIANTS === */
+.progress-primary .bar {
+    -fx-background-color: linear-gradient(to right, #00B4A6, #4DD0C7);
+}
+
+.progress-success .bar {
+    -fx-background-color: linear-gradient(to right, #10B981, #34D399);
+}
+
+.progress-warning .bar {
+    -fx-background-color: linear-gradient(to right, #F59E0B, #FBBF24);
+}
+
+.progress-error .bar {
+    -fx-background-color: linear-gradient(to right, #EF4444, #F87171);
+}
+
+.progress-info .bar {
+    -fx-background-color: linear-gradient(to right, #3B82F6, #60A5FA);
+}
+
+/* === CIRCULAR PROGRESS === */
+.progress-circle {
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-width: 3;
+    -fx-background-radius: 50%;
+    -fx-border-radius: 50%;
+}
+
+/* === STEP PROGRESS === */
+.step-progress {
+    -fx-background-color: transparent;
+    -fx-spacing: 0;
+    -fx-alignment: center;
+}
+
+.step-item {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-text-fill: #64748B;
+    -fx-background-radius: 50%;
+    -fx-border-radius: 50%;
+    -fx-min-width: 32;
+    -fx-min-height: 32;
+    -fx-pref-width: 32;
+    -fx-pref-height: 32;
+    -fx-alignment: center;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+}
+
+.step-item.active {
+    -fx-background-color: #00B4A6;
+    -fx-text-fill: white;
+}
+
+.step-item.completed {
+    -fx-background-color: #10B981;
+    -fx-text-fill: white;
+}
+
+/* ===== PROFESSIONAL UTILITIES ===== */
+
+/* === ACCESSIBILITY === */
+.focus-hidden {
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.focus-ring {
+    -fx-focus-color: #00B4A6;
+    -fx-faint-focus-color: rgba(0, 180, 166, 0.2);
+}
+
+/* === INTERACTION STATES === */
+.interactive {
+    -fx-cursor: hand;
+}
+
+.non-interactive {
+    -fx-cursor: default;
+    -fx-mouse-transparent: true;
+}
+
+.selectable {
+    -fx-cursor: text;
+}
+
+/* === POSITIONING === */
+.floating {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 16, 0.4, 0, 6);
+    -fx-view-order: -1;
+}
+
+.elevated {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 8, 0.3, 0, 2);
+}
+
+.sticky {
+    -fx-view-order: -2;
+}
+
+/* === VISIBILITY === */
+.hidden {
+    -fx-opacity: 0;
+    -fx-mouse-transparent: true;
+}
+
+.visible {
+    -fx-opacity: 1;
+    -fx-mouse-transparent: false;
+}
+
+.semi-transparent {
+    -fx-opacity: 0.7;
+}
+
+/* === LOADING STATES === */
+.loading {
+    -fx-opacity: 0.6;
+    -fx-cursor: wait;
+}
+
+.disabled {
+    -fx-opacity: 0.4;
+    -fx-cursor: default;
+    -fx-mouse-transparent: true;
+}
+
+/* ===== PROFESSIONAL ANIMATIONS ===== */
+
+/* === SCALE ANIMATIONS === */
+.scale-on-hover:hover {
     -fx-scale-x: 1.05;
     -fx-scale-y: 1.05;
 }
 
-.animated-scale:pressed {
+.scale-on-press:pressed {
     -fx-scale-x: 0.95;
     -fx-scale-y: 0.95;
 }
 
-/* ===== DIALOG ET MODALS ===== */
+.scale-subtle:hover {
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+}
 
-.dialog-modern {
+.scale-dramatic:hover {
+    -fx-scale-x: 1.1;
+    -fx-scale-y: 1.1;
+}
+
+/* === GLOW EFFECTS === */
+.glow-primary {
+    -fx-effect: dropshadow(gaussian, rgba(0, 180, 166, 0.4), 12, 0.5, 0, 0);
+}
+
+.glow-success {
+    -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.4), 12, 0.5, 0, 0);
+}
+
+.glow-warning {
+    -fx-effect: dropshadow(gaussian, rgba(245, 158, 11, 0.4), 12, 0.5, 0, 0);
+}
+
+.glow-error {
+    -fx-effect: dropshadow(gaussian, rgba(239, 68, 68, 0.4), 12, 0.5, 0, 0);
+}
+
+/* === PULSE ANIMATION === */
+.pulse {
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+}
+
+.pulse:hover {
+    -fx-scale-x: 1.03;
+    -fx-scale-y: 1.03;
+}
+
+/* === BOUNCE EFFECT === */
+.bounce:pressed {
+    -fx-scale-x: 0.9;
+    -fx-scale-y: 0.9;
+}
+
+/* ===== PROFESSIONAL MODALS & DIALOGS ===== */
+
+/* === OVERLAY === */
+.modal-overlay {
+    -fx-background-color: rgba(0, 0, 0, 0.6);
+}
+
+/* === DIALOG CONTAINERS === */
+.dialog-container {
     -fx-background-color: linear-gradient(to bottom right, 
-        rgba(45, 45, 45, 0.95), 
-        rgba(35, 35, 35, 0.95));
+        rgba(51, 65, 85, 0.98), 
+        rgba(42, 53, 68, 0.98));
     -fx-background-radius: 20;
     -fx-border-radius: 20;
-    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-color: rgba(255, 255, 255, 0.15);
     -fx-border-width: 1;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 24, 0.3, 0, 8);
-    -fx-padding: 24;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 32, 0.5, 0, 12);
+    -fx-padding: 32;
 }
 
-/* ===== ÉTATS SÉMANTIQUES ===== */
-
-.success-state {
-    -fx-border-color: #10B981;
-    -fx-text-fill: #10B981;
+.dialog-header {
+    -fx-background-color: transparent;
+    -fx-padding: 0 0 24 0;
 }
 
-.warning-state {
-    -fx-border-color: #F59E0B;
-    -fx-text-fill: #F59E0B;
+.dialog-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #F8FAFC;
 }
 
-.error-state {
-    -fx-border-color: #EF4444;
-    -fx-text-fill: #EF4444;
+.dialog-body {
+    -fx-background-color: transparent;
+    -fx-spacing: 16;
+    -fx-padding: 0 0 24 0;
 }
 
-.info-state {
-    -fx-border-color: #3B82F6;
-    -fx-text-fill: #3B82F6;
+.dialog-footer {
+    -fx-background-color: transparent;
+    -fx-spacing: 12;
+    -fx-alignment: center-right;
 }
+
+/* === ALERT DIALOGS === */
+.alert-success {
+    -fx-border-color: rgba(16, 185, 129, 0.3);
+    -fx-background-color: linear-gradient(to bottom right, 
+        rgba(16, 185, 129, 0.05),
+        rgba(5, 150, 105, 0.05));
+}
+
+.alert-warning {
+    -fx-border-color: rgba(245, 158, 11, 0.3);
+    -fx-background-color: linear-gradient(to bottom right, 
+        rgba(245, 158, 11, 0.05),
+        rgba(217, 119, 6, 0.05));
+}
+
+.alert-error {
+    -fx-border-color: rgba(239, 68, 68, 0.3);
+    -fx-background-color: linear-gradient(to bottom right, 
+        rgba(239, 68, 68, 0.05),
+        rgba(220, 38, 38, 0.05));
+}
+
+/* ===== RESPONSIVE BREAKPOINT INDICATORS ===== */
+
+/* These classes are applied dynamically by ResponsiveService */
+.mobile-layout .hide-mobile { -fx-opacity: 0; -fx-mouse-transparent: true; }
+.tablet-layout .hide-tablet { -fx-opacity: 0; -fx-mouse-transparent: true; }
+.desktop-layout .hide-desktop { -fx-opacity: 0; -fx-mouse-transparent: true; }
+.large-desktop-layout .hide-large { -fx-opacity: 0; -fx-mouse-transparent: true; }
+.ultra-wide-layout .hide-ultra { -fx-opacity: 0; -fx-mouse-transparent: true; }
+
+/* === SCROLLBAR ENHANCEMENTS === */
+.scroll-pane {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-pref-width: 8;
+}
+
+.scroll-pane .scroll-bar:horizontal {
+    -fx-background-color: transparent;
+    -fx-pref-height: 8;
+}
+
+.scroll-pane .scroll-bar .track {
+    -fx-background-color: rgba(255, 255, 255, 0.05);
+    -fx-background-radius: 4;
+}
+
+.scroll-pane .scroll-bar .thumb {
+    -fx-background-color: rgba(255, 255, 255, 0.2);
+    -fx-background-radius: 4;
+}
+
+.scroll-pane .scroll-bar .thumb:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.3);
+}
+
+.scroll-pane .scroll-bar .thumb:pressed {
+    -fx-background-color: #00B4A6;
+}
+
+/* ===== PERFORMANCE OPTIMIZATIONS ===== */
+
+.hardware-accelerated {
+    -fx-cache: true;
+    -fx-cache-hint: speed;
+}
+
+.smooth-rendering {
+    -fx-smooth: true;
+}
+
+.crisp-rendering {
+    -fx-smooth: false;
+}
+
+/* === END OF PROFESSIONAL DESIGN SYSTEM === */

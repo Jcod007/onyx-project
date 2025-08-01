@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { SubjectCard } from '@/components/SubjectCard';
 import { Timer } from '@/components/Timer';
-import { Subject, CreateSubjectDto } from '@/types/Subject';
+import { Modal } from '@/components/Modal';
+import { Subject, CreateSubjectDto, UpdateSubjectDto } from '@/types/Subject';
 import { subjectService } from '@/services/subjectService';
 import { Plus, Search, Filter, BookOpen, X } from 'lucide-react';
 
@@ -15,6 +16,8 @@ export const StudyPage: React.FC = () => {
   const [filteredSubjects, setFilteredSubjects] = useState<Subject[]>([]);
   const [activeTimer, setActiveTimer] = useState<StudyTimer | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<Subject['status'] | 'ALL'>('ALL');
   const [loading, setLoading] = useState(true);
@@ -121,8 +124,46 @@ export const StudyPage: React.FC = () => {
   };
 
   const handleEditSubject = (subject: Subject) => {
-    // TODO: Implémenter la modification de matière
-    console.log('Edit subject:', subject);
+    setEditingSubject(subject);
+    setFormData({
+      name: subject.name,
+      targetTime: Math.round(subject.targetTime / 60), // conversion secondes -> minutes
+      defaultTimerDuration: Math.round(subject.defaultTimerDuration / 60) // conversion secondes -> minutes
+    });
+    setFormErrors([]);
+    setShowEditForm(true);
+  };
+
+  const handleUpdateSubject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingSubject) return;
+    
+    setFormErrors([]);
+
+    try {
+      const updateData: UpdateSubjectDto = {
+        name: formData.name.trim(),
+        targetTime: formData.targetTime,
+        defaultTimerDuration: formData.defaultTimerDuration
+      };
+
+      await subjectService.updateSubject(editingSubject.id, updateData);
+      
+      // Reset form
+      setFormData({
+        name: '',
+        targetTime: 60,
+        defaultTimerDuration: 25
+      });
+      setShowEditForm(false);
+      setEditingSubject(null);
+      
+      // Reload subjects
+      await loadSubjects();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+      setFormErrors([errorMessage]);
+    }
   };
 
   const handleDeleteSubject = async (subject: Subject) => {
@@ -269,98 +310,166 @@ export const StudyPage: React.FC = () => {
       )}
 
       {/* Create Subject Form Modal */}
-      {showCreateForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50"
-            onClick={() => setShowCreateForm(false)}
-          />
-          
-          <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Nouvelle matière
-              </h2>
-              <button
-                onClick={() => setShowCreateForm(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X size={20} className="text-gray-500" />
-              </button>
+      <Modal
+        isOpen={showCreateForm}
+        onClose={() => setShowCreateForm(false)}
+        title="Nouvelle matière"
+      >
+        <form onSubmit={handleCreateSubject} className="p-6 space-y-4">
+          {formErrors.length > 0 && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <ul className="text-sm text-red-600 space-y-1">
+                {formErrors.map((error, index) => (
+                  <li key={index}>• {error}</li>
+                ))}
+              </ul>
             </div>
+          )}
 
-            <form onSubmit={handleCreateSubject} className="p-6 space-y-4">
-              {formErrors.length > 0 && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <ul className="text-sm text-red-600 space-y-1">
-                    {formErrors.map((error, index) => (
-                      <li key={index}>• {error}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nom de la matière *
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="ex: Mathématiques, Histoire..."
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Objectif de temps (en heures)
-                </label>
-                <input
-                  type="number"
-                  value={formData.targetTime}
-                  onChange={(e) => setFormData(prev => ({ ...prev, targetTime: parseInt(e.target.value) || 0 }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  min="1"
-                  max="1000"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Durée par défaut du timer (en minutes)
-                </label>
-                <input
-                  type="number"
-                  value={formData.defaultTimerDuration}
-                  onChange={(e) => setFormData(prev => ({ ...prev, defaultTimerDuration: parseInt(e.target.value) || 0 }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  min="1"
-                  max="180"
-                />
-              </div>
-
-              <div className="flex items-center justify-end space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateForm(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors font-medium"
-                >
-                  Créer
-                </button>
-              </div>
-            </form>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Nom de la matière *
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="ex: Mathématiques, Histoire..."
+              required
+            />
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Objectif de temps (en heures)
+            </label>
+            <input
+              type="number"
+              value={formData.targetTime}
+              onChange={(e) => setFormData(prev => ({ ...prev, targetTime: parseInt(e.target.value) || 0 }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              min="1"
+              max="1000"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Durée par défaut du timer (en minutes)
+            </label>
+            <input
+              type="number"
+              value={formData.defaultTimerDuration}
+              onChange={(e) => setFormData(prev => ({ ...prev, defaultTimerDuration: parseInt(e.target.value) || 0 }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              min="1"
+              max="180"
+            />
+          </div>
+
+          <div className="flex items-center justify-end space-x-3 pt-4">
+            <button
+              type="button"
+              onClick={() => setShowCreateForm(false)}
+              className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors font-medium"
+            >
+              Créer
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit Subject Form Modal */}
+      <Modal
+        isOpen={showEditForm}
+        onClose={() => {
+          setShowEditForm(false);
+          setEditingSubject(null);
+          setFormErrors([]);
+        }}
+        title={`Modifier ${editingSubject?.name}`}
+      >
+        <form onSubmit={handleUpdateSubject} className="p-6 space-y-4">
+          {formErrors.length > 0 && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <ul className="text-sm text-red-600 space-y-1">
+                {formErrors.map((error, index) => (
+                  <li key={index}>• {error}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Nom de la matière *
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="ex: Mathématiques, Histoire..."
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Objectif de temps (en heures)
+            </label>
+            <input
+              type="number"
+              value={formData.targetTime}
+              onChange={(e) => setFormData(prev => ({ ...prev, targetTime: parseInt(e.target.value) || 0 }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              min="1"
+              max="1000"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Durée par défaut du timer (en minutes)
+            </label>
+            <input
+              type="number"
+              value={formData.defaultTimerDuration}
+              onChange={(e) => setFormData(prev => ({ ...prev, defaultTimerDuration: parseInt(e.target.value) || 0 }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              min="1"
+              max="180"
+            />
+          </div>
+
+          <div className="flex items-center justify-end space-x-3 pt-4">
+            <button
+              type="button"
+              onClick={() => {
+                setShowEditForm(false);
+                setEditingSubject(null);
+                setFormErrors([]);
+              }}
+              className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors font-medium"
+            >
+              Modifier
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

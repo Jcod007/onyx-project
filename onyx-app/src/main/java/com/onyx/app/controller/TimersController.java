@@ -3,6 +3,7 @@ package com.onyx.app.controller;
 import java.io.IOException;
 
 import com.onyx.app.model.TimerConfigResult;
+import com.onyx.app.service.ResponsiveService;
 import com.onyx.app.service.TimerService;
 import com.onyx.app.service.TimersManagerService;
 
@@ -18,21 +19,42 @@ import javafx.scene.layout.VBox;
 import com.onyx.app.model.Subject;
 
 /**
- * Contrôleur pour gérer plusieurs timers
+ * Contrôleur pour gérer plusieurs timers avec support responsive
  * Utilise le TimersManagerService pour la logique métier
  */
 public class TimersController {
 
 	@FXML
+	private StackPane timersRoot;
+	@FXML
+	private VBox timerContentWrapper;
+	@FXML
 	private FlowPane timersList;
-	
-	private final TimersManagerService timersManager;
-
 	@FXML
 	private StackPane configOverlay;
+	
+	private final TimersManagerService timersManager;
+	private ResponsiveService responsiveService;
 
 	public TimersController(TimersManagerService timersManager) {
 		this.timersManager = timersManager;
+	}
+
+	/**
+	 * Set responsive service for dynamic layout management
+	 */
+	public void setResponsiveService(ResponsiveService responsiveService) {
+		this.responsiveService = responsiveService;
+		
+		if (responsiveService != null && timersRoot != null) {
+			// Register components for responsive updates
+			responsiveService.registerComponent(timersRoot);
+			responsiveService.registerComponent(timerContentWrapper);
+			responsiveService.registerComponent(timersList);
+			
+			// Add resize listener to update grid layout
+			responsiveService.addResizeListener(this::updateGridLayout);
+		}
 	}
 
 	/**
@@ -40,11 +62,19 @@ public class TimersController {
 	 */
 	@FXML
 	public void initialize() {
+		// Initialize responsive grid layout
+		updateGridLayout();
+		
 		// Load existing timers from the service
 		for (TimerService timerService : timersManager.getAllTimers()) {
 			try {
 				VBox newTimerCard = createTimerCard(timerService);
 				timersList.getChildren().add(newTimerCard);
+				
+				// Register timer card with responsive service
+				if (responsiveService != null) {
+					responsiveService.registerComponent(newTimerCard);
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -53,6 +83,44 @@ public class TimersController {
 		// Configurer les callbacks pour les changements de liste
 		timersManager.setOnTimersListChanged(this::refreshTimersList);
 		timersManager.setOnActiveTimersChanged(this::updateActiveTimersDisplay);
+	}
+
+	/**
+	 * Update grid layout based on current responsive breakpoint
+	 */
+	private void updateGridLayout() {
+		if (responsiveService != null && timersList != null) {
+			ResponsiveService.Breakpoint currentBreakpoint = responsiveService.getCurrentBreakpoint();
+			double recommendedGap = responsiveService.getRecommendedGap();
+			
+			// Update FlowPane gaps based on breakpoint
+			timersList.setHgap(recommendedGap);
+			timersList.setVgap(recommendedGap);
+			
+			// Set preferred tile dimensions for consistent card sizing
+			ResponsiveService.ComponentDimensions cardDimensions = 
+				responsiveService.getComponentDimensions("timer-card");
+			
+			// Note: FlowPane doesn't have setPrefTileWidth/Height methods
+			// The card dimensions are controlled via CSS classes instead
+			// timersList.setPrefTileWidth(cardDimensions.width());
+			// timersList.setPrefTileHeight(cardDimensions.height());
+			
+			// Ensure proper alignment
+			switch (currentBreakpoint) {
+				case MOBILE:
+					timersList.setAlignment(javafx.geometry.Pos.TOP_CENTER);
+					break;
+				case TABLET:
+					timersList.setAlignment(javafx.geometry.Pos.TOP_CENTER);
+					break;
+				case DESKTOP:
+				case LARGE_DESKTOP:
+				case ULTRA_WIDE:
+					timersList.setAlignment(javafx.geometry.Pos.TOP_LEFT);
+					break;
+			}
+		}
 	}
 
 	/**

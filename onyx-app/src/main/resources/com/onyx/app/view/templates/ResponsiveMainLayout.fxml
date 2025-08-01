@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<!--
+    Professional Responsive Main Layout Template
+    
+    Features:
+    - Adaptive sidebar that collapses on mobile/tablet
+    - BorderPane with responsive regions
+    - Professional styling with consistent spacing
+    - Scene graph manipulation for layout changes
+    - HBox/VBox grow properties for flexible sizing
+-->
+
+<BorderPane fx:id="responsiveMainLayout" 
+            styleClass="responsive-border-layout, desktop-layout"
+            stylesheets="@/com/onyx/app/styles/global.css, 
+                        @/com/onyx/app/styles/responsive-system.css,
+                        @/com/onyx/app/styles/responsive-extensions.css"
+            xmlns="http://javafx.com/javafx/23.0.1" 
+            xmlns:fx="http://javafx.com/fxml/1">
+
+    <!-- Adaptive Sidebar (Left Region) -->
+    <left>
+        <VBox fx:id="adaptiveSidebar" 
+              styleClass="adaptive-responsive-sidebar, responsive-nav-menu">
+            
+            <!-- App Logo/Title -->
+            <HBox styleClass="padding-lg" alignment="CENTER_LEFT">
+                <FontIcon iconLiteral="mdi2d-diamond-outline" iconSize="24" 
+                         iconColor="#00B4A6" styleClass="icon-responsive"/>
+                <Region prefWidth="8"/>
+                <Label fx:id="appTitle" text="ONYX" 
+                       styleClass="title-medium"/>
+            </HBox>
+            
+            <!-- Navigation Buttons -->
+            <VBox fx:id="navigationContainer" styleClass="spacing-sm">
+                <Button fx:id="dashboardButton" 
+                        styleClass="responsive-nav-button, menu-button"
+                        text="Dashboard">
+                    <graphic>
+                        <FontIcon iconLiteral="fas-tachometer-alt" 
+                                 iconSize="18" styleClass="icon-responsive"/>
+                    </graphic>
+                </Button>
+                
+                <Button fx:id="timerButton" 
+                        styleClass="responsive-nav-button, menu-button"
+                        text="Timer">
+                    <graphic>
+                        <FontIcon iconLiteral="fas-clock" 
+                                 iconSize="18" styleClass="icon-responsive"/>
+                    </graphic>
+                </Button>
+                
+                <Button fx:id="studyDeckButton" 
+                        styleClass="responsive-nav-button, menu-button"
+                        text="Study Deck">
+                    <graphic>
+                        <FontIcon iconLiteral="fas-clone" 
+                                 iconSize="18" styleClass="icon-responsive"/>
+                    </graphic>
+                </Button>
+            </VBox>
+            
+            <!-- Spacer to push settings to bottom -->
+            <Region VBox.vgrow="ALWAYS"/>
+            
+            <!-- Settings/Profile Section -->
+            <VBox styleClass="padding-base, spacing-xs">
+                <Button fx:id="settingsButton" 
+                        styleClass="responsive-nav-button, menu-button"
+                        text="Settings">
+                    <graphic>
+                        <FontIcon iconLiteral="fas-cog" 
+                                 iconSize="18" styleClass="icon-responsive"/>
+                    </graphic>
+                </Button>
+            </VBox>
+        </VBox>
+    </left>
+
+    <!-- Main Content Area (Center Region) -->
+    <center>
+        <VBox fx:id="mainContentContainer" styleClass="flexible-width, flexible-height">
+            
+            <!-- Top Navigation Bar (shown on mobile when sidebar is hidden) -->
+            <HBox fx:id="mobileTopNav" 
+                  styleClass="hide-on-desktop, padding-base, spacing-base"
+                  alignment="CENTER_LEFT"
+                  managed="false" visible="false">
+                
+                <Button fx:id="mobileMenuButton" 
+                        styleClass="btn-circle">
+                    <graphic>
+                        <FontIcon iconLiteral="fas-bars" iconSize="16"/>
+                    </graphic>
+                </Button>
+                
+                <Region prefWidth="12"/>
+                
+                <Label text="ONYX" styleClass="title-medium"/>
+                
+                <!-- Spacer -->
+                <Region HBox.hgrow="ALWAYS"/>
+                
+                <!-- Mobile actions -->
+                <Button fx:id="mobileSearchButton" 
+                        styleClass="btn-circle">
+                    <graphic>
+                        <FontIcon iconLiteral="fas-search" iconSize="16"/>
+                    </graphic>
+                </Button>
+            </HBox>
+            
+            <!-- Main Content ScrollPane -->
+            <ScrollPane fx:id="contentScrollPane" 
+                        styleClass="responsive-scroll-container"
+                        fitToWidth="true" 
+                        hbarPolicy="NEVER" 
+                        vbarPolicy="AS_NEEDED"
+                        VBox.vgrow="ALWAYS">
+                
+                <!-- Content will be injected here -->
+                <VBox fx:id="contentContainer" 
+                      styleClass="padding-base, spacing-base, flexible-width"/>
+            </ScrollPane>
+        </VBox>
+    </center>
+
+    <!-- Optional Right Panel (for notifications, etc.) -->
+    <right>
+        <VBox fx:id="rightPanel" 
+              styleClass="hide-on-mobile, hide-on-tablet"
+              prefWidth="280" 
+              managed="false" 
+              visible="false">
+            
+            <!-- Right panel content goes here -->
+            <Label text="Notifications" styleClass="title-small, padding-base"/>
+            
+            <ScrollPane styleClass="responsive-scroll-container" 
+                        fitToWidth="true"
+                        VBox.vgrow="ALWAYS">
+                <VBox fx:id="notificationsList" 
+                      styleClass="spacing-sm, padding-base"/>
+            </ScrollPane>
+        </VBox>
+    </right>
+
+</BorderPane>

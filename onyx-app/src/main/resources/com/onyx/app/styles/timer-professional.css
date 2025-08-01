@@ -1,0 +1,482 @@
+/*
+ * ONYX Professional Timer Styling
+ * Enhanced visual design for timer components
+ * Built on the professional design system in global.css
+ */
+
+/* ===== PROFESSIONAL TIMER CARDS ===== */
+
+/* Main timer card container */
+.timer-card-professional {
+    -fx-background-color: linear-gradient(135deg, 
+        rgba(51, 65, 85, 0.98), 
+        rgba(30, 41, 59, 0.98));
+    -fx-background-radius: 20;
+    -fx-border-radius: 20;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 16, 0.4, 0, 6);
+    -fx-padding: 24;
+    -fx-spacing: 16;
+    -fx-cursor: hand;
+    -fx-alignment: center;
+}
+
+.timer-card-professional:hover {
+    -fx-background-color: linear-gradient(135deg, 
+        rgba(71, 85, 105, 0.98), 
+        rgba(51, 65, 85, 0.98));
+    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 20, 0.5, 0, 8);
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+}
+
+.timer-card-professional:pressed {
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 8, 0.3, 0, 2);
+}
+
+/* Timer card states */
+.timer-card-professional.running {
+    -fx-border-color: rgba(0, 180, 166, 0.4);
+    -fx-effect: dropshadow(gaussian, rgba(0, 180, 166, 0.2), 16, 0.4, 0, 6);
+}
+
+.timer-card-professional.paused {
+    -fx-border-color: rgba(245, 158, 11, 0.4);
+    -fx-effect: dropshadow(gaussian, rgba(245, 158, 11, 0.2), 16, 0.4, 0, 6);
+}
+
+.timer-card-professional.finished {
+    -fx-border-color: rgba(16, 185, 129, 0.4);
+    -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.3), 20, 0.5, 0, 8);
+}
+
+/* ===== TIMER DISPLAY ===== */
+
+/* Professional digital timer display */
+.timer-display-professional {
+    -fx-font-family: "SF Mono", "Consolas", "Roboto Mono", monospace;
+    -fx-font-size: 48px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #F8FAFC;
+    -fx-alignment: center;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 4, 0.3, 0, 2);
+}
+
+.timer-display-professional.running {
+    -fx-text-fill: #4DD0C7;
+    -fx-effect: dropshadow(gaussian, rgba(77, 208, 199, 0.4), 8, 0.5, 0, 0);
+}
+
+.timer-display-professional.paused {
+    -fx-text-fill: #FBBF24;
+    -fx-effect: dropshadow(gaussian, rgba(251, 191, 36, 0.4), 8, 0.5, 0, 0);
+}
+
+.timer-display-professional.finished {
+    -fx-text-fill: #34D399;
+    -fx-effect: dropshadow(gaussian, rgba(52, 211, 153, 0.6), 12, 0.6, 0, 0);
+}
+
+.timer-display-professional.urgent {
+    -fx-text-fill: #F87171;
+    -fx-effect: dropshadow(gaussian, rgba(248, 113, 113, 0.6), 12, 0.6, 0, 0);
+}
+
+/* Timer display sizes */
+.timer-display-sm {
+    -fx-font-size: 24px;
+}
+
+.timer-display-md {
+    -fx-font-size: 36px;
+}
+
+.timer-display-lg {
+    -fx-font-size: 48px;
+}
+
+.timer-display-xl {
+    -fx-font-size: 64px;
+}
+
+/* ===== TIMER CONTROLS ===== */
+
+/* Timer control button group */
+.timer-controls {
+    -fx-spacing: 12;
+    -fx-alignment: center;
+}
+
+/* Play/Pause button */
+.timer-btn-play {
+    -fx-background-color: linear-gradient(to bottom, #10B981, #059669);
+    -fx-text-fill: white;
+    -fx-background-radius: 50%;
+    -fx-border-radius: 50%;
+    -fx-min-width: 64;
+    -fx-min-height: 64;
+    -fx-pref-width: 64;
+    -fx-pref-height: 64;
+    -fx-font-size: 20px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.4), 12, 0.4, 0, 4);
+}
+
+.timer-btn-play:hover {
+    -fx-background-color: linear-gradient(to bottom, #34D399, #10B981);
+    -fx-scale-x: 1.1;
+    -fx-scale-y: 1.1;
+    -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.6), 16, 0.5, 0, 6);
+}
+
+.timer-btn-play:pressed {
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+}
+
+/* Pause state */
+.timer-btn-pause {
+    -fx-background-color: linear-gradient(to bottom, #F59E0B, #D97706);
+    -fx-effect: dropshadow(gaussian, rgba(245, 158, 11, 0.4), 12, 0.4, 0, 4);
+}
+
+.timer-btn-pause:hover {
+    -fx-background-color: linear-gradient(to bottom, #FBBF24, #F59E0B);
+    -fx-effect: dropshadow(gaussian, rgba(245, 158, 11, 0.6), 16, 0.5, 0, 6);
+}
+
+/* Reset button */
+.timer-btn-reset {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-text-fill: #CBD5E1;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-width: 1;
+    -fx-min-width: 48;
+    -fx-min-height: 48;
+    -fx-font-size: 16px;
+    -fx-cursor: hand;
+}
+
+.timer-btn-reset:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.15);
+    -fx-text-fill: #F8FAFC;
+    -fx-border-color: rgba(255, 255, 255, 0.3);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+/* Delete button */
+.timer-btn-delete {
+    -fx-background-color: rgba(239, 68, 68, 0.1);
+    -fx-text-fill: #F87171;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: rgba(239, 68, 68, 0.2);
+    -fx-border-width: 1;
+    -fx-min-width: 48;
+    -fx-min-height: 48;
+    -fx-font-size: 16px;
+    -fx-cursor: hand;
+}
+
+.timer-btn-delete:hover {
+    -fx-background-color: rgba(239, 68, 68, 0.2);
+    -fx-text-fill: #EF4444;
+    -fx-border-color: rgba(239, 68, 68, 0.4);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+/* ===== TIMER PROGRESS ===== */
+
+/* Circular progress indicator */
+.timer-progress-circle {
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-width: 6;
+    -fx-background-radius: 50%;
+    -fx-border-radius: 50%;
+    -fx-min-width: 200;
+    -fx-min-height: 200;
+    -fx-pref-width: 200;
+    -fx-pref-height: 200;
+}
+
+/* Linear progress bar */
+.timer-progress-bar {
+    -fx-pref-height: 8;
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-background-radius: 4;
+}
+
+.timer-progress-bar .track {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-background-radius: 4;
+}
+
+.timer-progress-bar .bar {
+    -fx-background-color: linear-gradient(to right, #00B4A6, #4DD0C7);
+    -fx-background-radius: 4;
+}
+
+.timer-progress-bar.urgent .bar {
+    -fx-background-color: linear-gradient(to right, #EF4444, #F87171);
+    -fx-effect: dropshadow(gaussian, rgba(239, 68, 68, 0.4), 8, 0.4, 0, 0);
+}
+
+/* ===== TIMER LABELS ===== */
+
+/* Timer title */
+.timer-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #F8FAFC;
+    -fx-alignment: center;
+}
+
+/* Timer subtitle/description */
+.timer-subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: #94A3B8;
+    -fx-alignment: center;
+}
+
+/* Linked course label */
+.timer-course-label {
+    -fx-background-color: rgba(0, 180, 166, 0.15);
+    -fx-text-fill: #4DD0C7;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-padding: 4 12;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: rgba(0, 180, 166, 0.3);
+    -fx-border-width: 1;
+    -fx-alignment: center;
+}
+
+/* Timer statistics */
+.timer-stats {
+    -fx-spacing: 8;
+    -fx-alignment: center;
+}
+
+.timer-stat-label {
+    -fx-font-size: 10px;
+    -fx-text-fill: #64748B;
+    -fx-font-weight: 600;
+    -fx-text-transform: uppercase;
+}
+
+.timer-stat-value {
+    -fx-font-size: 14px;
+    -fx-text-fill: #CBD5E1;
+    -fx-font-weight: 500;
+}
+
+/* ===== MINI TIMER PROFESSIONAL ===== */
+
+/* Professional mini timer container */
+.mini-timer-professional {
+    -fx-background-color: linear-gradient(135deg, 
+        rgba(51, 65, 85, 0.95), 
+        rgba(30, 41, 59, 0.95));
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 20, 0.4, 0, 8);
+    -fx-padding: 16;
+    -fx-spacing: 12;
+    -fx-min-width: 280;
+    -fx-pref-width: 280;
+}
+
+/* Mini timer header */
+.mini-timer-header {
+    -fx-spacing: 8;
+    -fx-alignment: center-left;
+}
+
+.mini-timer-subject {
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #F8FAFC;
+}
+
+.mini-timer-close {
+    -fx-background-color: transparent;
+    -fx-text-fill: #94A3B8;
+    -fx-background-radius: 50%;
+    -fx-border-radius: 50%;
+    -fx-min-width: 24;
+    -fx-min-height: 24;
+    -fx-pref-width: 24;
+    -fx-pref-height: 24;
+    -fx-cursor: hand;
+}
+
+.mini-timer-close:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-text-fill: #F8FAFC;
+}
+
+/* Mini timer display */
+.mini-timer-display {
+    -fx-font-family: "SF Mono", "Consolas", "Roboto Mono", monospace;
+    -fx-font-size: 24px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #F8FAFC;
+    -fx-alignment: center;
+}
+
+.mini-timer-display.running {
+    -fx-text-fill: #4DD0C7;
+}
+
+.mini-timer-display.paused {
+    -fx-text-fill: #FBBF24;
+}
+
+/* Mini timer controls */
+.mini-timer-controls {
+    -fx-spacing: 8;
+    -fx-alignment: center;
+}
+
+.mini-timer-btn {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-text-fill: white;
+    -fx-background-radius: 50%;
+    -fx-border-radius: 50%;
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-width: 1;
+    -fx-min-width: 36;
+    -fx-min-height: 36;
+    -fx-pref-width: 36;
+    -fx-pref-height: 36;
+    -fx-cursor: hand;
+}
+
+.mini-timer-btn:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.15);
+    -fx-border-color: rgba(255, 255, 255, 0.3);
+    -fx-scale-x: 1.1;
+    -fx-scale-y: 1.1;
+}
+
+.mini-timer-btn.playing {
+    -fx-background-color: rgba(16, 185, 129, 0.3);
+    -fx-border-color: rgba(16, 185, 129, 0.5);
+}
+
+/* Mini timer progress */
+.mini-timer-progress {
+    -fx-pref-height: 4;
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-background-radius: 2;
+}
+
+.mini-timer-progress .track {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-background-radius: 2;
+}
+
+.mini-timer-progress .bar {
+    -fx-background-color: linear-gradient(to right, #10B981, #34D399);
+    -fx-background-radius: 2;
+}
+
+/* Session time indicator */
+.mini-timer-session {
+    -fx-font-size: 11px;
+    -fx-text-fill: rgba(255, 255, 255, 0.7);
+    -fx-alignment: center;
+}
+
+/* ===== TIMER CONFIGURATION ===== */
+
+/* Timer config dialog */
+.timer-config-professional {
+    -fx-background-color: linear-gradient(135deg, 
+        rgba(51, 65, 85, 0.98), 
+        rgba(30, 41, 59, 0.98));
+    -fx-background-radius: 24;
+    -fx-border-radius: 24;
+    -fx-border-color: rgba(255, 255, 255, 0.15);
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 32, 0.5, 0, 12);
+    -fx-padding: 32;
+    -fx-spacing: 20;
+    -fx-alignment: center;
+}
+
+/* Timer input fields */
+.timer-input-group {
+    -fx-spacing: 8;
+    -fx-alignment: center;
+}
+
+.timer-input-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #94A3B8;
+    -fx-text-transform: uppercase;
+}
+
+.timer-input-field {
+    -fx-background-color: rgba(255, 255, 255, 0.05);
+    -fx-text-fill: #F8FAFC;
+    -fx-font-family: "SF Mono", "Consolas", "Roboto Mono", monospace;
+    -fx-font-size: 24px;
+    -fx-font-weight: 700;
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+    -fx-padding: 12 16;
+    -fx-alignment: center;
+    -fx-min-width: 80;
+    -fx-pref-width: 80;
+}
+
+.timer-input-field:focused {
+    -fx-border-color: #00B4A6;
+    -fx-border-width: 2;
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-effect: dropshadow(gaussian, rgba(0, 180, 166, 0.25), 8, 0.4, 0, 0);
+}
+
+/* ===== TIMER ANIMATIONS ===== */
+
+/* Completion celebration */
+.timer-celebration {
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+}
+
+.timer-celebration.animate {
+    -fx-scale-x: 1.1;
+    -fx-scale-y: 1.1;
+    -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.8), 24, 0.8, 0, 0);
+}
+
+/* Urgent warning pulse */
+.timer-urgent-pulse {
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+}
+
+.timer-urgent-pulse.animate {
+    -fx-scale-x: 1.03;
+    -fx-scale-y: 1.03;
+    -fx-effect: dropshadow(gaussian, rgba(239, 68, 68, 0.6), 16, 0.6, 0, 0);
+}
+
+/* === END OF TIMER PROFESSIONAL STYLING === */

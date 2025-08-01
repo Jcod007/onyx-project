@@ -1,0 +1,650 @@
+/*
+ * PROFESSIONAL RESPONSIVE LAYOUT SYSTEM FOR ONYX
+ * 
+ * Complete responsive layout implementation with:
+ * - Flexible grid system using FlowPane and proper JavaFX containers
+ * - Smooth window resizing from 800x600 to full screen
+ * - Elegant sidebar navigation that adapts to screen size
+ * - Professional timer card layouts with natural reflow
+ * - Optimal spacing and margins at all breakpoints
+ */
+
+/* =============================================
+   MAIN LAYOUT ARCHITECTURE
+   Professional responsive foundation
+   ============================================= */
+
+.main-layout-container {
+    -fx-background-color: #0F172A;
+    -fx-padding: 0;
+    -fx-min-width: 600;
+    -fx-min-height: 500;
+}
+
+.responsive-layout-root {
+    -fx-cache: true;
+    -fx-cache-hint: speed;
+    -fx-smooth: true;
+}
+
+.content-wrapper {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.content-pane {
+    -fx-background-color: transparent;
+}
+
+/* =============================================
+   PROFESSIONAL RESPONSIVE SIDEBAR SYSTEM
+   Adaptive navigation with smooth transitions
+   ============================================= */
+
+/* Base Sidebar Container */
+.responsive-sidebar {
+    -fx-background-color: #1E293B;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-width: 0 1 0 0;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 8, 0.3, 2, 0);
+}
+
+/* Title Container */
+.title-container {
+    -fx-alignment: center-left;
+    -fx-border-color: rgba(255, 255, 255, 0.1);
+    -fx-border-width: 0 0 1 0;
+    -fx-min-height: 60;
+}
+
+.title-text {
+    -fx-text-fill: #F8FAFC;
+    -fx-font-weight: bold;
+}
+
+/* Navigation Container */
+.navigation-container {
+    -fx-alignment: top-left;
+    -fx-fill-width: true;
+}
+
+/* Enhanced Navigation Buttons */
+.responsive-nav-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #CBD5E1;
+    -fx-font-size: 14px;
+    -fx-padding: 12 16;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-alignment: center-left;
+    -fx-graphic-text-gap: 12;
+    -fx-border-width: 0;
+    -fx-min-width: 0;
+    -fx-pref-width: 10000;
+    -fx-font-family: "Segoe UI", "Inter", system-ui, sans-serif;
+}
+
+.responsive-nav-button:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-text-fill: #F8FAFC;
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+}
+
+.responsive-nav-button.active {
+    -fx-background-color: #00B4A6;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.responsive-nav-button.active:hover {
+    -fx-background-color: #4DD0C7;
+}
+
+/* Sidebar Footer */
+.sidebar-footer {
+    -fx-min-height: 40;
+    -fx-alignment: bottom-center;
+}
+
+/* =============================================
+   RESPONSIVE SIDEBAR BREAKPOINT ADAPTATIONS
+   Intelligent sidebar behavior across screen sizes
+   ============================================= */
+
+/* Mobile: Collapsed Sidebar (Icons Only) */
+.mobile-layout .sidebar-container {
+    -fx-pref-width: 60;
+    -fx-min-width: 60;
+    -fx-max-width: 60;
+}
+
+.mobile-layout .title-container {
+    -fx-min-height: 50;
+}
+
+.mobile-layout .title-text {
+    -fx-opacity: 0;
+    -fx-managed: false;
+}
+
+.mobile-layout .responsive-nav-button {
+    -fx-padding: 12 8;
+    -fx-graphic-text-gap: 0;
+    -fx-alignment: center;
+    -fx-content-display: graphic-only;
+}
+
+/* Tablet: Compact Sidebar */
+.tablet-layout .sidebar-container {
+    -fx-pref-width: 120;
+    -fx-min-width: 100;
+    -fx-max-width: 140;
+}
+
+.tablet-layout .title-text {
+    -fx-font-size: 16px;
+}
+
+.tablet-layout .responsive-nav-button {
+    -fx-font-size: 12px;
+    -fx-padding: 10 12;
+    -fx-content-display: graphic-only;
+    -fx-alignment: center;
+}
+
+/* Desktop: Standard Sidebar */
+.desktop-layout .sidebar-container {
+    -fx-pref-width: 186;
+    -fx-min-width: 160;
+    -fx-max-width: 220;
+}
+
+.desktop-layout .responsive-nav-button {
+    -fx-content-display: left;
+    -fx-alignment: center-left;
+}
+
+/* Large Desktop: Expanded Sidebar */
+.large-desktop-layout .sidebar-container {
+    -fx-pref-width: 220;
+    -fx-min-width: 180;
+    -fx-max-width: 260;
+}
+
+.large-desktop-layout .title-text {
+    -fx-font-size: 20px;
+}
+
+.large-desktop-layout .responsive-nav-button {
+    -fx-font-size: 16px;
+    -fx-padding: 16 20;
+}
+
+/* Ultra Wide: Maximum Sidebar */
+.ultra-wide-layout .sidebar-container {
+    -fx-pref-width: 260;
+    -fx-min-width: 220;
+    -fx-max-width: 300;
+}
+
+.ultra-wide-layout .title-text {
+    -fx-font-size: 24px;
+}
+
+.ultra-wide-layout .responsive-nav-button {
+    -fx-font-size: 18px;
+    -fx-padding: 18 24;
+    -fx-graphic-text-gap: 16;
+}
+
+/* =============================================
+   PROFESSIONAL TIMER GRID SYSTEM
+   Intelligent card reflow with optimal spacing
+   ============================================= */
+
+.timers-grid {
+    -fx-alignment: top-center;
+    -fx-row-valignment: top;
+    -fx-column-halignment: center;
+}
+
+.timer-content-wrapper {
+    -fx-alignment: top-center;
+    -fx-fill-width: true;
+}
+
+.timer-scroll-container {
+    -fx-background-color: transparent;
+}
+
+/* Responsive Timer Grid Adaptations */
+.responsive-card-grid {
+    -fx-alignment: top-center;
+    -fx-row-valignment: top;
+}
+
+/* Mobile: Single Column Grid */
+.mobile-layout .responsive-card-grid {
+    -fx-hgap: 12;
+    -fx-vgap: 12;
+    -fx-alignment: top-center;
+    -fx-pref-tile-width: 280;
+    -fx-pref-tile-height: 200;
+}
+
+/* Tablet: Two Column Grid */
+.tablet-layout .responsive-card-grid {
+    -fx-hgap: 16;
+    -fx-vgap: 16;
+    -fx-alignment: top-center;
+    -fx-pref-tile-width: 300;
+    -fx-pref-tile-height: 220;
+}
+
+/* Desktop: Three Column Grid */
+.desktop-layout .responsive-card-grid {
+    -fx-hgap: 20;
+    -fx-vgap: 20;
+    -fx-alignment: top-center;
+    -fx-pref-tile-width: 320;
+    -fx-pref-tile-height: 240;
+}
+
+/* Large Desktop: Four Column Grid */
+.large-desktop-layout .responsive-card-grid {
+    -fx-hgap: 24;
+    -fx-vgap: 24;
+    -fx-alignment: top-center;
+    -fx-pref-tile-width: 340;
+    -fx-pref-tile-height: 260;
+}
+
+/* Ultra Wide: Five Column Grid */
+.ultra-wide-layout .responsive-card-grid {
+    -fx-hgap: 28;
+    -fx-vgap: 28;
+    -fx-alignment: top-center;
+    -fx-pref-tile-width: 360;
+    -fx-pref-tile-height: 280;
+}
+
+/* =============================================
+   FLOATING ACTION BUTTON SYSTEM
+   Responsive FAB positioning and sizing
+   ============================================= */
+
+.fab-button {
+    -fx-background-color: #FF6B47;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 50%;
+    -fx-border-radius: 50%;
+    -fx-cursor: hand;
+    -fx-border-width: 0;
+    -fx-effect: dropshadow(gaussian, rgba(255,107,71,0.4), 12, 0.3, 0, 4);
+    -fx-alignment: center;
+    -fx-font-size: 20px;
+}
+
+.fab-button:hover {
+    -fx-background-color: #FF8A73;
+    -fx-scale-x: 1.1;
+    -fx-scale-y: 1.1;
+}
+
+.fab-button:pressed {
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+}
+
+/* Responsive FAB Sizing */
+.mobile-layout .fab-button {
+    -fx-min-width: 48;
+    -fx-min-height: 48;
+    -fx-pref-width: 48;
+    -fx-pref-height: 48;
+    -fx-font-size: 18px;
+}
+
+.tablet-layout .fab-button {
+    -fx-min-width: 52;
+    -fx-min-height: 52;
+    -fx-pref-width: 52;
+    -fx-pref-height: 52;
+    -fx-font-size: 20px;
+}
+
+.desktop-layout .fab-button {
+    -fx-min-width: 56;
+    -fx-min-height: 56;
+    -fx-pref-width: 56;
+    -fx-pref-height: 56;
+    -fx-font-size: 24px;
+}
+
+.large-desktop-layout .fab-button {
+    -fx-min-width: 64;
+    -fx-min-height: 64;
+    -fx-pref-width: 64;
+    -fx-pref-height: 64;
+    -fx-font-size: 28px;
+}
+
+.ultra-wide-layout .fab-button {
+    -fx-min-width: 72;
+    -fx-min-height: 72;
+    -fx-pref-width: 72;
+    -fx-pref-height: 72;
+    -fx-font-size: 32px;
+}
+
+/* =============================================
+   RESPONSIVE OVERLAY SYSTEM
+   Professional modal and dialog overlays
+   ============================================= */
+
+.responsive-overlay-container {
+    -fx-alignment: center;
+    -fx-background-color: rgba(0, 0, 0, 0.4);
+}
+
+.overlay-content {
+    -fx-background-color: linear-gradient(to bottom right, 
+        rgba(45, 45, 45, 0.95), 
+        rgba(35, 35, 35, 0.95));
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-border-color: rgba(255, 255, 255, 0.2);
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 24, 0.3, 0, 8);
+    -fx-padding: 24;
+}
+
+/* Responsive Overlay Sizing */
+.mobile-layout .overlay-content {
+    -fx-max-width: 280;
+    -fx-min-width: 280;
+    -fx-padding: 16;
+}
+
+.tablet-layout .overlay-content {
+    -fx-max-width: 320;
+    -fx-min-width: 320;
+    -fx-padding: 20;
+}
+
+.desktop-layout .overlay-content {
+    -fx-max-width: 400;
+    -fx-min-width: 400;
+    -fx-padding: 24;
+}
+
+.large-desktop-layout .overlay-content {
+    -fx-max-width: 480;
+    -fx-min-width: 480;
+    -fx-padding: 28;
+}
+
+.ultra-wide-layout .overlay-content {
+    -fx-max-width: 560;
+    -fx-min-width: 560;
+    -fx-padding: 32;
+}
+
+/* =============================================
+   STUDY DECK RESPONSIVE ENHANCEMENTS
+   Professional course card layouts
+   ============================================= */
+
+.study-deck-container {
+    -fx-background-color: transparent;
+    -fx-alignment: top-center;
+}
+
+.course-cards-container {
+    -fx-alignment: top-center;
+    -fx-fill-width: true;
+}
+
+/* Responsive Course Card Sizing */
+.mobile-layout .course-card {
+    -fx-min-width: 260;
+    -fx-pref-width: 300;
+    -fx-max-width: 320;
+}
+
+.tablet-layout .course-card {
+    -fx-min-width: 320;
+    -fx-pref-width: 360;
+    -fx-max-width: 400;
+}
+
+.desktop-layout .course-card {
+    -fx-min-width: 380;
+    -fx-pref-width: 420;
+    -fx-max-width: 480;
+}
+
+.large-desktop-layout .course-card {
+    -fx-min-width: 440;
+    -fx-pref-width: 500;
+    -fx-max-width: 560;
+}
+
+.ultra-wide-layout .course-card {
+    -fx-min-width: 500;
+    -fx-pref-width: 580;
+    -fx-max-width: 640;
+}
+
+/* =============================================
+   SMOOTH TRANSITION SYSTEM
+   Hardware-accelerated resize animations
+   ============================================= */
+
+.smooth-resize {
+    -fx-cache: true;
+    -fx-cache-hint: speed;
+}
+
+.animatable {
+    -fx-cache: true;
+    -fx-cache-hint: quality;
+}
+
+.floating-widget {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 20, 0.4, 0, 8);
+    -fx-view-order: -1;
+}
+
+/* Window resize performance optimization */
+.responsive-layout-root {
+    -fx-smooth: true;
+}
+
+/* =============================================
+   RESPONSIVE MARGIN AND PADDING SYSTEM
+   Dynamic spacing based on available space
+   ============================================= */
+
+/* Container margins adapt to screen size */
+.mobile-layout .container-margins {
+    -fx-padding: 8;
+}
+
+.tablet-layout .container-margins {
+    -fx-padding: 12;
+}
+
+.desktop-layout .container-margins {
+    -fx-padding: 16;
+}
+
+.large-desktop-layout .container-margins {
+    -fx-padding: 24;
+}
+
+.ultra-wide-layout .container-margins {
+    -fx-padding: 32;
+}
+
+/* =============================================
+   PROFESSIONAL ICON SYSTEM
+   Consistent icon sizing across breakpoints
+   ============================================= */
+
+.icon-menu {
+    -fx-icon-color: #CBD5E1;
+}
+
+.responsive-nav-button:hover .icon-menu {
+    -fx-icon-color: #F8FAFC;
+}
+
+.responsive-nav-button.active .icon-menu {
+    -fx-icon-color: white;
+}
+
+/* Responsive Icon Sizes */
+.mobile-layout .icon-responsive {
+    -fx-icon-size: 16;
+}
+
+.tablet-layout .icon-responsive {
+    -fx-icon-size: 18;
+}
+
+.desktop-layout .icon-responsive {
+    -fx-icon-size: 20;
+}
+
+.large-desktop-layout .icon-responsive {
+    -fx-icon-size: 24;
+}
+
+.ultra-wide-layout .icon-responsive {
+    -fx-icon-size: 28;
+}
+
+/* =============================================
+   PROFESSIONAL SCROLL SYSTEM
+   Optimized scrolling experience
+   ============================================= */
+
+.scroll-pane-responsive {
+    -fx-background-color: transparent;
+    -fx-fit-to-width: true;
+    -fx-fit-to-height: true;
+}
+
+/* Responsive Scrollbar Sizing */
+.mobile-layout .scroll-pane-responsive .scroll-bar:horizontal,
+.mobile-layout .scroll-pane-responsive .scroll-bar:vertical {
+    -fx-pref-width: 6;
+    -fx-pref-height: 6;
+}
+
+.tablet-layout .scroll-pane-responsive .scroll-bar:horizontal,
+.tablet-layout .scroll-pane-responsive .scroll-bar:vertical {
+    -fx-pref-width: 8;
+    -fx-pref-height: 8;
+}
+
+.desktop-layout .scroll-pane-responsive .scroll-bar:horizontal,
+.desktop-layout .scroll-pane-responsive .scroll-bar:vertical {
+    -fx-pref-width: 12;
+    -fx-pref-height: 12;
+}
+
+.large-desktop-layout .scroll-pane-responsive .scroll-bar:horizontal,
+.large-desktop-layout .scroll-pane-responsive .scroll-bar:vertical {
+    -fx-pref-width: 16;
+    -fx-pref-height: 16;
+}
+
+.ultra-wide-layout .scroll-pane-responsive .scroll-bar:horizontal,
+.ultra-wide-layout .scroll-pane-responsive .scroll-bar:vertical {
+    -fx-pref-width: 20;
+    -fx-pref-height: 20;
+}
+
+/* Scrollbar Styling */
+.scroll-pane-responsive .scroll-bar .track {
+    -fx-background-color: rgba(0, 0, 0, 0.05);
+    -fx-background-radius: 8;
+}
+
+.scroll-pane-responsive .scroll-bar .thumb {
+    -fx-background-color: rgba(0, 0, 0, 0.2);
+    -fx-background-radius: 8;
+}
+
+.scroll-pane-responsive .scroll-bar .thumb:hover {
+    -fx-background-color: rgba(0, 0, 0, 0.4);
+}
+
+.scroll-pane-responsive .scroll-bar .thumb:pressed {
+    -fx-background-color: #00B4A6;
+}
+
+/* =============================================
+   UTILITY CLASSES
+   Layout helpers and responsive utilities
+   ============================================= */
+
+/* Layout Flexibility */
+.flexible-width {
+    -fx-max-width: 10000;
+    -fx-hgrow: always;
+}
+
+.flexible-height {
+    -fx-max-height: 10000;
+    -fx-vgrow: always;
+}
+
+.fill-width {
+    -fx-pref-width: 10000;
+    -fx-max-width: 10000;
+}
+
+.fill-height {
+    -fx-pref-height: 10000;
+    -fx-max-height: 10000;
+}
+
+/* Professional Alignment Classes */
+.center-content {
+    -fx-alignment: center;
+}
+
+.left-content {
+    -fx-alignment: center-left;
+}
+
+.right-content {
+    -fx-alignment: center-right;
+}
+
+.top-content {
+    -fx-alignment: top-center;
+}
+
+.bottom-content {
+    -fx-alignment: bottom-center;
+}
+
+/* Performance Optimization Classes */
+.hardware-accelerated {
+    -fx-cache: true;
+    -fx-cache-hint: speed;
+}
+
+.crisp-edges {
+    -fx-smooth: false;
+}
+
+.smooth-edges {
+    -fx-smooth: true;
+}

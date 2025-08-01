@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<!--
+    Professional Responsive Card Grid Template
+    
+    Features:
+    - FlowPane-based grid system with natural wrapping
+    - Professional card layouts that adapt to screen size
+    - FAB (Floating Action Button) for adding new items
+    - StackPane overlay system for modals/dialogs
+    - Performance-optimized scrolling
+    - Responsive spacing and sizing
+-->
+
+<StackPane fx:id="cardGridContainer"
+           styleClass="desktop-layout"
+           stylesheets="@/com/onyx/app/styles/global.css, 
+                       @/com/onyx/app/styles/responsive-system.css,
+                       @/com/onyx/app/styles/responsive-extensions.css"
+           xmlns="http://javafx.com/javafx/23.0.1" 
+           xmlns:fx="http://javafx.com/fxml/1">
+
+    <!-- Main Content Layer -->
+    <VBox styleClass="flexible-width, flexible-height">
+        
+        <!-- Header Section -->
+        <HBox fx:id="headerSection" 
+              styleClass="padding-base, spacing-base"
+              alignment="CENTER_LEFT">
+            
+            <Label fx:id="sectionTitle" 
+                   text="Items" 
+                   styleClass="title-large"/>
+            
+            <!-- Spacer -->
+            <Region HBox.hgrow="ALWAYS"/>
+            
+            <!-- Header Actions -->
+            <HBox fx:id="headerActions" 
+                  styleClass="spacing-sm"
+                  alignment="CENTER_RIGHT">
+                
+                <!-- Search/Filter Button -->
+                <Button fx:id="searchButton" 
+                        styleClass="btn-glass, hide-on-mobile">
+                    <graphic>
+                        <FontIcon iconLiteral="fas-search" iconSize="16"/>
+                    </graphic>
+                </Button>
+                
+                <!-- View Toggle Button -->
+                <Button fx:id="viewToggleButton" 
+                        styleClass="btn-glass, hide-on-mobile">
+                    <graphic>
+                        <FontIcon iconLiteral="fas-th" iconSize="16"/>
+                    </graphic>
+                </Button>
+                
+                <!-- More Options -->
+                <Button fx:id="moreOptionsButton" 
+                        styleClass="btn-glass">
+                    <graphic>
+                        <FontIcon iconLiteral="fas-ellipsis-v" iconSize="16"/>
+                    </graphic>
+                </Button>
+            </HBox>
+        </HBox>
+        
+        <!-- Filter Bar (Optional) -->
+        <HBox fx:id="filterBar" 
+              styleClass="padding-sm, spacing-sm, hide-on-mobile"
+              alignment="CENTER_LEFT"
+              managed="false" 
+              visible="false">
+            
+            <Label text="Filter:" styleClass="body-text"/>
+            
+            <Button fx:id="allFilter" 
+                    text="All" 
+                    styleClass="btn-glass active"/>
+            
+            <Button fx:id="activeFilter" 
+                    text="Active" 
+                    styleClass="btn-glass"/>
+            
+            <Button fx:id="completedFilter" 
+                    text="Completed" 
+                    styleClass="btn-glass"/>
+            
+            <!-- Spacer -->
+            <Region HBox.hgrow="ALWAYS"/>
+            
+            <!-- Results Count -->
+            <Label fx:id="resultsCount" 
+                   text="12 items" 
+                   styleClass="caption-text"/>
+        </HBox>
+        
+        <!-- Main Grid Container -->
+        <ScrollPane fx:id="gridScrollPane" 
+                    styleClass="responsive-scroll-container"
+                    fitToWidth="true" 
+                    hbarPolicy="NEVER" 
+                    vbarPolicy="AS_NEEDED"
+                    VBox.vgrow="ALWAYS">
+            
+            <!-- Responsive FlowPane Grid -->
+            <FlowPane fx:id="cardGrid" 
+                      styleClass="responsive-flow-grid, responsive-card-grid"
+                      alignment="TOP_LEFT">
+                
+                <padding>
+                    <Insets bottom="80" left="20" right="20" top="20"/>
+                </padding>
+                
+                <!-- Cards will be added dynamically here -->
+                
+            </FlowPane>
+        </ScrollPane>
+        
+        <!-- Empty State (shown when no items) -->
+        <VBox fx:id="emptyState" 
+              styleClass="center-content, spacing-lg, padding-2xl"
+              alignment="CENTER"
+              managed="false" 
+              visible="false">
+            
+            <FontIcon iconLiteral="fas-inbox" 
+                     iconSize="48" 
+                     iconColor="#94A3B8"/>
+            
+            <Label text="No items yet" 
+                   styleClass="title-medium"/>
+            
+            <Label text="Get started by adding your first item" 
+                   styleClass="body-text"/>
+            
+            <Button fx:id="emptyStateAddButton" 
+                    text="Add Item" 
+                    styleClass="btn-primary"/>
+        </VBox>
+    </VBox>
+
+    <!-- Floating Action Button -->
+    <Button fx:id="addButton" 
+            styleClass="fab-button, btn-accent, responsive-scale-animation"
+            StackPane.alignment="BOTTOM_RIGHT">
+        <StackPane.margin>
+            <Insets bottom="24" right="24"/>
+        </StackPane.margin>
+        <graphic>
+            <FontIcon iconLiteral="fas-plus" iconSize="18"/>
+        </graphic>
+    </Button>
+
+    <!-- Overlay Container for Modals/Dialogs -->
+    <StackPane fx:id="overlayContainer" 
+               styleClass="responsive-overlay-container"
+               managed="false" 
+               visible="false"
+               pickOnBounds="false">
+        
+        <!-- Modal content will be injected here -->
+        
+    </StackPane>
+
+    <!-- Mobile Menu Overlay (shown on mobile when sidebar is opened) -->
+    <StackPane fx:id="mobileMenuOverlay" 
+               styleClass="mobile-sidebar-overlay, show-on-mobile-only"
+               managed="false" 
+               visible="false"
+               alignment="CENTER_LEFT">
+        
+        <VBox fx:id="mobileMenuPanel" 
+              styleClass="mobile-sidebar-panel, spacing-base">
+            
+            <!-- Mobile menu content -->
+            <HBox styleClass="padding-base" alignment="CENTER_LEFT">
+                <FontIcon iconLiteral="mdi2d-diamond-outline" 
+                         iconSize="24" iconColor="#00B4A6"/>
+                <Region prefWidth="8"/>
+                <Label text="ONYX" styleClass="title-medium"/>
+                
+                <!-- Spacer -->
+                <Region HBox.hgrow="ALWAYS"/>
+                
+                <Button fx:id="closeMobileMenuButton" 
+                        styleClass="btn-circle">
+                    <graphic>
+                        <FontIcon iconLiteral="fas-times" iconSize="16"/>
+                    </graphic>
+                </Button>
+            </HBox>
+            
+            <!-- Navigation items -->
+            <VBox fx:id="mobileNavigation" 
+                  styleClass="spacing-xs, padding-base">
+                
+                <Button text="Dashboard" 
+                        styleClass="responsive-nav-button, menu-button">
+                    <graphic>
+                        <FontIcon iconLiteral="fas-tachometer-alt" iconSize="18"/>
+                    </graphic>
+                </Button>
+                
+                <Button text="Timer" 
+                        styleClass="responsive-nav-button, menu-button">
+                    <graphic>
+                        <FontIcon iconLiteral="fas-clock" iconSize="18"/>
+                    </graphic>
+                </Button>
+                
+                <Button text="Study Deck" 
+                        styleClass="responsive-nav-button, menu-button">
+                    <graphic>
+                        <FontIcon iconLiteral="fas-clone" iconSize="18"/>
+                    </graphic>
+                </Button>
+            </VBox>
+        </VBox>
+    </StackPane>
+
+</StackPane>
