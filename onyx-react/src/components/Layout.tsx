@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, Link } from 'react-router-dom';
 import { 
   Timer, 
@@ -28,6 +28,23 @@ export const Layout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
+  // Fermer la sidebar lors des changements de route ou de taille d'écran
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
+  // Gérer le redimensionnement de l'écran
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) { // lg breakpoint
+        setSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const isActivePath = (path: string): boolean => {
     if (path === '/') {
       return location.pathname === '/';
@@ -40,19 +57,19 @@ export const Layout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
+          className="fixed inset-0 z-30 bg-black bg-opacity-50 lg:hidden"
           onClick={closeSidebar}
         />
       )}
 
       {/* Sidebar */}
       <div className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out
-        lg:translate-x-0 lg:static lg:inset-0
+        fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out
+        lg:relative lg:translate-x-0 lg:flex lg:flex-col lg:z-auto
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         {/* Sidebar Header */}
@@ -110,7 +127,7 @@ export const Layout: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="lg:ml-64">
+      <div className="flex-1 flex flex-col">
         {/* Top Bar */}
         <header className="bg-white shadow-sm border-b border-gray-200">
           <div className="flex items-center justify-between px-6 py-4">
@@ -146,7 +163,7 @@ export const Layout: React.FC = () => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1">
+        <main className="flex-1 overflow-auto">
           <div className="container-main py-8">
             <Outlet />
           </div>

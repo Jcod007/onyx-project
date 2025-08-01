@@ -94,20 +94,13 @@ export const StudyPage: React.FC = () => {
   };
 
   const handleStartTimer = (subject: Subject) => {
-    const timerConfig = {
-      workDuration: subject.defaultTimerDuration,
-      shortBreakDuration: 300, // 5 minutes
-      longBreakDuration: 900,  // 15 minutes
-      longBreakInterval: 4
-    };
-
     setActiveTimer({
       subject,
       isActive: true
     });
   };
 
-  const handleTimerComplete = async (sessionCount: number) => {
+  const handleTimerComplete = async () => {
     if (!activeTimer) return;
 
     try {
@@ -279,7 +272,7 @@ export const StudyPage: React.FC = () => {
       {showCreateForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div 
-            className="absolute inset-0 bg-black bg-opacity-50"
+            className="fixed inset-0 bg-black bg-opacity-50"
             onClick={() => setShowCreateForm(false)}
           />
           

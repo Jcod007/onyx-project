@@ -1,4 +1,3 @@
-import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { HomePage } from '@/pages/HomePage';
@@ -22,15 +21,15 @@ const SettingsPage = () => (
 
 function App() {
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/timers" element={<TimersPage />} />
-        <Route path="/study" element={<StudyPage />} />
-        <Route path="/statistics" element={<StatisticsPage />} />
-        <Route path="/settings" element={<SettingsPage />} />
-      </Routes>
-    </Layout>
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={<HomePage />} />
+        <Route path="timers" element={<TimersPage />} />
+        <Route path="study" element={<StudyPage />} />
+        <Route path="statistics" element={<StatisticsPage />} />
+        <Route path="settings" element={<SettingsPage />} />
+      </Route>
+    </Routes>
   );
 }
 

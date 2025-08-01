@@ -6,8 +6,10 @@ import { Subject } from '@/types/Subject';
 import { formatDuration } from '@/utils/timeFormat';
 
 interface DashboardStats {
-  totalSubjects: number;
-  completedSubjects: number;
+  total: number;
+  completed: number;
+  inProgress: number;
+  notStarted: number;
   totalTimeSpent: number;
   totalTargetTime: number;
   overallProgress: number;
@@ -15,8 +17,10 @@ interface DashboardStats {
 
 export const HomePage: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats>({
-    totalSubjects: 0,
-    completedSubjects: 0,
+    total: 0,
+    completed: 0,
+    inProgress: 0,
+    notStarted: 0,
     totalTimeSpent: 0,
     totalTargetTime: 0,
     overallProgress: 0
@@ -88,7 +92,7 @@ export const HomePage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total matières</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalSubjects}</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
             </div>
             <div className="p-3 bg-blue-100 rounded-lg">
               <BookOpen size={24} className="text-blue-600" />
@@ -100,7 +104,7 @@ export const HomePage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Matières terminées</p>
-              <p className="text-2xl font-bold text-green-600">{stats.completedSubjects}</p>
+              <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
             </div>
             <div className="p-3 bg-green-100 rounded-lg">
               <Target size={24} className="text-green-600" />

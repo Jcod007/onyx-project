@@ -46,7 +46,7 @@ export const TimersPage: React.FC = () => {
     setShowConfigDialog(false);
   };
 
-  const handleSessionComplete = useCallback(async (sessionCount: number, timerId: string) => {
+  const handleSessionComplete = useCallback(async (timerId: string) => {
     setCompletedSessions(prev => prev + 1);
     
     // Trouver le timer correspondant pour ajouter le temps à la matière
@@ -166,7 +166,7 @@ export const TimersPage: React.FC = () => {
             <div key={timer.id} className="relative">
               <Timer
                 config={timer.config}
-                onSessionComplete={(sessionCount) => handleSessionComplete(sessionCount, timer.id)}
+                onSessionComplete={() => handleSessionComplete(timer.id)}
                 onModeChange={(mode) => handleModeChange(mode, timer.id)}
                 onTimerFinish={(totalTime) => handleTimerFinish(totalTime, timer.id)}
                 showModeButtons={true}

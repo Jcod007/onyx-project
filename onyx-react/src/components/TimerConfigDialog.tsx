@@ -111,7 +111,7 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Overlay */}
       <div 
-        className="absolute inset-0 bg-black bg-opacity-50"
+        className="fixed inset-0 bg-black bg-opacity-50"
         onClick={onClose}
       />
       
