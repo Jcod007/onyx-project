@@ -33,6 +33,19 @@ export const Layout: React.FC = () => {
     setSidebarOpen(false);
   }, [location.pathname]);
 
+  // Gérer l'overflow du body quand la sidebar est ouverte sur mobile
+  useEffect(() => {
+    if (sidebarOpen && window.innerWidth < 1024) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [sidebarOpen]);
+
   // Gérer le redimensionnement de l'écran
   useEffect(() => {
     const handleResize = () => {
@@ -52,23 +65,21 @@ export const Layout: React.FC = () => {
     return location.pathname.startsWith(path);
   };
 
-  const closeSidebar = () => {
-    setSidebarOpen(false);
-  };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 z-30 bg-black bg-opacity-50 lg:hidden"
-          onClick={closeSidebar}
+          className="fixed inset-0 z-20 bg-black/50 backdrop-blur-sm lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
         />
       )}
 
       {/* Sidebar */}
       <div className={`
-        fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out
+        fixed inset-y-0 left-0 z-30 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out
         lg:relative lg:translate-x-0 lg:flex lg:flex-col lg:z-auto
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
@@ -81,7 +92,7 @@ export const Layout: React.FC = () => {
             <h1 className="text-xl font-bold text-gray-900">Onyx</h1>
           </div>
           <button
-            onClick={closeSidebar}
+            onClick={() => setSidebarOpen(false)}
             className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
           >
             <X size={20} />
@@ -99,7 +110,7 @@ export const Layout: React.FC = () => {
                 <li key={item.path}>
                   <Link
                     to={item.path}
-                    onClick={closeSidebar}
+                    onClick={() => setSidebarOpen(false)}
                     className={`
                       flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors font-medium
                       ${isActive 
