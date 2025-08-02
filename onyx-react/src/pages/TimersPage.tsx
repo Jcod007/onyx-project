@@ -285,6 +285,7 @@ export const TimersPage: React.FC = () => {
                 isPomodoroMode={timer.isPomodoroMode || false}
                 maxCycles={timer.maxCycles || 0}
                 enableSounds={soundEnabled}
+                linkedSubject={timer.linkedSubject || null}
                 onSessionComplete={() => handleSessionComplete(timer.id)}
                 onModeChange={(mode) => handleModeChange(mode, timer.id)}
                 onTimerFinish={(totalTime) => handleTimerFinish(totalTime, timer.id)}
@@ -296,20 +297,6 @@ export const TimersPage: React.FC = () => {
                 }}
                 showModeButtons={!timer.isPomodoroMode}
               />
-              
-              {/* Timer Info - Simplified */}
-              <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm font-medium text-gray-700 text-center">
-                  {Math.floor(timer.config.workDuration / 3600) > 0 && `${Math.floor(timer.config.workDuration / 3600)}h `}
-                  {Math.floor((timer.config.workDuration % 3600) / 60)}min
-                  {timer.config.workDuration % 60 > 0 && ` ${timer.config.workDuration % 60}s`}
-                </p>
-                {timer.linkedSubject && (
-                  <p className="text-xs text-blue-600 text-center mt-1">
-                    📚 {timer.linkedSubject.name}
-                  </p>
-                )}
-              </div>
             </div>
           ))}
         </div>
