@@ -3,7 +3,8 @@ import { Subject, TimerType, TimerTypeLabels } from '@/types';
 import { subjectService } from '@/services/subjectService';
 import { isValidTimeInput, normalizeTime } from '@/utils/timeFormat';
 import { Modal } from '@/components/Modal';
-import { Clock, BookOpen, Timer, RotateCcw } from 'lucide-react';
+import { SmartTimeInput } from '@/components/SmartTimeInput';
+import { Clock, BookOpen, Timer, RotateCcw, Zap, Coffee } from 'lucide-react';
 
 type TimerModeType = 'simple' | 'pomodoro';
 type PomodoroPreset = {
@@ -193,57 +194,132 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
             </div>
           )}
 
-          {/* Nom du timer */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nom du timer (optionnel)
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="ex: Session de travail, Timer Pomodoro..."
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Si vide, un nom sera généré automatiquement (Timer 1, Timer 2...)
-            </p>
-          </div>
-
-          {/* Mode de timer */}
+          {/* Type de session - Design amélioré */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
-              Mode de timer
+              Choix du mode de session
             </label>
-            <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setTimerType('FREE_SESSION');
+                  setSelectedSubject(undefined);
+                }}
+                className={`p-3 rounded-lg border-2 transition-all duration-200 ${timerType === 'FREE_SESSION'
+                  ? 'border-purple-500 bg-gradient-to-br from-purple-50 to-purple-100 text-purple-700 shadow-md'
+                  : 'border-gray-200 hover:border-gray-300 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center justify-center space-x-2">
+                  <div className={`p-1 rounded ${
+                    timerType === 'FREE_SESSION' ? 'bg-purple-200' : 'bg-gray-100'
+                  }`}>
+                    <Zap size={16} className={timerType === 'FREE_SESSION' ? 'text-purple-600' : 'text-gray-500'} />
+                  </div>
+                  <span className="font-medium text-sm">Session libre</span>
+                </div>
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setTimerType('STUDY_SESSION')}
+                className={`p-3 rounded-lg border-2 transition-all duration-200 ${timerType === 'STUDY_SESSION'
+                  ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-blue-100 text-blue-700 shadow-md'
+                  : 'border-gray-200 hover:border-gray-300 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center justify-center space-x-2">
+                  <div className={`p-1 rounded ${
+                    timerType === 'STUDY_SESSION' ? 'bg-blue-200' : 'bg-gray-100'
+                  }`}>
+                    <BookOpen size={16} className={timerType === 'STUDY_SESSION' ? 'text-blue-600' : 'text-gray-500'} />
+                  </div>
+                  <span className="font-medium text-sm">Session d'étude</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Matière (si session d'étude) */}
+          {timerType === 'STUDY_SESSION' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                <div className="flex items-center space-x-2">
+                  <BookOpen size={16} />
+                  <span>Matière d'étude</span>
+                </div>
+              </label>
+              
+              {subjects.length > 0 ? (
+                <select
+                  value={selectedSubject?.id || ''}
+                  onChange={(e) => {
+                    const subject = subjects.find(s => s.id === e.target.value);
+                    setSelectedSubject(subject);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Sélectionner une matière</option>
+                  {subjects.map((subject) => (
+                    <option key={subject.id} value={subject.id}>
+                      {subject.name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="p-4 bg-gray-50 rounded-lg text-center">
+                  <p className="text-sm text-gray-500 mb-2">
+                    Aucune matière disponible
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    Créez d'abord des matières dans la section Étude
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Choix du type de timer - Design amélioré */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Choix du type de timer
+            </label>
+            <div className="grid grid-cols-2 gap-2 mb-4">
               <button
                 type="button"
                 onClick={() => setTimerMode('simple')}
-                className={`p-4 rounded-lg border-2 transition-all ${
+                className={`p-3 rounded-lg border-2 transition-all duration-200 ${
                   timerMode === 'simple'
-                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                    ? 'border-green-500 bg-gradient-to-br from-green-50 to-green-100 text-green-700 shadow-md'
+                    : 'border-gray-200 hover:border-gray-300 text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                <div className="flex flex-col items-center space-y-2">
-                  <Timer size={24} />
-                  <span className="font-medium">Mode Simple</span>
-                  <span className="text-xs text-center">Une seule durée de travail</span>
+                <div className="flex items-center justify-center space-x-2">
+                  <div className={`p-1 rounded ${
+                    timerMode === 'simple' ? 'bg-green-200' : 'bg-gray-100'
+                  }`}>
+                    <Timer size={16} className={timerMode === 'simple' ? 'text-green-600' : 'text-gray-500'} />
+                  </div>
+                  <span className="font-medium text-sm">Timer Simple</span>
                 </div>
               </button>
               <button
                 type="button"
                 onClick={() => setTimerMode('pomodoro')}
-                className={`p-4 rounded-lg border-2 transition-all ${
+                className={`p-3 rounded-lg border-2 transition-all duration-200 ${
                   timerMode === 'pomodoro'
-                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                    ? 'border-red-500 bg-gradient-to-br from-red-50 to-red-100 text-red-700 shadow-md'
+                    : 'border-gray-200 hover:border-gray-300 text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                <div className="flex flex-col items-center space-y-2">
-                  <RotateCcw size={24} />
-                  <span className="font-medium">Mode Pomodoro</span>
-                  <span className="text-xs text-center">Cycles travail/pause automatiques</span>
+                <div className="flex items-center justify-center space-x-2">
+                  <div className={`p-1 rounded ${
+                    timerMode === 'pomodoro' ? 'bg-red-200' : 'bg-gray-100'
+                  }`}>
+                    <Coffee size={16} className={timerMode === 'pomodoro' ? 'text-red-600' : 'text-gray-500'} />
+                  </div>
+                  <span className="font-medium text-sm">Pomodoro</span>
                 </div>
               </button>
             </div>
@@ -256,57 +332,37 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
                 Durée du timer
               </label>
               
-              {/* Presets */}
-              <div className="grid grid-cols-4 gap-2 mb-4">
-                {[5, 15, 25, 45].map((preset) => (
-                  <button
-                    key={preset}
-                    onClick={() => handlePresetTime(preset)}
-                    className="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                  >
-                    {preset}min
-                  </button>
-                ))}
+              {/* Durées courantes prédéfinies */}
+              <div className="mb-4">
+                <div className="text-sm font-medium text-gray-600 mb-2">Durées courantes :</div>
+                <div className="grid grid-cols-5 gap-2">
+                  {[5, 15, 25, 45, 60].map((preset) => (
+                    <button
+                      key={preset}
+                      onClick={() => handlePresetTime(preset)}
+                      className={`px-3 py-2 text-sm rounded-lg border-2 transition-all duration-200 ${
+                        minutes === preset && hours === 0 && seconds === 0
+                          ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium'
+                          : 'border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      {preset} min
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {/* Time inputs */}
-              <div className="flex items-center space-x-2">
-                <div className="flex-1">
-                  <label className="block text-xs text-gray-500 mb-1">Heures</label>
-                  <input
-                    type="number"
-                    value={hours}
-                    onChange={(e) => handleTimeChange(e.target.value, setHours, 99)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    min="0"
-                    max="99"
-                  />
-                </div>
-                <div className="text-2xl font-bold text-gray-400 mt-6">:</div>
-                <div className="flex-1">
-                  <label className="block text-xs text-gray-500 mb-1">Minutes</label>
-                  <input
-                    type="number"
-                    value={minutes}
-                    onChange={(e) => handleTimeChange(e.target.value, setMinutes, 59)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    min="0"
-                    max="59"
-                  />
-                </div>
-                <div className="text-2xl font-bold text-gray-400 mt-6">:</div>
-                <div className="flex-1">
-                  <label className="block text-xs text-gray-500 mb-1">Secondes</label>
-                  <input
-                    type="number"
-                    value={seconds}
-                    onChange={(e) => handleTimeChange(e.target.value, setSeconds, 59)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    min="0"
-                    max="59"
-                  />
-                </div>
-              </div>
+              {/* Composant de saisie intelligente */}
+              <SmartTimeInput
+                hours={hours}
+                minutes={minutes}
+                seconds={seconds}
+                onChange={(h, m, s) => {
+                  setHours(h);
+                  setMinutes(m);
+                  setSeconds(s);
+                }}
+              />
             </div>
           ) : (
             <div>
@@ -396,71 +452,23 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
             </div>
           )}
 
-          {/* Type de timer */}
+          {/* Nom du timer */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              Type de session
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Nom du timer (optionnel)
             </label>
-            <div className="space-y-2">
-              {Object.entries(TimerTypeLabels).map(([type, label]) => (
-                <label key={type} className="flex items-center space-x-3 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="timerType"
-                    value={type}
-                    checked={timerType === type}
-                    onChange={(e) => {
-                      setTimerType(e.target.value as TimerType);
-                      if (e.target.value === 'FREE_SESSION') {
-                        setSelectedSubject(undefined);
-                      }
-                    }}
-                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700">{label}</span>
-                </label>
-              ))}
-            </div>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder={timerMode === 'pomodoro' ? 'Timer Pomodoro' : 'Timer Simple'}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Un nom sera généré automatiquement si vide
+            </p>
           </div>
 
-          {/* Matière (si session d'étude) */}
-          {timerType === 'STUDY_SESSION' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                <div className="flex items-center space-x-2">
-                  <BookOpen size={16} />
-                  <span>Matière d'étude</span>
-                </div>
-              </label>
-              
-              {subjects.length > 0 ? (
-                <select
-                  value={selectedSubject?.id || ''}
-                  onChange={(e) => {
-                    const subject = subjects.find(s => s.id === e.target.value);
-                    setSelectedSubject(subject);
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Sélectionner une matière</option>
-                  {subjects.map((subject) => (
-                    <option key={subject.id} value={subject.id}>
-                      {subject.name}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <div className="p-4 bg-gray-50 rounded-lg text-center">
-                  <p className="text-sm text-gray-500 mb-2">
-                    Aucune matière disponible
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    Créez d'abord des matières dans la section Étude
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
       </div>
 
       {/* Footer */}

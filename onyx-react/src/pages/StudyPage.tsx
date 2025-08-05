@@ -257,6 +257,9 @@ export const StudyPage: React.FC = () => {
           </div>
           
           <Timer
+            id={activeTimer.subject.id}
+            duration={activeTimer.subject.defaultTimerDuration}
+            linkedCourse={activeTimer.subject.name}
             config={{
               workDuration: activeTimer.subject.defaultTimerDuration,
               shortBreakDuration: 300,

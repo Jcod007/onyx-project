@@ -1,12 +1,14 @@
 import React, { useState, useCallback } from 'react';
 import { Timer } from '@/components/Timer';
+import { ModernTimerCard } from '@/components/ModernTimerCard';
 import { TimerConfigDialog } from '@/components/TimerConfigDialog';
+import { DailySummary } from '@/components/DailySummary';
 import { TimerConfig, TimerMode } from '@/services/timerService';
 import { Subject } from '@/types/Subject';
 import { subjectService } from '@/services/subjectService';
 import { useReactiveTimers } from '@/hooks/useReactiveTimers';
 import { ActiveTimer } from '@/types/ActiveTimer';
-import { Plus, Settings, Volume2, VolumeX, Edit3, Trash2 } from 'lucide-react';
+import { Plus, Settings, Volume2, VolumeX, Edit3, Trash2, BarChart3 } from 'lucide-react';
 
 export const TimersPage: React.FC = () => {
   const {
@@ -23,6 +25,7 @@ export const TimersPage: React.FC = () => {
   const [editingTimer, setEditingTimer] = useState<ActiveTimer | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [completedSessions, setCompletedSessions] = useState(0);
+  const [showDailySummary, setShowDailySummary] = useState(false);
 
   const handleCreateTimer = () => {
     setShowConfigDialog(true);
@@ -211,6 +214,18 @@ export const TimersPage: React.FC = () => {
         
         <div className="flex items-center gap-3">
           <button
+            onClick={() => setShowDailySummary(!showDailySummary)}
+            className={`p-3 rounded-lg border transition-colors ${
+              showDailySummary 
+                ? 'bg-purple-50 border-purple-200 text-purple-600' 
+                : 'bg-gray-50 border-gray-200 text-gray-400'
+            }`}
+            title={showDailySummary ? 'Masquer le résumé' : 'Afficher le résumé journalier'}
+          >
+            <BarChart3 size={20} />
+          </button>
+          
+          <button
             onClick={() => setSoundEnabled(!soundEnabled)}
             className={`p-3 rounded-lg border transition-colors ${
               soundEnabled 
@@ -232,8 +247,36 @@ export const TimersPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Daily Summary */}
+      {showDailySummary && (
+        <DailySummary
+          sessions={[
+            // Exemple de données - à remplacer par de vraies données
+            {
+              id: '1',
+              subject: { id: '1', name: 'Mathématiques', targetTime: 7200, defaultTimerDuration: 1500, studiedTime: 3600, status: 'IN_PROGRESS', createdAt: new Date(), updatedAt: new Date() },
+              plannedDuration: 3600,
+              studiedTime: 1800,
+              isCompleted: false,
+              progress: 50
+            },
+            {
+              id: '2', 
+              subject: { id: '2', name: 'Histoire', targetTime: 3600, defaultTimerDuration: 1500, studiedTime: 3600, status: 'COMPLETED', createdAt: new Date(), updatedAt: new Date() },
+              plannedDuration: 3600,
+              studiedTime: 3600,
+              isCompleted: true,
+              progress: 100
+            }
+          ]}
+          onStartSession={(sessionId) => {
+            console.log('Starting session:', sessionId);
+          }}
+        />
+      )}
+
       {/* Statistics */}
-      {completedSessions > 0 && (
+      {completedSessions > 0 && !showDailySummary && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-100 rounded-lg">
@@ -251,71 +294,58 @@ export const TimersPage: React.FC = () => {
         </div>
       )}
 
-      {/* Timers Grid */}
+      {/* Timers Grid - Utilisation des nouvelles cartes modernes */}
       {timers.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
           {timers.map((timer) => (
-            <div key={timer.id} className="relative group">
-              {/* Action Buttons - Positioned above Timer - Style uniforme avec SubjectCard */}
-              <div className="absolute top-3 right-3 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    editTimer(timer);
-                  }}
-                  className="p-2 bg-white text-blue-600 rounded-lg shadow-sm hover:bg-blue-50 transition-colors border border-gray-200"
-                  title="Modifier ce timer"
-                >
-                  <Edit3 size={16} />
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveTimer(timer.id);
-                  }}
-                  className="p-2 bg-white text-red-600 rounded-lg shadow-sm hover:bg-red-50 transition-colors border border-gray-200"
-                  title="Supprimer ce timer"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-
-              <Timer
-                config={timer.config}
-                title={timer.title}
-                isPomodoroMode={timer.isPomodoroMode || false}
-                maxCycles={timer.maxCycles || 0}
-                enableSounds={soundEnabled}
-                linkedSubject={timer.linkedSubject || null}
-                onSessionComplete={() => handleSessionComplete(timer.id)}
-                onModeChange={(mode) => handleModeChange(mode, timer.id)}
-                onTimerFinish={(totalTime) => handleTimerFinish(totalTime, timer.id)}
-                onCycleComplete={() => {
-                  console.log(`Pomodoro session completed for timer ${timer.id}`);
-                  if (soundEnabled) {
-                    playNotificationSound();
-                  }
-                }}
-                showModeButtons={!timer.isPomodoroMode}
-              />
-            </div>
+            <ModernTimerCard
+              key={timer.id}
+              id={timer.id}
+              title={timer.title}
+              duration={timer.config.workDuration}
+              state="idle" // TODO: Connecter avec l'état réel du timer
+              timeRemaining={timer.config.workDuration}
+              linkedSubject={timer.linkedSubject}
+              isPomodoroMode={timer.isPomodoroMode || false}
+              sessionCount={0} // TODO: Connecter avec les données réelles
+              maxCycles={timer.maxCycles}
+              progress={0} // TODO: Calculer la progression réelle
+              onStart={() => {
+                console.log('Starting timer:', timer.id);
+                // TODO: Implémenter le démarrage
+              }}
+              onPause={() => {
+                console.log('Pausing timer:', timer.id);
+                // TODO: Implémenter la pause
+              }}
+              onReset={() => {
+                console.log('Resetting timer:', timer.id);
+                // TODO: Implémenter le reset
+              }}
+              onEdit={() => editTimer(timer)}
+              onDelete={() => handleRemoveTimer(timer.id)}
+              onLinkSubject={() => {
+                console.log('Link subject for timer:', timer.id);
+                // TODO: Implémenter la liaison avec un sujet
+              }}
+            />
           ))}
         </div>
       ) : (
         /* Empty State */
         <div className="text-center py-16">
-          <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
-            <Plus size={32} className="text-gray-400" />
+          <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
+            <Plus size={32} className="text-blue-600" />
           </div>
           <h3 className="text-xl font-medium text-gray-900 mb-2">
             Aucun timer actif
           </h3>
           <p className="text-gray-500 mb-6 max-w-md mx-auto">
-            Créez votre premier timer pour commencer une session de travail concentré
+            Créez votre premier timer pour commencer une session de travail concentré avec la technique Pomodoro ou un timer simple
           </p>
           <button
             onClick={handleCreateTimer}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
           >
             <Plus size={20} />
             Créer un timer
@@ -324,16 +354,35 @@ export const TimersPage: React.FC = () => {
       )}
 
       {/* Tips */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-        <h3 className="font-medium text-yellow-900 mb-3">
-          💡 Conseils d'utilisation
+      <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-6 shadow-lg">
+        <h3 className="font-semibold text-yellow-900 mb-4 flex items-center gap-2">
+          <div className="w-6 h-6 bg-yellow-200 rounded-full flex items-center justify-center">
+            💡
+          </div>
+          Conseils d'utilisation
         </h3>
-        <ul className="space-y-2 text-sm text-yellow-800">
-          <li>• Utilisez la technique Pomodoro : 25 min de travail, 5 min de pause</li>
-          <li>• Liez vos timers à des matières pour suivre automatiquement vos progrès</li>
-          <li>• Prenez une pause longue (15 min) toutes les 4 sessions</li>
-          <li>• Éliminez les distractions pendant vos sessions de travail</li>
-        </ul>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-3 text-sm text-yellow-800">
+            <div className="flex items-start gap-2">
+              <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
+              <span>Utilisez la technique Pomodoro : 25 min de travail, 5 min de pause</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
+              <span>Liez vos timers à des matières pour suivre automatiquement vos progrès</span>
+            </div>
+          </div>
+          <div className="space-y-3 text-sm text-yellow-800">
+            <div className="flex items-start gap-2">
+              <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
+              <span>Prenez une pause longue (15 min) toutes les 4 sessions</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
+              <span>Éliminez les distractions pendant vos sessions de travail</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Timer Configuration Dialog */}

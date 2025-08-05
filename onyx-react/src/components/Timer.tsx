@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TimerService, TimerData, TimerMode, TimerConfig } from '@/services/timerService';
 import { Subject } from '@/types/Subject';
-import { Play, Pause, Square, RotateCcw, Volume2, VolumeX, BookOpen, Clock } from 'lucide-react';
+import { Play, Pause, RotateCcw, Volume2, VolumeX, BookOpen, Clock } from 'lucide-react';
 import { useTimerSounds } from '@/hooks/useTimerSounds';
 
 interface TimerProps {
   id: string;
-  duration: number; // en secondes
+  duration?: number; // en secondes (optionnel, utilise config si fourni)
   linkedCourse?: string;
   title?: string;
   config?: TimerConfig;
@@ -25,12 +25,10 @@ interface TimerProps {
 
 export const Timer: React.FC<TimerProps> = ({
   id,
-  duration,
   linkedCourse,
   title,
   config,
   className = '',
-  showModeButtons = false,
   autoStart = false,
   isPomodoroMode = false,
   maxCycles = 0,
@@ -119,58 +117,12 @@ export const Timer: React.FC<TimerProps> = ({
     timerServiceRef.current?.reset();
   };
 
-  const handleModeChange = (mode: TimerMode) => {
-    timerServiceRef.current?.switchMode(mode);
-    onModeChange?.(mode);
-  };
-
   const formatTime = (seconds: number): string => {
     return timerServiceRef.current?.formatTime(seconds) || '00:00';
   };
 
   const getProgress = (): number => {
     return timerServiceRef.current?.getProgress() || 0;
-  };
-
-  const getModeLabel = (mode: TimerMode): string => {
-    switch (mode) {
-      case 'work': return 'Travail';
-      case 'break': return 'Pause';
-      case 'longBreak': return 'P. Longue';
-    }
-  };
-
-  const getFullModeLabel = (mode: TimerMode): string => {
-    switch (mode) {
-      case 'work': return 'Travail';
-      case 'break': return 'Pause courte';
-      case 'longBreak': return 'Pause longue';
-    }
-  };
-
-  const getStateColor = (state: string): string => {
-    switch (state) {
-      case 'running': return 'text-green-600';
-      case 'paused': return 'text-yellow-600';
-      case 'finished': return 'text-blue-600';
-      default: return 'text-gray-600';
-    }
-  };
-
-  const getModeColor = (mode: TimerMode): string => {
-    switch (mode) {
-      case 'work': return 'border-blue-500 bg-blue-50';
-      case 'break': return 'border-green-500 bg-green-50';
-      case 'longBreak': return 'border-purple-500 bg-purple-50';
-    }
-  };
-
-  const getProgressColor = (mode: TimerMode): string => {
-    switch (mode) {
-      case 'work': return 'from-blue-500 to-blue-600';
-      case 'break': return 'from-green-500 to-green-600';
-      case 'longBreak': return 'from-purple-500 to-purple-600';
-    }
   };
 
   // Obtenir les couleurs selon l'état
