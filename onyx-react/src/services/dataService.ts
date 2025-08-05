@@ -44,7 +44,9 @@ class DataService {
       timeSpent: 0,
       defaultTimerDuration: (subjectData.defaultTimerDuration || 25) * 60,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      weeklyTimeGoal: subjectData.weeklyTimeGoal || 120, // 2h par défaut
+      studyDays: subjectData.studyDays || ['MONDAY', 'WEDNESDAY', 'FRIDAY']
     };
 
     subjects.push(newSubject);

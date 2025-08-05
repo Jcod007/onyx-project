@@ -1,52 +1,43 @@
 import React from 'react';
 import { WeekView } from './WeekView';
 import { DayView } from './DayView';
-import { Subject } from '@/types/Subject';
-import { ActiveTimer } from '@/types/ActiveTimer';
+import { CalendarDay, DayStudySession } from '@/types/Subject';
 
 interface CalendarViewProps {
+  calendarDays: CalendarDay[];
   currentDate: Date;
   viewMode: 'week' | 'day';
-  subjects: Subject[];
-  timers: ActiveTimer[];
-  onLinkTimer: (subjectId: string, timerId: string) => void;
-  onUnlinkTimer: (subjectId: string) => void;
-  getAvailableTimers: (subjectId?: string) => ActiveTimer[];
-  getLinkedTimers: (subjectId: string) => ActiveTimer[];
+  onLaunchSession: (session: DayStudySession) => void;
+  onLinkCourse: (courseId: string, timerId: string) => void;
+  onUnlinkCourse: (courseId: string) => void;
 }
 
 export const CalendarView: React.FC<CalendarViewProps> = ({
+  calendarDays,
   currentDate,
   viewMode,
-  subjects,
-  timers,
-  onLinkTimer,
-  onUnlinkTimer,
-  getAvailableTimers,
-  getLinkedTimers
+  onLaunchSession,
+  onLinkCourse,
+  onUnlinkCourse
 }) => {
   if (viewMode === 'week') {
     return (
       <WeekView
+        calendarDays={calendarDays}
         currentDate={currentDate}
-        subjects={subjects}
-        timers={timers}
-        onLinkTimer={onLinkTimer}
-        onUnlinkTimer={onUnlinkTimer}
-        getAvailableTimers={getAvailableTimers}
-        getLinkedTimers={getLinkedTimers}
+        onLaunchSession={onLaunchSession}
+        onLinkCourse={onLinkCourse}
+        onUnlinkCourse={onUnlinkCourse}
       />
     );
   } else {
     return (
       <DayView
+        calendarDays={calendarDays}
         currentDate={currentDate}
-        subjects={subjects}
-        timers={timers}
-        onLinkTimer={onLinkTimer}
-        onUnlinkTimer={onUnlinkTimer}
-        getAvailableTimers={getAvailableTimers}
-        getLinkedTimers={getLinkedTimers}
+        onLaunchSession={onLaunchSession}
+        onLinkCourse={onLinkCourse}
+        onUnlinkCourse={onUnlinkCourse}
       />
     );
   }

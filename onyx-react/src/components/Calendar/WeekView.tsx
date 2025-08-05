@@ -1,79 +1,47 @@
 import React from 'react';
-import { SessionCard } from './SessionCard';
-import { Subject } from '@/types/Subject';
-import { ActiveTimer } from '@/types/ActiveTimer';
-import { BookOpen, Clock, Link } from 'lucide-react';
+import { CalendarDay, DayStudySession } from '@/types/Subject';
+import { BookOpen, Clock } from 'lucide-react';
 
 interface WeekViewProps {
+  calendarDays: CalendarDay[];
   currentDate: Date;
-  subjects: Subject[];
-  timers: ActiveTimer[];
-  onLinkTimer: (subjectId: string, timerId: string) => void;
-  onUnlinkTimer: (subjectId: string) => void;
-  getAvailableTimers: (subjectId?: string) => ActiveTimer[];
-  getLinkedTimers: (subjectId: string) => ActiveTimer[];
+  onLaunchSession: (session: DayStudySession) => void;
+  onLinkCourse?: (courseId: string, timerId: string) => void;
+  onUnlinkCourse?: (courseId: string) => void;
 }
 
 export const WeekView: React.FC<WeekViewProps> = ({
+  calendarDays,
   currentDate,
-  subjects,
-  timers,
-  onLinkTimer,
-  onUnlinkTimer,
-  getAvailableTimers,
-  getLinkedTimers
+  onLaunchSession
 }) => {
-  // Générer les jours de la semaine (Lundi à Dimanche)
-  const getWeekDays = (date: Date) => {
-    const days = [];
-    const startOfWeek = new Date(date);
-    startOfWeek.setDate(date.getDate() - date.getDay() + 1); // Lundi
-
-    for (let i = 0; i < 7; i++) {
-      const day = new Date(startOfWeek);
-      day.setDate(startOfWeek.getDate() + i);
-      days.push(day);
-    }
-    return days;
-  };
-
-  const weekDays = getWeekDays(currentDate);
   const dayNames = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-
-  // Simuler des sessions programmées (à remplacer par vraies données)
-  const getSessionsForDay = (date: Date) => {
-    const dayOfWeek = date.getDay();
-    const sessions = [];
-
-    // Exemple de données de test
-    if (dayOfWeek === 1) { // Lundi
-      const mathSubject = subjects.find(s => s.name.toLowerCase().includes('math'));
-      if (mathSubject) {
-        sessions.push({
-          id: `session-${date.toISOString()}-1`,
-          subject: mathSubject,
-          startTime: '09:00',
-          endTime: '10:30',
-          type: 'study' as const
-        });
-      }
-    }
-    
-    if (dayOfWeek === 3) { // Mercredi
-      const historySubject = subjects.find(s => s.name.toLowerCase().includes('histoire'));
-      if (historySubject) {
-        sessions.push({
-          id: `session-${date.toISOString()}-2`,
-          subject: historySubject,
-          startTime: '14:00',
-          endTime: '15:30',
-          type: 'study' as const
-        });
-      }
-    }
-
-    return sessions;
+  
+  // Trier les jours du calendrier pour la semaine courante
+  const getWeekStart = (date: Date) => {
+    const start = new Date(date);
+    const day = start.getDay();
+    const diff = start.getDate() - day + (day === 0 ? -6 : 1); // Lundi = début de semaine
+    start.setDate(diff);
+    start.setHours(0, 0, 0, 0);
+    return start;
   };
+  
+  const weekStart = getWeekStart(currentDate);
+  const weekDays = [];
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(weekStart);
+    day.setDate(weekStart.getDate() + i);
+    weekDays.push({
+      date: day,
+      data: calendarDays.find(cd => cd.date.toDateString() === day.toDateString()) || {
+        date: day,
+        isToday: day.toDateString() === new Date().toDateString(),
+        sessions: [],
+        totalPlannedTime: 0
+      }
+    });
+  }
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -82,11 +50,11 @@ export const WeekView: React.FC<WeekViewProps> = ({
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
       {/* En-tête des jours */}
       <div className="grid grid-cols-7 border-b border-gray-200">
-        {weekDays.map((day, index) => {
-          const isToday = day.getTime() === today.getTime();
+        {weekDays.map((dayInfo, index) => {
+          const isToday = dayInfo.data.isToday;
           return (
             <div
-              key={day.toISOString()}
+              key={dayInfo.date.toISOString()}
               className={`p-4 text-center border-r border-gray-200 last:border-r-0 ${
                 isToday ? 'bg-blue-50' : ''
               }`}
@@ -97,7 +65,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
               <div className={`text-lg font-semibold mt-1 ${
                 isToday ? 'text-blue-600' : 'text-gray-900'
               }`}>
-                {day.getDate()}
+                {dayInfo.date.getDate()}
               </div>
             </div>
           );
@@ -106,32 +74,39 @@ export const WeekView: React.FC<WeekViewProps> = ({
 
       {/* Grille des sessions */}
       <div className="grid grid-cols-7 min-h-[400px]">
-        {weekDays.map((day) => {
-          const sessions = getSessionsForDay(day);
-          const isToday = day.getTime() === today.getTime();
+        {weekDays.map((dayInfo) => {
+          const isToday = dayInfo.data.isToday;
           
           return (
             <div
-              key={day.toISOString()}
+              key={dayInfo.date.toISOString()}
               className={`p-3 border-r border-gray-200 last:border-r-0 ${
                 isToday ? 'bg-blue-50/30' : ''
               }`}
             >
               <div className="space-y-2">
-                {sessions.map((session) => (
-                  <SessionCard
-                    key={session.id}
-                    session={session}
-                    timers={timers}
-                    onLinkTimer={onLinkTimer}
-                    onUnlinkTimer={onUnlinkTimer}
-                    getAvailableTimers={getAvailableTimers}
-                    getLinkedTimers={getLinkedTimers}
-                  />
+                {dayInfo.data.sessions.map((session) => (
+                  <div key={session.id} className="bg-white border border-gray-200 rounded-lg p-3 text-sm">
+                    <div className="font-medium text-gray-900 mb-1">{session.subject.name}</div>
+                    <div className="text-xs text-gray-600 mb-2">{session.plannedDuration} min</div>
+                    <button 
+                      onClick={() => onLaunchSession(session)}
+                      className="w-full px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                    >
+                      Démarrer
+                    </button>
+                  </div>
                 ))}
                 
+                {/* Temps total planifié */}
+                {dayInfo.data.totalPlannedTime > 0 && (
+                  <div className="text-xs text-gray-500 text-center mt-2">
+                    Total: {dayInfo.data.totalPlannedTime} min
+                  </div>
+                )}
+                
                 {/* Indicateur jour vide */}
-                {sessions.length === 0 && (
+                {dayInfo.data.sessions.length === 0 && (
                   <div className="text-center py-8 text-gray-400">
                     <Clock size={24} className="mx-auto mb-2 opacity-50" />
                     <span className="text-sm">Aucune session</span>
@@ -143,63 +118,31 @@ export const WeekView: React.FC<WeekViewProps> = ({
         })}
       </div>
 
-      {/* Panel de liaison timer-cours */}
+      {/* Résumé de la semaine */}
       <div className="border-t border-gray-200 p-4 bg-gray-50">
         <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-          <Link size={20} className="text-blue-600" />
-          Liaisons Timer-Cours
+          <BookOpen size={20} className="text-blue-600" />
+          Résumé de la semaine
         </h3>
         
-        <div className="grid md:grid-cols-2 gap-4">
-          {/* Matières */}
+        <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
-              <BookOpen size={16} />
-              Matières ({subjects.length})
-            </h4>
-            <div className="space-y-2 max-h-32 overflow-y-auto">
-              {subjects.map((subject) => {
-                const linkedTimers = getLinkedTimers(subject.id);
-                return (
-                  <div key={subject.id} className="text-sm p-2 bg-white rounded border">
-                    <div className="font-medium">{subject.name}</div>
-                    {linkedTimers.length > 0 ? (
-                      <div className="text-green-600 text-xs mt-1">
-                        ↔ {linkedTimers[0].title}
-                      </div>
-                    ) : (
-                      <div className="text-gray-400 text-xs mt-1">
-                        Aucun timer lié
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+            <div className="text-2xl font-bold text-blue-600">
+              {calendarDays.reduce((sum, day) => sum + day.sessions.length, 0)}
             </div>
+            <div className="text-sm text-gray-600">Sessions planifiées</div>
           </div>
-
-          {/* Timers */}
           <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
-              <Clock size={16} />
-              Timers ({timers.length})
-            </h4>
-            <div className="space-y-2 max-h-32 overflow-y-auto">
-              {timers.map(timer => (
-                <div key={timer.id} className="text-sm p-2 bg-white rounded border">
-                  <div className="font-medium">{timer.title}</div>
-                  {timer.linkedSubject ? (
-                    <div className="text-blue-600 text-xs mt-1">
-                      → {timer.linkedSubject.name}
-                    </div>
-                  ) : (
-                    <div className="text-gray-400 text-xs mt-1">
-                      Non lié
-                    </div>
-                  )}
-                </div>
-              ))}
+            <div className="text-2xl font-bold text-green-600">
+              {calendarDays.reduce((sum, day) => sum + day.totalPlannedTime, 0)} min
             </div>
+            <div className="text-sm text-gray-600">Temps planifié</div>
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-purple-600">
+              {new Set(calendarDays.flatMap(day => day.sessions.map(s => s.subjectId))).size}
+            </div>
+            <div className="text-sm text-gray-600">Matières différentes</div>
           </div>
         </div>
       </div>

@@ -2,6 +2,8 @@ export type SubjectStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
 
 export type DefaultTimerMode = 'simple' | 'quick_timer';
 
+export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
+
 export interface QuickTimerConfig {
   type: 'simple' | 'pomodoro';
   workDuration: number; // en minutes
@@ -21,6 +23,10 @@ export interface Subject {
   createdAt: Date;
   updatedAt: Date;
   
+  // 📅 PLANIFICATION CALENDRIER
+  weeklyTimeGoal: number; // Objectif hebdomadaire en minutes (ex: 240 = 4h/semaine)
+  studyDays: DayOfWeek[]; // Jours sélectionnés pour étude (ex: ['MONDAY', 'WEDNESDAY', 'FRIDAY'])
+  
   // Champs pour liaison avec timers
   linkedTimerId?: string;
   defaultTimerMode?: DefaultTimerMode;
@@ -32,6 +38,10 @@ export interface CreateSubjectDto {
   name: string;
   targetTime: number; // en minutes
   defaultTimerDuration?: number; // en minutes
+  
+  // 📅 PLANIFICATION CALENDRIER
+  weeklyTimeGoal?: number; // Objectif hebdomadaire en minutes
+  studyDays?: DayOfWeek[]; // Jours sélectionnés pour étude
 }
 
 export interface UpdateSubjectDto {
@@ -39,6 +49,10 @@ export interface UpdateSubjectDto {
   targetTime?: number; // en minutes
   defaultTimerDuration?: number; // en minutes
   status?: SubjectStatus;
+  
+  // 📅 PLANIFICATION CALENDRIER
+  weeklyTimeGoal?: number; // Objectif hebdomadaire en minutes
+  studyDays?: DayOfWeek[]; // Jours sélectionnés pour étude
   
   // Champs pour liaison avec timers
   linkedTimerId?: string;
@@ -63,3 +77,31 @@ export const SubjectStatusLabels: Record<SubjectStatus, string> = {
   IN_PROGRESS: 'En cours',
   COMPLETED: 'Terminé'
 };
+
+export const DayLabels: Record<DayOfWeek, string> = {
+  MONDAY: 'Lundi',
+  TUESDAY: 'Mardi',
+  WEDNESDAY: 'Mercredi',
+  THURSDAY: 'Jeudi',
+  FRIDAY: 'Vendredi',
+  SATURDAY: 'Samedi',
+  SUNDAY: 'Dimanche'
+};
+
+// 📅 TYPES POUR CALENDRIER
+export interface DayStudySession {
+  id: string;
+  subjectId: string;
+  subject: Subject;
+  date: Date;
+  plannedDuration: number; // en minutes (calculé depuis timer lié ou rapide)
+  timerType: 'quick' | 'linked';
+  timerConfig: QuickTimerConfig | { timerId: string }; // Config directe ou référence au timer
+}
+
+export interface CalendarDay {
+  date: Date;
+  isToday: boolean;
+  sessions: DayStudySession[];
+  totalPlannedTime: number; // en minutes
+}

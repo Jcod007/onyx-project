@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TimerService, TimerData, TimerMode, TimerConfig } from '@/services/timerService';
 import { Subject } from '@/types/Subject';
-import { Play, Square, RotateCcw, Volume2, VolumeX } from 'lucide-react';
+import { Play, Pause, Square, RotateCcw, Volume2, VolumeX, BookOpen, Clock } from 'lucide-react';
 import { useTimerSounds } from '@/hooks/useTimerSounds';
 
 interface TimerProps {
-  config?: TimerConfig;
+  id: string;
+  duration: number; // en secondes
+  linkedCourse?: string;
   title?: string;
+  config?: TimerConfig;
   className?: string;
   showModeButtons?: boolean;
   autoStart?: boolean;
@@ -21,15 +24,18 @@ interface TimerProps {
 }
 
 export const Timer: React.FC<TimerProps> = ({
-  config,
+  id,
+  duration,
+  linkedCourse,
   title,
+  config,
   className = '',
-  showModeButtons = true,
+  showModeButtons = false,
   autoStart = false,
   isPomodoroMode = false,
   maxCycles = 0,
   enableSounds = true,
-  linkedSubject: _linkedSubject, // TODO: Utiliser pour afficher le cours lié
+  linkedSubject,
   onSessionComplete,
   onModeChange,
   onTimerFinish,
@@ -167,197 +173,182 @@ export const Timer: React.FC<TimerProps> = ({
     }
   };
 
+  // Obtenir les couleurs selon l'état
+  const getStateInfo = (state: string) => {
+    switch (state) {
+      case 'running':
+        return { color: 'bg-green-100 text-green-800', label: 'EN COURS', borderColor: 'border-green-200' };
+      case 'paused':
+        return { color: 'bg-orange-100 text-orange-800', label: 'PAUSE', borderColor: 'border-orange-200' };
+      case 'finished':
+        return { color: 'bg-purple-100 text-purple-800', label: 'TERMINÉ', borderColor: 'border-purple-200' };
+      default:
+        return { color: 'bg-gray-100 text-gray-800', label: 'IDLE', borderColor: 'border-gray-200' };
+    }
+  };
+
+  const stateInfo = getStateInfo(timerData.state);
+  const displayTitle = title || `Timer ${id}`;
+
   return (
-    <div className={`w-full max-w-2xl mx-auto p-4 bg-white rounded-lg shadow-md border-2 ${getModeColor(timerData.mode)} ${className}`}>
-      {/* Header */}
-      <div className="mb-4 relative">
-        {title && (
-          <h2 className="text-lg font-bold text-gray-800 mb-3 text-left pr-20">
-            {title}
-          </h2>
-        )}
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium text-gray-600">
-              {getFullModeLabel(timerData.mode)}
-            </span>
-            {isPomodoroMode && (
-              <span className="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded-full font-medium">
-                Pomodoro
-              </span>
-            )}
-          </div>
-          <span className={`text-xs font-medium px-2 py-1 rounded-full ${getStateColor(timerData.state)} bg-gray-100 relative z-0`}>
-            {timerData.state.toUpperCase()}
-          </span>
-        </div>
+    <div className={`w-full max-w-md mx-auto p-6 bg-white rounded-xl shadow-lg border-2 ${stateInfo.borderColor} ${className}`}>
+      {/* Header avec titre et état */}
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-bold text-gray-900">
+          {displayTitle}
+        </h2>
+        <span className={`text-xs font-semibold px-3 py-1 rounded-full ${stateInfo.color}`}>
+          {stateInfo.label}
+        </span>
       </div>
 
-      {/* Time Display */}
-      <div className="text-center mb-6 py-6">
-        <div className={`text-5xl font-mono font-bold text-gray-800 mb-4 ${timerData.state === 'running' ? 'timer-pulse' : ''}`}>
+      {/* Affichage du temps principal */}
+      <div className="text-center mb-6">
+        <div className={`text-6xl font-mono font-bold text-gray-900 mb-4 ${timerData.state === 'running' ? 'timer-pulse' : ''}`}>
           {formatTime(timerData.timeRemaining)}
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+        
+        {/* Barre de progression */}
+        <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
           <div 
-            className={`h-full rounded-full transition-all duration-1000 bg-gradient-to-r ${getProgressColor(timerData.mode)}`}
+            className={`h-full rounded-full transition-all duration-1000 ${
+              timerData.state === 'running' ? 'bg-gradient-to-r from-green-500 to-green-600' :
+              timerData.state === 'paused' ? 'bg-gradient-to-r from-orange-500 to-orange-600' :
+              timerData.state === 'finished' ? 'bg-gradient-to-r from-purple-500 to-purple-600' :
+              'bg-gradient-to-r from-gray-400 to-gray-500'
+            }`}
             style={{ width: `${getProgress()}%` }}
           />
         </div>
-      </div>
-
-      {/* Session Counter & Cycle Info */}
-      <div className="text-center text-gray-600 mb-4 space-y-1">
-        <div>
-          <span className="text-xs">Sessions:</span>
-          <span className="ml-1 text-sm font-semibold text-blue-600">{timerData.sessionCount}</span>
+        
+        <div className="text-xs text-gray-500">
+          {Math.round(getProgress())}% complété
         </div>
-        {isPomodoroMode && maxCycles > 0 && (
-          <div>
-            <span className="text-xs">Cycles:</span>
-            <span className="ml-1 text-sm font-semibold text-purple-600">
-              {(timerData as any).currentCycle || 0}/{maxCycles}
-            </span>
-          </div>
-        )}
       </div>
 
-      {/* Controls */}
-      <div className="flex justify-center flex-wrap gap-3 mb-4 px-2">
+      {/* Cours lié */}
+      {(linkedCourse || linkedSubject) && (
+        <div className="flex items-center justify-center gap-2 mb-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <BookOpen size={16} className="text-blue-600" />
+          <span className="text-sm font-medium text-blue-900">Timer lié :</span>
+          <span className="text-sm font-bold text-blue-900">
+            {linkedCourse || linkedSubject?.name || 'Cours'}
+          </span>
+        </div>
+      )}
+
+      {/* Bouton principal */}
+      <div className="mb-6">
         {timerData.state === 'finished' ? (
-          // État terminé : seul Reset est visible
           <button 
-            className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-semibold text-lg shadow-lg"
             onClick={(e) => {
               e.stopPropagation();
               handleReset();
             }}
           >
-            <RotateCcw size={18} />
-            Reset
+            <RotateCcw size={20} />
+            Recommencer
           </button>
         ) : timerData.state === 'running' ? (
-          // État en cours : Arrêter + Reset
-          <>
+          <div className="flex gap-3">
             <button 
-              className="flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-4 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-colors font-semibold shadow-lg"
               onClick={(e) => {
                 e.stopPropagation();
                 handleStop();
               }}
             >
-              <Square size={18} />
-              Arrêter
+              <Pause size={18} />
+              Pause
             </button>
             <button 
-              className="flex items-center gap-2 px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
+              className="px-4 py-4 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-colors shadow-lg"
               onClick={(e) => {
                 e.stopPropagation();
                 handleReset();
               }}
+              title="Reset"
             >
               <RotateCcw size={18} />
-              Reset
             </button>
-          </>
+          </div>
         ) : timerData.state === 'paused' ? (
-          // État en pause : Reprendre + Reset
-          <>
+          <div className="flex gap-3">
             <button 
-              className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+              className="flex-1 flex items-center justify-center gap-3 px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-semibold text-lg shadow-lg"
               onClick={(e) => {
                 e.stopPropagation();
                 handleStart();
               }}
             >
-              <Play size={18} />
+              <Play size={20} />
               Reprendre
             </button>
             <button 
-              className="flex items-center gap-2 px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
+              className="px-4 py-4 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-colors shadow-lg"
               onClick={(e) => {
                 e.stopPropagation();
                 handleReset();
               }}
+              title="Reset"
             >
               <RotateCcw size={18} />
-              Reset
             </button>
-          </>
+          </div>
         ) : (
-          // État initial : seulement Démarrer
           <button 
-            className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+            className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-semibold text-lg shadow-lg"
             onClick={(e) => {
               e.stopPropagation();
               handleStart();
             }}
           >
-            <Play size={18} />
+            <Play size={20} />
             Démarrer
           </button>
         )}
       </div>
 
-      {/* Sound Toggle & Mode Buttons */}
-      <div className="px-2">
-        <div className="flex items-center justify-between gap-2 mb-3">
-          {/* Sound Toggle */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setSoundEnabled(!soundEnabled);
-            }}
-            className={`p-2 rounded-lg transition-colors flex-shrink-0 ${
-              soundEnabled 
-                ? 'text-blue-600 bg-blue-100 hover:bg-blue-200' 
-                : 'text-gray-400 bg-gray-100 hover:bg-gray-200'
-            }`}
-            title={soundEnabled ? 'Désactiver les sons' : 'Activer les sons'}
-          >
-            {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
-          </button>
+      {/* Contrôles secondaires */}
+      <div className="flex items-center justify-between">
+        {/* Bouton son */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setSoundEnabled(!soundEnabled);
+          }}
+          className={`p-3 rounded-xl transition-colors ${
+            soundEnabled 
+              ? 'text-blue-600 bg-blue-100 hover:bg-blue-200' 
+              : 'text-gray-400 bg-gray-100 hover:bg-gray-200'
+          }`}
+          title={soundEnabled ? 'Désactiver les sons' : 'Activer les sons'}
+        >
+          {soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
+        </button>
 
-          {/* Pomodoro Info */}
-          {isPomodoroMode && (
-            <div className="flex-1 text-center min-w-0">
-              <div className="text-xs text-gray-500 font-medium truncate">
-                Mode Pomodoro actif
-              </div>
-              {maxCycles > 0 && (timerData as any).currentCycle >= maxCycles && (
-                <div className="text-xs text-green-600 font-semibold truncate">
-                  Session terminée ! 🎉
-                </div>
-              )}
+        {/* Informations de session */}
+        <div className="text-center">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <Clock size={14} />
+            <span>Sessions: <span className="font-semibold text-blue-600">{timerData.sessionCount}</span></span>
+          </div>
+          {isPomodoroMode && maxCycles > 0 && (
+            <div className="text-xs text-gray-500 mt-1">
+              Cycles: {(timerData as any).currentCycle || 0}/{maxCycles}
             </div>
           )}
-
-          {/* Spacer when not in Pomodoro mode */}
-          {!isPomodoroMode && <div className="flex-1"></div>}
         </div>
 
-        {/* Mode Buttons */}
-        {showModeButtons && !isPomodoroMode && (
-          <div className="flex gap-1 p-1 bg-gray-100 rounded-lg">
-            {(['work', 'break', 'longBreak'] as TimerMode[]).map((mode) => (
-              <button
-                key={mode}
-                className={`flex-1 px-1 py-2 text-xs rounded-md transition-all font-medium min-w-0 ${
-                  timerData.mode === mode 
-                    ? 'bg-white text-gray-900 shadow-sm' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                } ${timerData.state === 'running' ? 'opacity-50 cursor-not-allowed' : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleModeChange(mode);
-                }}
-                disabled={timerData.state === 'running'}
-              >
-                <span className="truncate block">{getModeLabel(mode)}</span>
-              </button>
-            ))}
+        {/* Indicateur Pomodoro */}
+        {isPomodoroMode && (
+          <div className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+            Pomodoro
           </div>
         )}
+        
+        {!isPomodoroMode && <div className="w-12"></div>} {/* Spacer */}
       </div>
     </div>
   );
