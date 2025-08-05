@@ -4,6 +4,7 @@ import { Timer } from '@/components/Timer';
 import { Modal } from '@/components/Modal';
 import { Subject, CreateSubjectDto, UpdateSubjectDto } from '@/types/Subject';
 import { subjectService } from '@/services/subjectService';
+import { useReactiveTimers } from '@/hooks/useReactiveTimers';
 import { Plus, Search, Filter, BookOpen, X } from 'lucide-react';
 
 interface StudyTimer {
@@ -12,6 +13,7 @@ interface StudyTimer {
 }
 
 export const StudyPage: React.FC = () => {
+  const { ensureDataConsistency } = useReactiveTimers();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [filteredSubjects, setFilteredSubjects] = useState<Subject[]>([]);
   const [activeTimer, setActiveTimer] = useState<StudyTimer | null>(null);
@@ -42,6 +44,9 @@ export const StudyPage: React.FC = () => {
     try {
       const loadedSubjects = await subjectService.getAllSubjects();
       setSubjects(loadedSubjects);
+      
+      // Vérifier la cohérence des données timer-cours après chaque chargement
+      await ensureDataConsistency();
     } catch (error) {
       console.error('Erreur lors du chargement des matières:', error);
     } finally {

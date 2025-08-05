@@ -4,7 +4,8 @@ import { TimerConfigDialog } from '@/components/TimerConfigDialog';
 import { TimerConfig, TimerMode } from '@/services/timerService';
 import { Subject } from '@/types/Subject';
 import { subjectService } from '@/services/subjectService';
-import { usePersistedTimers, ActiveTimer } from '@/hooks/usePersistedTimers';
+import { useReactiveTimers } from '@/hooks/useReactiveTimers';
+import { ActiveTimer } from '@/types/ActiveTimer';
 import { Plus, Settings, Volume2, VolumeX, Edit3, Trash2 } from 'lucide-react';
 
 export const TimersPage: React.FC = () => {
@@ -16,7 +17,7 @@ export const TimersPage: React.FC = () => {
     updateTimer,
     removeTimer: removeTimerFromStorage,
     updateTimerLastUsed
-  } = usePersistedTimers();
+  } = useReactiveTimers();
   
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [editingTimer, setEditingTimer] = useState<ActiveTimer | null>(null);

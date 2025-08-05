@@ -1,5 +1,15 @@
 export type SubjectStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
 
+export type DefaultTimerMode = 'simple' | 'quick_timer';
+
+export interface QuickTimerConfig {
+  type: 'simple' | 'pomodoro';
+  workDuration: number; // en minutes
+  shortBreakDuration?: number; // en minutes
+  longBreakDuration?: number; // en minutes
+  cycles?: number;
+}
+
 export interface Subject {
   id: string;
   name: string;
@@ -10,6 +20,12 @@ export interface Subject {
   lastStudyDate?: Date;
   createdAt: Date;
   updatedAt: Date;
+  
+  // Champs pour liaison avec timers
+  linkedTimerId?: string;
+  defaultTimerMode?: DefaultTimerMode;
+  quickTimerConfig?: QuickTimerConfig;
+  timerConversionNote?: string;
 }
 
 export interface CreateSubjectDto {
@@ -23,6 +39,12 @@ export interface UpdateSubjectDto {
   targetTime?: number; // en minutes
   defaultTimerDuration?: number; // en minutes
   status?: SubjectStatus;
+  
+  // Champs pour liaison avec timers
+  linkedTimerId?: string;
+  defaultTimerMode?: DefaultTimerMode;
+  quickTimerConfig?: QuickTimerConfig;
+  timerConversionNote?: string;
 }
 
 export interface SubjectProgress {

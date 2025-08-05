@@ -3,6 +3,7 @@ import { Layout } from '@/components/Layout';
 import { HomePage } from '@/pages/HomePage';
 import { TimersPage } from '@/pages/TimersPage';
 import { StudyPage } from '@/pages/StudyPage';
+import { CalendarPage } from '@/pages/CalendarPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 
@@ -22,6 +23,7 @@ function App() {
           <Route index element={<HomePage />} />
           <Route path="timers" element={<TimersPage />} />
           <Route path="study" element={<StudyPage />} />
+          <Route path="calendar" element={<CalendarPage />} />
           <Route path="statistics" element={<StatisticsPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>

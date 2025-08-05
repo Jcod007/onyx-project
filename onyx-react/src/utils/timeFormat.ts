@@ -91,3 +91,8 @@ export function normalizeTime(hours: number, minutes: number, seconds: number): 
   
   return secondsToTimeSpan(totalSeconds);
 }
+
+export function formatTimeIntelligent(seconds: number): string {
+  // Alias pour formatHoursMinutes pour compatibilité
+  return formatHoursMinutes(seconds);
+}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TimerService, TimerData, TimerMode, TimerConfig } from '@/services/timerService';
+import { Subject } from '@/types/Subject';
 import { Play, Square, RotateCcw, Volume2, VolumeX } from 'lucide-react';
 import { useTimerSounds } from '@/hooks/useTimerSounds';
 
@@ -12,6 +13,7 @@ interface TimerProps {
   isPomodoroMode?: boolean;
   maxCycles?: number;
   enableSounds?: boolean;
+  linkedSubject?: Subject | null;
   onSessionComplete?: (sessionCount: number) => void;
   onModeChange?: (mode: TimerMode) => void;
   onTimerFinish?: (totalTime: number) => void;
@@ -27,6 +29,7 @@ export const Timer: React.FC<TimerProps> = ({
   isPomodoroMode = false,
   maxCycles = 0,
   enableSounds = true,
+  linkedSubject: _linkedSubject, // TODO: Utiliser pour afficher le cours lié
   onSessionComplete,
   onModeChange,
   onTimerFinish,

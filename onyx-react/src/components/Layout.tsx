@@ -7,7 +7,8 @@ import {
   Settings, 
   Menu, 
   X,
-  Home
+  Home,
+  Calendar
 } from 'lucide-react';
 
 interface NavItem {
@@ -20,6 +21,7 @@ const navItems: NavItem[] = [
   { path: '/', label: 'Accueil', icon: Home },
   { path: '/timers', label: 'Minuteurs', icon: Timer },
   { path: '/study', label: 'Étude', icon: BookOpen },
+  { path: '/calendar', label: 'Calendrier', icon: Calendar },
   { path: '/statistics', label: 'Statistiques', icon: BarChart3 },
   { path: '/settings', label: 'Paramètres', icon: Settings },
 ];
