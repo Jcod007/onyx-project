@@ -1,14 +1,14 @@
 import React, { useState, useCallback } from 'react';
-import { Timer } from '@/components/Timer';
 import { ModernTimerCard } from '@/components/ModernTimerCard';
 import { TimerConfigDialog } from '@/components/TimerConfigDialog';
 import { DailySummary } from '@/components/DailySummary';
-import { TimerConfig, TimerMode } from '@/services/timerService';
+import { TimerConfig } from '@/services/timerService';
 import { Subject } from '@/types/Subject';
 import { subjectService } from '@/services/subjectService';
 import { useReactiveTimers } from '@/hooks/useReactiveTimers';
+import { useTimerExecution } from '@/hooks/useTimerExecution';
 import { ActiveTimer } from '@/types/ActiveTimer';
-import { Plus, Settings, Volume2, VolumeX, Edit3, Trash2, BarChart3 } from 'lucide-react';
+import { Plus, Settings, Volume2, VolumeX, BarChart3 } from 'lucide-react';
 
 export const TimersPage: React.FC = () => {
   const {
@@ -26,6 +26,47 @@ export const TimersPage: React.FC = () => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [completedSessions, setCompletedSessions] = useState(0);
   const [showDailySummary, setShowDailySummary] = useState(false);
+
+  const {
+    startTimer,
+    pauseTimer,
+    resetTimer,
+    getTimerState,
+    cleanupTimer
+  } = useTimerExecution(
+    // onTimerFinish callback
+    useCallback(async (timerId: string, timer: ActiveTimer, totalTime: number) => {
+      updateTimerLastUsed(timerId);
+      if (timer.linkedSubject) {
+        try {
+          await subjectService.addStudyTime(timer.linkedSubject.id, totalTime);
+        } catch (error) {
+          console.error('Erreur lors de l\'ajout du temps d\'étude:', error);
+        }
+      }
+    }, [updateTimerLastUsed]),
+    // onSessionComplete callback
+    useCallback(async (timerId: string, timer: ActiveTimer) => {
+      setCompletedSessions(prev => prev + 1);
+      updateTimerLastUsed(timerId);
+      
+      if (timer.linkedSubject) {
+        try {
+          await subjectService.addStudyTime(
+            timer.linkedSubject.id, 
+            timer.config.workDuration
+          );
+        } catch (error) {
+          console.error('Erreur lors de l\'ajout du temps d\'étude:', error);
+        }
+      }
+
+      // Jouer un son si activé
+      if (soundEnabled) {
+        playNotificationSound();
+      }
+    }, [updateTimerLastUsed, soundEnabled])
+  );
 
   const handleCreateTimer = () => {
     setShowConfigDialog(true);
@@ -80,48 +121,13 @@ export const TimersPage: React.FC = () => {
     setShowConfigDialog(false);
   };
 
-  const handleSessionComplete = useCallback(async (timerId: string) => {
-    setCompletedSessions(prev => prev + 1);
-    updateTimerLastUsed(timerId);
-    
-    // Trouver le timer correspondant pour ajouter le temps à la matière
-    const timer = timers.find(t => t.id === timerId);
-    if (timer?.linkedSubject) {
-      try {
-        await subjectService.addStudyTime(
-          timer.linkedSubject.id, 
-          timer.config.workDuration
-        );
-      } catch (error) {
-        console.error('Erreur lors de l\'ajout du temps d\'étude:', error);
-      }
-    }
 
-    // Jouer un son si activé
-    if (soundEnabled) {
-      playNotificationSound();
-    }
-  }, [timers, soundEnabled, updateTimerLastUsed]);
-
-  const handleTimerFinish = useCallback(async (totalTime: number, timerId: string) => {
-    updateTimerLastUsed(timerId);
-    const timer = timers.find(t => t.id === timerId);
-    if (timer?.linkedSubject) {
-      try {
-        await subjectService.addStudyTime(timer.linkedSubject.id, totalTime);
-      } catch (error) {
-        console.error('Erreur lors de l\'ajout du temps d\'étude:', error);
-      }
-    }
-  }, [timers, updateTimerLastUsed]);
-
-  const handleModeChange = (mode: TimerMode, timerId: string) => {
-    updateTimerLastUsed(timerId);
-    console.log(`Timer ${timerId} switched to ${mode}`);
-  };
 
   const handleRemoveTimer = (timerId: string) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce timer ?')) {
+      // Arrêter et nettoyer le timer s'il est en cours d'exécution
+      cleanupTimer(timerId);
+      // Supprimer de la storage
       removeTimerFromStorage(timerId);
     }
   };
@@ -254,7 +260,7 @@ export const TimersPage: React.FC = () => {
             // Exemple de données - à remplacer par de vraies données
             {
               id: '1',
-              subject: { id: '1', name: 'Mathématiques', targetTime: 7200, defaultTimerDuration: 1500, studiedTime: 3600, status: 'IN_PROGRESS', createdAt: new Date(), updatedAt: new Date() },
+              subject: { id: '1', name: 'Mathématiques', targetTime: 7200, defaultTimerDuration: 1500, timeSpent: 3600, status: 'IN_PROGRESS', weeklyTimeGoal: 240, studyDays: ['MONDAY', 'WEDNESDAY', 'FRIDAY'], createdAt: new Date(), updatedAt: new Date() },
               plannedDuration: 3600,
               studiedTime: 1800,
               isCompleted: false,
@@ -262,7 +268,7 @@ export const TimersPage: React.FC = () => {
             },
             {
               id: '2', 
-              subject: { id: '2', name: 'Histoire', targetTime: 3600, defaultTimerDuration: 1500, studiedTime: 3600, status: 'COMPLETED', createdAt: new Date(), updatedAt: new Date() },
+              subject: { id: '2', name: 'Histoire', targetTime: 3600, defaultTimerDuration: 1500, timeSpent: 3600, status: 'COMPLETED', weeklyTimeGoal: 180, studyDays: ['TUESDAY', 'THURSDAY'], createdAt: new Date(), updatedAt: new Date() },
               plannedDuration: 3600,
               studiedTime: 3600,
               isCompleted: true,
@@ -297,39 +303,42 @@ export const TimersPage: React.FC = () => {
       {/* Timers Grid - Utilisation des nouvelles cartes modernes */}
       {timers.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
-          {timers.map((timer) => (
-            <ModernTimerCard
-              key={timer.id}
-              id={timer.id}
-              title={timer.title}
-              duration={timer.config.workDuration}
-              state="idle" // TODO: Connecter avec l'état réel du timer
-              timeRemaining={timer.config.workDuration}
-              linkedSubject={timer.linkedSubject}
-              isPomodoroMode={timer.isPomodoroMode || false}
-              sessionCount={0} // TODO: Connecter avec les données réelles
-              maxCycles={timer.maxCycles}
-              progress={0} // TODO: Calculer la progression réelle
-              onStart={() => {
-                console.log('Starting timer:', timer.id);
-                // TODO: Implémenter le démarrage
-              }}
-              onPause={() => {
-                console.log('Pausing timer:', timer.id);
-                // TODO: Implémenter la pause
-              }}
-              onReset={() => {
-                console.log('Resetting timer:', timer.id);
-                // TODO: Implémenter le reset
-              }}
-              onEdit={() => editTimer(timer)}
-              onDelete={() => handleRemoveTimer(timer.id)}
-              onLinkSubject={() => {
-                console.log('Link subject for timer:', timer.id);
-                // TODO: Implémenter la liaison avec un sujet
-              }}
-            />
-          ))}
+          {timers.map((timer) => {
+            const timerState = getTimerState(timer.id);
+            return (
+              <ModernTimerCard
+                key={timer.id}
+                id={timer.id}
+                title={timer.title}
+                duration={timer.config.workDuration}
+                state={timerState?.state || 'idle'}
+                timeRemaining={timerState?.timeRemaining || timer.config.workDuration}
+                linkedSubject={timer.linkedSubject}
+                isPomodoroMode={timer.isPomodoroMode || false}
+                sessionCount={timerState?.sessionCount || 0}
+                maxCycles={timer.maxCycles}
+                progress={timerState?.progress || 0}
+                onStart={() => {
+                  console.log('Starting timer:', timer.id);
+                  startTimer(timer.id, timer);
+                }}
+                onPause={() => {
+                  console.log('Pausing timer:', timer.id);
+                  pauseTimer(timer.id);
+                }}
+                onReset={() => {
+                  console.log('Resetting timer:', timer.id);
+                  resetTimer(timer.id);
+                }}
+                onEdit={() => editTimer(timer)}
+                onDelete={() => handleRemoveTimer(timer.id)}
+                onLinkSubject={() => {
+                  console.log('Link subject for timer:', timer.id);
+                  // TODO: Implémenter la liaison avec un sujet
+                }}
+              />
+            );
+          })}
         </div>
       ) : (
         /* Empty State */

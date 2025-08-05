@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import { ModernTimerCard } from '@/components/ModernTimerCard';
 import { DailySummary } from '@/components/DailySummary';
-import { CourseConfigCard } from '@/components/CourseConfigCard';
-import { AdvancedCourseConfig } from '@/components/AdvancedCourseConfig';
-import { StudyCourseConfigCard } from '@/components/StudyCourseConfigCard';
-import { StudyCourseCard } from '@/components/StudyCourseCard';
+import { SubjectConfigCard } from '@/components/SubjectConfigCard';
 import { TimerConfigDialog } from '@/components/TimerConfigDialog';
 import { Subject } from '@/types/Subject';
 import { ActiveTimer } from '@/types/ActiveTimer';
@@ -13,7 +10,7 @@ import { Play, Settings, Eye } from 'lucide-react';
 
 export const ConfigDemoPage: React.FC = () => {
   const [showTimerConfig, setShowTimerConfig] = useState(false);
-  const [activeDemo, setActiveDemo] = useState<'basic' | 'advanced' | 'cards' | 'summary' | 'wheel' | 'rotary'>('cards');
+  const [activeDemo, setActiveDemo] = useState<'cards' | 'summary' | 'subject-config'>('subject-config');
 
   // Données de démonstration
   const demoSubject: Subject = {
@@ -21,8 +18,10 @@ export const ConfigDemoPage: React.FC = () => {
     name: 'Mathématiques',
     targetTime: 7200, // 2 heures
     defaultTimerDuration: 1500, // 25 minutes
-    studiedTime: 3600, // 1 heure étudiée
+    timeSpent: 3600, // 1 heure étudiée
     status: 'IN_PROGRESS',
+    weeklyTimeGoal: 240, // 4h par semaine
+    studyDays: ['MONDAY', 'WEDNESDAY', 'FRIDAY'],
     createdAt: new Date(),
     updatedAt: new Date()
   };
@@ -61,7 +60,7 @@ export const ConfigDemoPage: React.FC = () => {
     },
     {
       id: '2',
-      subject: { ...demoSubject, name: 'Histoire', studiedTime: 3600 },
+      subject: { ...demoSubject, name: 'Histoire', timeSpent: 3600 },
       plannedDuration: 3600,
       studiedTime: 3600,
       isCompleted: true,
@@ -111,44 +110,14 @@ export const ConfigDemoPage: React.FC = () => {
               Résumé Journalier
             </button>
             <button
-              onClick={() => setActiveDemo('basic')}
+              onClick={() => setActiveDemo('subject-config')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                activeDemo === 'basic'
-                  ? 'bg-blue-600 text-white shadow-lg'
+                activeDemo === 'subject-config'
+                  ? 'bg-purple-600 text-white shadow-lg'
                   : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
               }`}
             >
-              Config Course Simple
-            </button>
-            <button
-              onClick={() => setActiveDemo('advanced')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                activeDemo === 'advanced'
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              Config Avancée
-            </button>
-            <button
-              onClick={() => setActiveDemo('wheel')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                activeDemo === 'wheel'
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              Carte à Molettes
-            </button>
-            <button
-              onClick={() => setActiveDemo('rotary')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                activeDemo === 'rotary'
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              Roues Rotatives
+              Config Matière
             </button>
             <button
               onClick={() => setShowTimerConfig(true)}
@@ -241,63 +210,23 @@ export const ConfigDemoPage: React.FC = () => {
             </div>
           )}
 
-          {activeDemo === 'basic' && (
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <Eye className="text-purple-600" size={24} />
-                Configuration Course Simple
-              </h2>
-              <div className="max-w-md">
-                <CourseConfigCard
-                  subject={demoSubject}
-                  availableTimers={demoTimers}
-                  linkedTimer={null}
-                  onTimeAllocationChange={(subjectId, time) => 
-                    console.log('Time allocation:', subjectId, time)
-                  }
-                  onLinkTimer={(subjectId, timerId) => 
-                    console.log('Link timer:', subjectId, timerId)
-                  }
-                  onUnlinkTimer={(subjectId) => 
-                    console.log('Unlink timer:', subjectId)
-                  }
-                  onCreateQuickTimer={(subjectId, config) => 
-                    console.log('Create quick timer:', subjectId, config)
-                  }
-                />
-              </div>
-            </div>
-          )}
 
-          {activeDemo === 'advanced' && (
+          {activeDemo === 'subject-config' && (
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <Settings className="text-indigo-600" size={24} />
-                Configuration Avancée
-              </h2>
-              <div className="max-w-2xl">
-                <AdvancedCourseConfig
-                  subject={demoSubject}
-                  availableTimers={demoTimers}
-                  onSave={(config) => console.log('Save config:', config)}
-                />
-              </div>
-            </div>
-          )}
-
-          {activeDemo === 'wheel' && (
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <Settings className="text-orange-600" size={24} />
-                Carte de Configuration à Molettes
+                <Settings className="text-purple-600" size={24} />
+                Nouvelle Configuration de Matière
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <StudyCourseConfigCard
+                <SubjectConfigCard
                   subject={demoSubject}
                   availableTimers={demoTimers}
                   linkedTimer={null}
                   onTimeAllocationChange={(subjectId, time) => 
                     console.log('Time allocation:', subjectId, time)
+                  }
+                  onStudyDaysChange={(subjectId, days) => 
+                    console.log('Study days:', subjectId, days)
                   }
                   onLinkTimer={(subjectId, timerId) => 
                     console.log('Link timer:', subjectId, timerId)
@@ -310,58 +239,15 @@ export const ConfigDemoPage: React.FC = () => {
                   }
                 />
                 
-                <StudyCourseConfigCard
-                  subject={{ ...demoSubject, name: 'Histoire', studiedTime: 5400 }}
-                  availableTimers={[]}
+                <SubjectConfigCard
+                  subject={{ ...demoSubject, name: 'Histoire', timeSpent: 5400 }}
+                  availableTimers={[demoTimers[1]]}
                   linkedTimer={demoTimers[0]}
                   onTimeAllocationChange={(subjectId, time) => 
                     console.log('Time allocation:', subjectId, time)
                   }
-                  onLinkTimer={(subjectId, timerId) => 
-                    console.log('Link timer:', subjectId, timerId)
-                  }
-                  onUnlinkTimer={(subjectId) => 
-                    console.log('Unlink timer:', subjectId)
-                  }
-                  onCreateQuickTimer={(subjectId, config) => 
-                    console.log('Create quick timer:', subjectId, config)
-                  }
-                />
-                
-                <StudyCourseConfigCard
-                  subject={{ ...demoSubject, name: 'Physique', studiedTime: 1800, targetTime: 10800 }}
-                  availableTimers={demoTimers}
-                  linkedTimer={null}
-                  onTimeAllocationChange={(subjectId, time) => 
-                    console.log('Time allocation:', subjectId, time)
-                  }
-                  onLinkTimer={(subjectId, timerId) => 
-                    console.log('Link timer:', subjectId, timerId)
-                  }
-                  onUnlinkTimer={(subjectId) => 
-                    console.log('Unlink timer:', subjectId)
-                  }
-                  onCreateQuickTimer={(subjectId, config) => 
-                    console.log('Create quick timer:', subjectId, config)
-                  }
-                />
-              </div>
-            </div>
-          )}
-
-          {activeDemo === 'rotary' && (
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <Settings className="text-emerald-600" size={24} />
-                Cartes avec Roues Rotatives
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <StudyCourseCard
-                  subject={demoSubject}
-                  availableTimers={demoTimers}
-                  linkedTimer={null}
-                  onTimeAllocationChange={(subjectId, time) => 
-                    console.log('Time allocation:', subjectId, time)
+                  onStudyDaysChange={(subjectId, days) => 
+                    console.log('Study days:', subjectId, days)
                   }
                   onLinkTimer={(subjectId, timerId) => 
                     console.log('Link timer:', subjectId, timerId)
@@ -374,30 +260,15 @@ export const ConfigDemoPage: React.FC = () => {
                   }
                 />
                 
-                <StudyCourseCard
-                  subject={{ ...demoSubject, name: 'Histoire', studiedTime: 5400 }}
+                <SubjectConfigCard
+                  subject={{ ...demoSubject, name: 'Physique', timeSpent: 1800, targetTime: 10800 }}
                   availableTimers={[]}
-                  linkedTimer={demoTimers[0]}
-                  onTimeAllocationChange={(subjectId, time) => 
-                    console.log('Time allocation:', subjectId, time)
-                  }
-                  onLinkTimer={(subjectId, timerId) => 
-                    console.log('Link timer:', subjectId, timerId)
-                  }
-                  onUnlinkTimer={(subjectId) => 
-                    console.log('Unlink timer:', subjectId)
-                  }
-                  onCreateQuickTimer={(subjectId, config) => 
-                    console.log('Create quick timer:', subjectId, config)
-                  }
-                />
-                
-                <StudyCourseCard
-                  subject={{ ...demoSubject, name: 'Physique', studiedTime: 1800, targetTime: 10800 }}
-                  availableTimers={demoTimers}
                   linkedTimer={null}
                   onTimeAllocationChange={(subjectId, time) => 
                     console.log('Time allocation:', subjectId, time)
+                  }
+                  onStudyDaysChange={(subjectId, days) => 
+                    console.log('Study days:', subjectId, days)
                   }
                   onLinkTimer={(subjectId, timerId) => 
                     console.log('Link timer:', subjectId, timerId)
@@ -431,7 +302,7 @@ export const ConfigDemoPage: React.FC = () => {
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <span>Molettes/roues pour la configuration temporelle</span>
+                <span>Configuration avec sliders verticaux tactiles exclusivement</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -445,15 +316,23 @@ export const ConfigDemoPage: React.FC = () => {
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <span>Sélection de jours d'étude</span>
+                <span>Sélection de jours d'étude avec calcul de moyenne</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <span>Slider de temps hebdomadaire</span>
+                <span>Timer rapide vs Timer lié (exclusifs)</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                 <span>Design moderne et cohérent</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span>Liaison bidirectionnelle 1:1 cours-timer</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span>Calcul automatique de moyenne quotidienne</span>
               </div>
             </div>
           </div>

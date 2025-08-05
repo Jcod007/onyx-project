@@ -4,21 +4,6 @@ export * from './Timer';
 export * from './StudyDeck';
 
 // Common utility types
-export interface ApiResponse<T> {
-  data: T;
-  success: boolean;
-  message?: string;
-  error?: string;
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  limit: number;
-  hasNext: boolean;
-  hasPrev: boolean;
-}
 
 export interface TimeSpan {
   hours: number;

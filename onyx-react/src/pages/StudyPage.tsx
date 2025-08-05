@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SubjectCard } from '@/components/SubjectCard';
 import { Timer } from '@/components/Timer';
 import { Modal } from '@/components/Modal';
+import { SubjectConfigCard } from '@/components/SubjectConfigCard';
 import { Subject, CreateSubjectDto, UpdateSubjectDto } from '@/types/Subject';
 import { subjectService } from '@/services/subjectService';
 import { useReactiveTimers } from '@/hooks/useReactiveTimers';
@@ -72,25 +73,9 @@ export const StudyPage: React.FC = () => {
     setFilteredSubjects(filtered);
   };
 
-  const handleCreateSubject = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormErrors([]);
-
+  const handleCreateSubject = async (subjectData: CreateSubjectDto) => {
     try {
-      const newSubjectData: CreateSubjectDto = {
-        name: formData.name.trim(),
-        targetTime: formData.targetTime,
-        defaultTimerDuration: formData.defaultTimerDuration
-      };
-
-      await subjectService.createSubject(newSubjectData);
-      
-      // Reset form
-      setFormData({
-        name: '',
-        targetTime: 60,
-        defaultTimerDuration: 25
-      });
+      await subjectService.createSubject(subjectData);
       setShowCreateForm(false);
       
       // Reload subjects
@@ -98,6 +83,26 @@ export const StudyPage: React.FC = () => {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
       setFormErrors([errorMessage]);
+    }
+  };
+
+  const handleSubjectConfigSave = async (formData: any) => {
+    const newSubjectData: CreateSubjectDto = {
+      name: formData.name,
+      targetTime: Math.round(formData.weeklyTimeMinutes * 60), // Convertir minutes en secondes
+      defaultTimerDuration: formData.timerConfig?.simpleTimerDuration 
+        ? formData.timerConfig.simpleTimerDuration * 60 
+        : 1500 // 25 minutes par défaut
+    };
+    
+    try {
+      await handleCreateSubject(newSubjectData);
+      // TODO: Gérer la configuration du timer si nécessaire
+      if (formData.timerConfig?.mode === 'quick-create') {
+        console.log('Timer config à créer:', formData.timerConfig);
+      }
+    } catch (error) {
+      console.error('Erreur lors de la création:', error);
     }
   };
 
@@ -317,81 +322,20 @@ export const StudyPage: React.FC = () => {
         </div>
       )}
 
-      {/* Create Subject Form Modal */}
+      {/* Create Subject Configuration Modal */}
       <Modal
         isOpen={showCreateForm}
         onClose={() => setShowCreateForm(false)}
-        title="Nouvelle matière"
+        title=""
+        className="max-w-lg"
       >
-        <form onSubmit={handleCreateSubject} className="p-6 space-y-4">
-          {formErrors.length > 0 && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <ul className="text-sm text-red-600 space-y-1">
-                {formErrors.map((error, index) => (
-                  <li key={index}>• {error}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nom de la matière *
-            </label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="ex: Mathématiques, Histoire..."
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Objectif de temps (en heures)
-            </label>
-            <input
-              type="number"
-              value={formData.targetTime}
-              onChange={(e) => setFormData(prev => ({ ...prev, targetTime: parseInt(e.target.value) || 0 }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              min="1"
-              max="1000"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Durée par défaut du timer (en minutes)
-            </label>
-            <input
-              type="number"
-              value={formData.defaultTimerDuration}
-              onChange={(e) => setFormData(prev => ({ ...prev, defaultTimerDuration: parseInt(e.target.value) || 0 }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              min="1"
-              max="180"
-            />
-          </div>
-
-          <div className="flex items-center justify-end space-x-3 pt-4">
-            <button
-              type="button"
-              onClick={() => setShowCreateForm(false)}
-              className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors font-medium"
-            >
-              Créer
-            </button>
-          </div>
-        </form>
+        <SubjectConfigCard
+          availableTimers={[]} // TODO: Récupérer les timers disponibles
+          linkedTimer={null}
+          isCreating={true}
+          onSave={handleSubjectConfigSave}
+          onCancel={() => setShowCreateForm(false)}
+        />
       </Modal>
 
       {/* Edit Subject Form Modal */}
