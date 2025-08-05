@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Subject, SubjectStatusLabels } from '@/types/Subject';
-import { formatDuration, calculateProgress } from '@/utils/timeFormat';
-import { Clock, Play, Target, TrendingUp, Edit, Trash2 } from 'lucide-react';
+import { Subject, SubjectStatusLabels, DayLabels } from '@/types/Subject';
+import { ActiveTimer } from '@/types/ActiveTimer';
+import { formatDuration } from '@/utils/timeFormat';
+import { Clock, Target, Edit, Trash2, Calendar, Link2, TimerIcon } from 'lucide-react';
 
 interface SubjectCardProps {
   subject: Subject;
-  onStartTimer?: (subject: Subject) => void;
+  linkedTimer?: ActiveTimer; // Timer lié à ce cours
   onEdit?: (subject: Subject) => void;
   onDelete?: (subject: Subject) => void;
   showQuickActions?: boolean;
@@ -14,7 +15,7 @@ interface SubjectCardProps {
 
 export const SubjectCard: React.FC<SubjectCardProps> = ({
   subject,
-  onStartTimer,
+  linkedTimer,
   onEdit,
   onDelete,
   showQuickActions = true,
@@ -22,8 +23,36 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
-  const progress = calculateProgress(subject.timeSpent, subject.targetTime);
-  const remainingTime = Math.max(0, subject.targetTime - subject.timeSpent);
+  // Calculer les informations du timer
+  const getTimerInfo = () => {
+    if (linkedTimer) {
+      // Timer lié
+      return {
+        duration: linkedTimer.config.workDuration,
+        type: 'lié',
+        name: linkedTimer.title,
+        isLinked: true
+      };
+    } else if (subject.quickTimerConfig) {
+      // Quick timer configuré
+      return {
+        duration: subject.quickTimerConfig.workDuration * 60, // Convertir minutes en secondes
+        type: 'libre',
+        name: `${subject.quickTimerConfig.type === 'pomodoro' ? 'Pomodoro' : 'Simple'} Timer`,
+        isLinked: false
+      };
+    } else {
+      // Timer par défaut
+      return {
+        duration: subject.defaultTimerDuration,
+        type: 'libre',
+        name: 'Timer par défaut',
+        isLinked: false
+      };
+    }
+  };
+
+  const timerInfo = getTimerInfo();
 
   const getStatusColor = (status: Subject['status']): string => {
     switch (status) {
@@ -33,17 +62,6 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
     }
   };
 
-  const getProgressColor = (progress: number): string => {
-    if (progress >= 100) return 'bg-green-500';
-    if (progress >= 75) return 'bg-blue-500';
-    if (progress >= 50) return 'bg-yellow-500';
-    return 'bg-gray-400';
-  };
-
-  const handleQuickTimer = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onStartTimer?.(subject);
-  };
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -77,13 +95,6 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
         {showQuickActions && isHovered && (
           <div className="flex items-center space-x-2 ml-4">
             <button
-              onClick={handleQuickTimer}
-              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              title="Démarrer un timer"
-            >
-              <Play size={18} />
-            </button>
-            <button
               onClick={handleEdit}
               className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
               title="Modifier"
@@ -101,61 +112,51 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
         )}
       </div>
 
-      {/* Progress Bar */}
-      <div className="mb-4">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-sm text-gray-600">Progression</span>
-          <span className="text-sm font-medium text-gray-900">
-            {Math.round(progress)}%
+
+      {/* Nouvelles informations */}
+      <div className="space-y-4 mb-4">
+        {/* Objectif hebdomadaire */}
+        <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <Calendar size={16} className="text-blue-600" />
+            <span className="text-sm text-gray-700">Objectif hebdomadaire</span>
+          </div>
+          <span className="text-sm font-semibold text-blue-700">
+            {subject.weeklyTimeGoal ? `${Math.floor(subject.weeklyTimeGoal / 60).toString().padStart(2, '0')}h${(subject.weeklyTimeGoal % 60).toString().padStart(2, '0')}/semaine` : 'Non défini'}
           </span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div 
-            className={`h-2 rounded-full transition-all duration-500 ${getProgressColor(progress)}`}
-            style={{ width: `${Math.min(progress, 100)}%` }}
-          />
-        </div>
-      </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="flex items-center space-x-2">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <Clock size={16} className="text-blue-600" />
+        {/* Timer configuré */}
+        <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <TimerIcon size={16} className="text-purple-600" />
+            <span className="text-sm text-gray-700">Timer configuré</span>
           </div>
-          <div>
-            <p className="text-xs text-gray-500">Temps passé</p>
-            <p className="text-sm font-medium text-gray-900">
-              {formatDuration(subject.timeSpent)}
+          <div className="text-right">
+            <p className="text-sm font-semibold text-purple-700">
+              {formatDuration(timerInfo.duration)}
+            </p>
+            <p className="text-xs text-purple-600">
+              {timerInfo.name}
             </p>
           </div>
         </div>
-        
-        <div className="flex items-center space-x-2">
-          <div className="p-2 bg-green-100 rounded-lg">
-            <Target size={16} className="text-green-600" />
-          </div>
-          <div>
-            <p className="text-xs text-gray-500">Objectif</p>
-            <p className="text-sm font-medium text-gray-900">
-              {formatDuration(subject.targetTime)}
-            </p>
-          </div>
-        </div>
-      </div>
 
-      {/* Remaining Time */}
-      {remainingTime > 0 && (
+        {/* Statut de liaison */}
         <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
           <div className="flex items-center space-x-2">
-            <TrendingUp size={16} className="text-orange-500" />
-            <span className="text-sm text-gray-600">Temps restant</span>
+            <Link2 size={16} className={timerInfo.isLinked ? 'text-green-600' : 'text-gray-500'} />
+            <span className="text-sm text-gray-700">État du timer</span>
           </div>
-          <span className="text-sm font-medium text-orange-600">
-            {formatDuration(remainingTime)}
-          </span>
+          <div className="flex items-center space-x-2">
+            <div className={`w-2 h-2 rounded-full ${timerInfo.isLinked ? 'bg-green-500' : 'bg-gray-400'}`} />
+            <span className={`text-sm font-medium ${timerInfo.isLinked ? 'text-green-700' : 'text-gray-600'}`}>
+              {timerInfo.type === 'lié' ? 'Timer lié' : 'Timer libre'}
+            </span>
+          </div>
         </div>
-      )}
+      </div>
+
 
       {/* Completed Badge */}
       {subject.status === 'COMPLETED' && (
@@ -164,16 +165,6 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
         </div>
       )}
 
-      {/* Quick Timer Button */}
-      {showQuickActions && subject.status !== 'COMPLETED' && (
-        <button
-          onClick={handleQuickTimer}
-          className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-        >
-          <Play size={16} />
-          Timer {formatDuration(subject.defaultTimerDuration)}
-        </button>
-      )}
 
       {/* Last Study Date */}
       {subject.lastStudyDate && (

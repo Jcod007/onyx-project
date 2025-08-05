@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Subject, TimerType, TimerTypeLabels } from '@/types';
+import { Subject, TimerType } from '@/types';
 import { subjectService } from '@/services/subjectService';
 import { isValidTimeInput, normalizeTime } from '@/utils/timeFormat';
 import { Modal } from '@/components/Modal';
 import { SmartTimeInput } from '@/components/SmartTimeInput';
-import { Clock, BookOpen, Timer, RotateCcw, Zap, Coffee } from 'lucide-react';
+import { Clock, BookOpen, Timer, Zap, Coffee } from 'lucide-react';
 
 type TimerModeType = 'simple' | 'pomodoro';
 type PomodoroPreset = {
@@ -47,6 +47,19 @@ interface TimerConfigDialogProps {
   };
   defaultName?: string;
   preselectedSubject?: Subject;
+  isEditMode?: boolean;
+  editingTimerData?: {
+    id: string;
+    mode: TimerModeType;
+    isPomodoroMode: boolean;
+    pomodoroConfig?: {
+      workDuration: number;
+      breakDuration: number;
+      longBreakDuration: number;
+      cycles: number;
+    };
+  };
+  existingTimers?: Array<{ id: string; title: string; linkedSubject?: Subject }>;
 }
 
 export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
@@ -55,7 +68,10 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
   onConfirm,
   defaultDuration = { hours: 0, minutes: 25, seconds: 0 },
   defaultName = '',
-  preselectedSubject
+  preselectedSubject,
+  isEditMode = false,
+  editingTimerData,
+  existingTimers = []
 }) => {
   const [name, setName] = useState(defaultName);
   const [hours, setHours] = useState(defaultDuration.hours);
@@ -83,11 +99,44 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
       setSeconds(defaultDuration.seconds);
       setSelectedSubject(preselectedSubject);
       setTimerType(preselectedSubject ? 'STUDY_SESSION' : 'FREE_SESSION');
-      setTimerMode('simple');
-      setSelectedPreset(POMODORO_PRESETS[0]);
       setErrors([]);
+      
+      // Configuration spécifique pour le mode édition
+      if (isEditMode && editingTimerData) {
+        setTimerMode(editingTimerData.mode);
+        
+        if (editingTimerData.isPomodoroMode && editingTimerData.pomodoroConfig) {
+          // Trouver le preset correspondant ou utiliser personnalisé
+          const matchingPreset = POMODORO_PRESETS.find(preset => 
+            preset.workDuration * 60 === editingTimerData.pomodoroConfig!.workDuration &&
+            preset.breakDuration * 60 === editingTimerData.pomodoroConfig!.breakDuration &&
+            preset.cycles === editingTimerData.pomodoroConfig!.cycles
+          );
+          
+          if (matchingPreset) {
+            setSelectedPreset(matchingPreset);
+          } else {
+            // Configuration personnalisée
+            const customConfig = {
+              name: 'Personnalisé',
+              workDuration: Math.floor(editingTimerData.pomodoroConfig.workDuration / 60),
+              breakDuration: Math.floor(editingTimerData.pomodoroConfig.breakDuration / 60),
+              longBreakDuration: Math.floor(editingTimerData.pomodoroConfig.longBreakDuration / 60),
+              cycles: editingTimerData.pomodoroConfig.cycles
+            };
+            setCustomPomodoro(customConfig);
+            setSelectedPreset(customConfig);
+          }
+        } else {
+          setSelectedPreset(POMODORO_PRESETS[0]);
+        }
+      } else {
+        // Mode création - valeurs par défaut
+        setTimerMode('simple');
+        setSelectedPreset(POMODORO_PRESETS[0]);
+      }
     }
-  }, [isOpen, defaultDuration, defaultName, preselectedSubject]);
+  }, [isOpen, defaultDuration, defaultName, preselectedSubject, isEditMode, editingTimerData]);
 
   const loadSubjects = async () => {
     try {
@@ -96,6 +145,15 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
     } catch (error) {
       console.error('Erreur lors du chargement des matières:', error);
     }
+  };
+
+  // Fonction utilitaire pour vérifier si un cours est déjà lié à un autre timer
+  const getLinkedTimerForSubject = (subjectId: string) => {
+    return existingTimers.find(timer => 
+      timer.linkedSubject && 
+      timer.linkedSubject.id === subjectId &&
+      (!isEditMode || timer.id !== editingTimerData?.id) // Exclure le timer en cours d'édition
+    );
   };
 
   const validateForm = (): boolean => {
@@ -146,16 +204,6 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
     }
   };
 
-  const handleTimeChange = (
-    value: string, 
-    setter: React.Dispatch<React.SetStateAction<number>>,
-    max: number
-  ) => {
-    const numValue = parseInt(value) || 0;
-    if (numValue >= 0 && numValue <= max) {
-      setter(numValue);
-    }
-  };
 
   const handlePresetTime = (presetMinutes: number) => {
     setHours(0);
@@ -177,7 +225,7 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
           <Clock size={20} className="text-blue-600" />
         </div>
         <h2 className="text-xl font-semibold text-gray-900">
-          Configuration du Timer
+          {isEditMode ? 'Modifier le Timer' : 'Configuration du Timer'}
         </h2>
       </div>
 
@@ -252,21 +300,39 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
               </label>
               
               {subjects.length > 0 ? (
-                <select
-                  value={selectedSubject?.id || ''}
-                  onChange={(e) => {
-                    const subject = subjects.find(s => s.id === e.target.value);
-                    setSelectedSubject(subject);
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Sélectionner une matière</option>
-                  {subjects.map((subject) => (
-                    <option key={subject.id} value={subject.id}>
-                      {subject.name}
-                    </option>
-                  ))}
-                </select>
+                <>
+                  <select
+                    value={selectedSubject?.id || ''}
+                    onChange={(e) => {
+                      const subject = subjects.find(s => s.id === e.target.value);
+                      setSelectedSubject(subject);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Sélectionner une matière</option>
+                    {subjects.map((subject) => {
+                      const linkedTimer = getLinkedTimerForSubject(subject.id);
+                      const isLinkedToOtherTimer = linkedTimer && (!isEditMode || linkedTimer.id !== editingTimerData?.id);
+                      
+                      return (
+                        <option key={subject.id} value={subject.id}>
+                          {subject.name}
+                          {isLinkedToOtherTimer ? ` (déjà lié au timer "${linkedTimer.title}")` : ''}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  
+                  {/* Message d'information sur le toggle */}
+                  {selectedSubject && getLinkedTimerForSubject(selectedSubject.id) && (
+                    <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                      <p className="text-xs text-blue-700">
+                        ℹ Ce cours est déjà lié au timer "{getLinkedTimerForSubject(selectedSubject.id)?.title}". 
+                        En confirmant, l'ancien timer sera délié automatiquement (relation 1:1).
+                      </p>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="p-4 bg-gray-50 rounded-lg text-center">
                   <p className="text-sm text-gray-500 mb-2">
@@ -483,7 +549,10 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
           onClick={handleConfirm}
           className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors font-medium"
         >
-          {timerMode === 'pomodoro' ? 'Créer le Pomodoro' : 'Créer le timer'}
+          {isEditMode 
+            ? (timerMode === 'pomodoro' ? 'Modifier le Pomodoro' : 'Modifier le timer')
+            : (timerMode === 'pomodoro' ? 'Créer le Pomodoro' : 'Créer le timer')
+          }
         </button>
       </div>
     </Modal>

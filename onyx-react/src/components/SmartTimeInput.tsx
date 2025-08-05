@@ -167,15 +167,6 @@ export const SmartTimeInput: React.FC<SmartTimeInputProps> = ({
     }
   };
 
-  const getPreviewText = (): string => {
-    if (!isFocused || inputValue.length === 0) return '';
-    
-    const digits = inputValue.replace(/\D/g, '');
-    if (digits.length === 0) return '';
-
-    const parsed = parseSmartInput(inputValue);
-    return `→ ${formatTimeDisplay(parsed.hours, parsed.minutes, parsed.seconds)}`;
-  };
 
   return (
     <div className={`space-y-2 ${className}`}>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Calendar, Clock, Target, TrendingUp, Play, CheckCircle2 } from 'lucide-react';
 import { Subject } from '@/types/Subject';
-import { formatDuration, formatHoursMinutes } from '@/utils/timeFormat';
+import { formatHoursMinutes } from '@/utils/timeFormat';
 
 interface DailySession {
   id: string;

@@ -2,7 +2,6 @@ import React from 'react';
 import { Play, Pause, RotateCcw, BookOpen, Clock, Link2, Plus, Edit3, Trash2 } from 'lucide-react';
 import { Subject } from '@/types/Subject';
 import { TimerState } from '@/types/Timer';
-import { formatDuration } from '@/utils/timeFormat';
 
 interface ModernTimerCardProps {
   id: string;
@@ -25,7 +24,7 @@ interface ModernTimerCardProps {
 }
 
 export const ModernTimerCard: React.FC<ModernTimerCardProps> = ({
-  id,
+  id: _id,
   title,
   duration,
   state,

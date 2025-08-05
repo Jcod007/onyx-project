@@ -6,6 +6,8 @@ import { SubjectConfigCard } from '@/components/SubjectConfigCard';
 import { Subject, CreateSubjectDto, UpdateSubjectDto } from '@/types/Subject';
 import { subjectService } from '@/services/subjectService';
 import { useReactiveTimers } from '@/hooks/useReactiveTimers';
+import { useTimerContext } from '@/contexts/TimerContext';
+import { courseTimerLinkManager } from '@/services/courseTimerLinkManager';
 import { Plus, Search, Filter, BookOpen, X } from 'lucide-react';
 
 interface StudyTimer {
@@ -15,6 +17,7 @@ interface StudyTimer {
 
 export const StudyPage: React.FC = () => {
   const { ensureDataConsistency } = useReactiveTimers();
+  const { timers } = useTimerContext();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [filteredSubjects, setFilteredSubjects] = useState<Subject[]>([]);
   const [activeTimer, setActiveTimer] = useState<StudyTimer | null>(null);
@@ -24,13 +27,6 @@ export const StudyPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<Subject['status'] | 'ALL'>('ALL');
   const [loading, setLoading] = useState(true);
-
-  // Form state
-  const [formData, setFormData] = useState({
-    name: '',
-    targetTime: 60, // en minutes
-    defaultTimerDuration: 25 // en minutes
-  });
   const [formErrors, setFormErrors] = useState<string[]>([]);
 
   useEffect(() => {
@@ -73,18 +69,6 @@ export const StudyPage: React.FC = () => {
     setFilteredSubjects(filtered);
   };
 
-  const handleCreateSubject = async (subjectData: CreateSubjectDto) => {
-    try {
-      await subjectService.createSubject(subjectData);
-      setShowCreateForm(false);
-      
-      // Reload subjects
-      await loadSubjects();
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
-      setFormErrors([errorMessage]);
-    }
-  };
 
   const handleSubjectConfigSave = async (formData: any) => {
     const newSubjectData: CreateSubjectDto = {
@@ -92,17 +76,136 @@ export const StudyPage: React.FC = () => {
       targetTime: Math.round(formData.weeklyTimeMinutes * 60), // Convertir minutes en secondes
       defaultTimerDuration: formData.timerConfig?.simpleTimerDuration 
         ? formData.timerConfig.simpleTimerDuration * 60 
-        : 1500 // 25 minutes par défaut
+        : 1500, // 25 minutes par défaut
+      weeklyTimeGoal: formData.weeklyTimeMinutes,
+      studyDays: formData.selectedDays.map((dayId: number) => {
+        const dayMap: Record<number, string> = {
+          0: 'SUNDAY',
+          1: 'MONDAY', 
+          2: 'TUESDAY',
+          3: 'WEDNESDAY',
+          4: 'THURSDAY',
+          5: 'FRIDAY',
+          6: 'SATURDAY'
+        };
+        return dayMap[dayId] as any;
+      })
     };
     
     try {
-      await handleCreateSubject(newSubjectData);
-      // TODO: Gérer la configuration du timer si nécessaire
-      if (formData.timerConfig?.mode === 'quick-create') {
-        console.log('Timer config à créer:', formData.timerConfig);
+      // 1. Créer le cours
+      const createdSubject = await subjectService.createSubject(newSubjectData);
+      
+      // 2. Gérer la configuration du timer
+      if (formData.timerConfig?.mode === 'link-existing' && formData.timerConfig?.linkedTimerId) {
+        // Lier le timer existant au nouveau cours
+        await courseTimerLinkManager.linkCourseToTimer(
+          createdSubject.id, 
+          formData.timerConfig.linkedTimerId
+        );
+      } else if (formData.timerConfig?.mode === 'quick-create') {
+        // Configurer le timer rapide
+        const quickTimerConfig = formData.timerConfig.quickTimerType === 'simple' 
+          ? {
+              type: 'simple' as const,
+              workDuration: formData.timerConfig.simpleTimerDuration || 25
+            }
+          : {
+              type: 'pomodoro' as const,
+              workDuration: formData.timerConfig.pomodoroConfig?.workTime || 25,
+              shortBreakDuration: formData.timerConfig.pomodoroConfig?.breakTime || 5,
+              longBreakDuration: 15,
+              cycles: formData.timerConfig.pomodoroConfig?.cycles || 4
+            };
+            
+        await subjectService.updateSubject(createdSubject.id, {
+          defaultTimerMode: 'quick_timer',
+          quickTimerConfig
+        });
       }
+      
+      setShowCreateForm(false);
+      await loadSubjects();
     } catch (error) {
       console.error('Erreur lors de la création:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+      setFormErrors([errorMessage]);
+    }
+  };
+
+  const handleSubjectConfigUpdate = async (formData: any) => {
+    if (!editingSubject) return;
+    
+    const updateData: UpdateSubjectDto = {
+      name: formData.name,
+      targetTime: Math.round(formData.weeklyTimeMinutes * 60), // Convertir minutes en secondes
+      defaultTimerDuration: formData.timerConfig?.simpleTimerDuration 
+        ? formData.timerConfig.simpleTimerDuration * 60 
+        : editingSubject.defaultTimerDuration,
+      weeklyTimeGoal: formData.weeklyTimeMinutes,
+      studyDays: formData.selectedDays.map((dayId: number) => {
+        const dayMap: Record<number, string> = {
+          0: 'SUNDAY',
+          1: 'MONDAY',
+          2: 'TUESDAY', 
+          3: 'WEDNESDAY',
+          4: 'THURSDAY',
+          5: 'FRIDAY',
+          6: 'SATURDAY'
+        };
+        return dayMap[dayId] as any;
+      })
+    };
+    
+    try {
+      // 1. Mettre à jour les informations du cours
+      await subjectService.updateSubject(editingSubject.id, updateData);
+      
+      // 2. Gérer la configuration du timer
+      if (formData.timerConfig?.mode === 'link-existing' && formData.timerConfig?.linkedTimerId) {
+        // Trouver le timer actuellement lié à ce cours
+        const currentLinkedTimer = timers.find(t => t.linkedSubject?.id === editingSubject.id);
+        
+        // Si on change de timer lié
+        if (currentLinkedTimer?.id !== formData.timerConfig.linkedTimerId) {
+          // Lier le nouveau timer au cours (cela gérera automatiquement la déliaison de l'ancien)
+          await courseTimerLinkManager.linkCourseToTimer(
+            editingSubject.id, 
+            formData.timerConfig.linkedTimerId
+          );
+        }
+      } else if (formData.timerConfig?.mode === 'quick-create') {
+        // Si on passe en mode timer rapide, délier le timer actuel s'il existe
+        const currentLinkedTimer = timers.find(t => t.linkedSubject?.id === editingSubject.id);
+        if (currentLinkedTimer) {
+          await courseTimerLinkManager.unlinkCourse(editingSubject.id);
+        }
+        
+        // Mettre à jour la configuration du timer rapide
+        const quickTimerConfig = formData.timerConfig.quickTimerType === 'simple' 
+          ? {
+              type: 'simple' as const,
+              workDuration: formData.timerConfig.simpleTimerDuration || 25
+            }
+          : {
+              type: 'pomodoro' as const,
+              workDuration: formData.timerConfig.pomodoroConfig?.workTime || 25,
+              shortBreakDuration: formData.timerConfig.pomodoroConfig?.breakTime || 5,
+              longBreakDuration: 15,
+              cycles: formData.timerConfig.pomodoroConfig?.cycles || 4
+            };
+            
+        await subjectService.updateSubject(editingSubject.id, {
+          defaultTimerMode: 'quick_timer',
+          quickTimerConfig
+        });
+      }
+      
+      setShowEditForm(false);
+      setEditingSubject(null);
+      await loadSubjects();
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour:', error);
     }
   };
 
@@ -135,51 +238,16 @@ export const StudyPage: React.FC = () => {
 
   const handleEditSubject = (subject: Subject) => {
     setEditingSubject(subject);
-    setFormData({
-      name: subject.name,
-      targetTime: Math.round(subject.targetTime / 60), // conversion secondes -> minutes
-      defaultTimerDuration: Math.round(subject.defaultTimerDuration / 60) // conversion secondes -> minutes
-    });
     setFormErrors([]);
     setShowEditForm(true);
-  };
-
-  const handleUpdateSubject = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingSubject) return;
-    
-    setFormErrors([]);
-
-    try {
-      const updateData: UpdateSubjectDto = {
-        name: formData.name.trim(),
-        targetTime: formData.targetTime,
-        defaultTimerDuration: formData.defaultTimerDuration
-      };
-
-      await subjectService.updateSubject(editingSubject.id, updateData);
-      
-      // Reset form
-      setFormData({
-        name: '',
-        targetTime: 60,
-        defaultTimerDuration: 25
-      });
-      setShowEditForm(false);
-      setEditingSubject(null);
-      
-      // Reload subjects
-      await loadSubjects();
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
-      setFormErrors([errorMessage]);
-    }
   };
 
   const handleDeleteSubject = async (subject: Subject) => {
     if (window.confirm(`Êtes-vous sûr de vouloir supprimer "${subject.name}" ?`)) {
       try {
-        await subjectService.deleteSubject(subject.id);
+        // Utiliser courseTimerLinkManager pour gérer la suppression
+        // Cela déliera automatiquement le timer associé
+        await courseTimerLinkManager.handleCourseDeletion(subject.id);
         await loadSubjects();
       } catch (error) {
         console.error('Erreur lors de la suppression:', error);
@@ -281,16 +349,23 @@ export const StudyPage: React.FC = () => {
       {/* Subjects Grid */}
       {filteredSubjects.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredSubjects.map((subject) => (
-            <SubjectCard
-              key={subject.id}
-              subject={subject}
-              onStartTimer={handleStartTimer}
-              onEdit={handleEditSubject}
-              onDelete={handleDeleteSubject}
-              showQuickActions={true}
-            />
-          ))}
+          {filteredSubjects.map((subject) => {
+            // Trouver le timer lié à ce cours
+            const linkedTimer = timers.find(timer => 
+              timer.linkedSubject && timer.linkedSubject.id === subject.id
+            );
+            
+            return (
+              <SubjectCard
+                key={subject.id}
+                subject={subject}
+                linkedTimer={linkedTimer}
+                onEdit={handleEditSubject}
+                onDelete={handleDeleteSubject}
+                showQuickActions={true}
+              />
+            );
+          })}
         </div>
       ) : (
         /* Empty State */
@@ -327,10 +402,10 @@ export const StudyPage: React.FC = () => {
         isOpen={showCreateForm}
         onClose={() => setShowCreateForm(false)}
         title=""
-        className="max-w-lg"
+        maxWidth="max-w-lg"
       >
         <SubjectConfigCard
-          availableTimers={[]} // TODO: Récupérer les timers disponibles
+          availableTimers={timers.filter(t => !t.linkedSubject)}
           linkedTimer={null}
           isCreating={true}
           onSave={handleSubjectConfigSave}
@@ -346,81 +421,21 @@ export const StudyPage: React.FC = () => {
           setEditingSubject(null);
           setFormErrors([]);
         }}
-        title={`Modifier ${editingSubject?.name}`}
+        title=""
+        maxWidth="max-w-lg"
       >
-        <form onSubmit={handleUpdateSubject} className="p-6 space-y-4">
-          {formErrors.length > 0 && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <ul className="text-sm text-red-600 space-y-1">
-                {formErrors.map((error, index) => (
-                  <li key={index}>• {error}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nom de la matière *
-            </label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="ex: Mathématiques, Histoire..."
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Objectif de temps (en heures)
-            </label>
-            <input
-              type="number"
-              value={formData.targetTime}
-              onChange={(e) => setFormData(prev => ({ ...prev, targetTime: parseInt(e.target.value) || 0 }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              min="1"
-              max="1000"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Durée par défaut du timer (en minutes)
-            </label>
-            <input
-              type="number"
-              value={formData.defaultTimerDuration}
-              onChange={(e) => setFormData(prev => ({ ...prev, defaultTimerDuration: parseInt(e.target.value) || 0 }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              min="1"
-              max="180"
-            />
-          </div>
-
-          <div className="flex items-center justify-end space-x-3 pt-4">
-            <button
-              type="button"
-              onClick={() => {
-                setShowEditForm(false);
-                setEditingSubject(null);
-                setFormErrors([]);
-              }}
-              className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors font-medium"
-            >
-              Modifier
-            </button>
-          </div>
-        </form>
+        <SubjectConfigCard
+          subject={editingSubject || undefined}
+          availableTimers={timers.filter(t => !t.linkedSubject || t.linkedSubject.id === editingSubject?.id)}
+          linkedTimer={editingSubject ? timers.find(t => t.linkedSubject?.id === editingSubject.id) : null}
+          isCreating={false}
+          onSave={handleSubjectConfigUpdate}
+          onCancel={() => {
+            setShowEditForm(false);
+            setEditingSubject(null);
+            setFormErrors([]);
+          }}
+        />
       </Modal>
     </div>
   );

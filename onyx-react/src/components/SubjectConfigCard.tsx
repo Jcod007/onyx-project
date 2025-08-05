@@ -3,15 +3,15 @@ import { ErgonomicTimeInput } from '@/components/ErgonomicTimeInput';
 import { HorizontalSlider } from '@/components/HorizontalSlider';
 import { Subject } from '@/types/Subject';
 import { ActiveTimer } from '@/types/ActiveTimer';
-import { BookOpen, Timer, Coffee, Link2, Plus, Check } from 'lucide-react';
+import { BookOpen, Timer, Coffee, Link2, Plus, Check, Calendar, Clock, AlertCircle } from 'lucide-react';
 
 interface SubjectConfigCardProps {
-  subject?: Subject; // Optionnel pour création
+  subject?: Subject;
   availableTimers?: ActiveTimer[];
   linkedTimer?: ActiveTimer | null;
   onSave?: (subjectData: SubjectFormData) => void;
   onCancel?: () => void;
-  isCreating?: boolean; // Mode création vs édition
+  isCreating?: boolean;
   className?: string;
 }
 
@@ -36,13 +36,13 @@ type TimerMode = 'quick-create' | 'link-existing';
 type QuickTimerType = 'simple' | 'pomodoro';
 
 const WEEKDAYS = [
-  { id: 1, short: 'Lun', full: 'Lundi' },
-  { id: 2, short: 'Mar', full: 'Mardi' },
-  { id: 3, short: 'Mer', full: 'Mercredi' },
-  { id: 4, short: 'Jeu', full: 'Jeudi' },
-  { id: 5, short: 'Ven', full: 'Vendredi' },
-  { id: 6, short: 'Sam', full: 'Samedi' },
-  { id: 0, short: 'Dim', full: 'Dimanche' }
+  { id: 1, short: 'L', full: 'Lundi' },
+  { id: 2, short: 'M', full: 'Mardi' },
+  { id: 3, short: 'M', full: 'Mercredi' },
+  { id: 4, short: 'J', full: 'Jeudi' },
+  { id: 5, short: 'V', full: 'Vendredi' },
+  { id: 6, short: 'S', full: 'Samedi' },
+  { id: 0, short: 'D', full: 'Dimanche' }
 ];
 
 export const SubjectConfigCard: React.FC<SubjectConfigCardProps> = ({
@@ -54,7 +54,7 @@ export const SubjectConfigCard: React.FC<SubjectConfigCardProps> = ({
   isCreating = true,
   className = ''
 }) => {
-  // État du formulaire principal
+  // État du formulaire
   const [subjectName, setSubjectName] = useState(subject?.name || '');
   const [weeklyTimeMinutes, setWeeklyTimeMinutes] = useState(subject?.weeklyTimeGoal || 240);
   const [selectedDays, setSelectedDays] = useState<number[]>(
@@ -64,91 +64,56 @@ export const SubjectConfigCard: React.FC<SubjectConfigCardProps> = ({
   const [quickTimerType, setQuickTimerType] = useState<QuickTimerType>('simple');
   const [selectedExistingTimer, setSelectedExistingTimer] = useState<string | null>(linkedTimer?.id || null);
 
-  // Validation
-  const [errors, setErrors] = useState<string[]>([]);
-
-  // Configuration timer rapide - Timer simple
-  const [simpleTimerDuration, setSimpleTimerDuration] = useState(45); // 45 min par défaut
-
-  // Configuration timer rapide - Pomodoro
+  // Configuration timer
+  const [simpleTimerDuration, setSimpleTimerDuration] = useState(25);
   const [pomodoroWorkTime, setPomodoroWorkTime] = useState(25);
   const [pomodoroBreakTime, setPomodoroBreakTime] = useState(5);
   const [pomodoroCycles, setPomodoroCycles] = useState(4);
 
-  // Validation en temps réel
-  useEffect(() => {
-    const newErrors: string[] = [];
-    
-    if (!subjectName.trim()) {
-      newErrors.push('Le nom de la matière est requis');
-    } else if (subjectName.trim().length < 2) {
-      newErrors.push('Le nom doit contenir au moins 2 caractères');
-    }
-    
-    if (selectedDays.length === 0) {
-      newErrors.push('Sélectionnez au moins un jour d\'étude');
-    }
-    
-    if (timerMode === 'link-existing' && !selectedExistingTimer && availableTimers.length > 0) {
-      newErrors.push('Sélectionnez un timer à lier');
-    }
-    
-    setErrors(newErrors);
-  }, [subjectName, selectedDays, timerMode, selectedExistingTimer, availableTimers.length]);
+  // Validation
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
-    // Si un timer est déjà lié, basculer en mode "link-existing"
     if (linkedTimer) {
       setTimerMode('link-existing');
       setSelectedExistingTimer(linkedTimer.id);
     }
   }, [linkedTimer]);
 
-  const formatWeeklyTime = (minutes: number) => {
-    if (minutes < 60) return `${minutes}min`;
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
-  };
-
-  const calculateDailyAverage = () => {
-    if (selectedDays.length === 0) return 0;
-    return Math.round(weeklyTimeMinutes / selectedDays.length);
-  };
-
-  const formatDailyAverage = (minutes: number) => {
-    if (minutes < 60) return `${minutes}min`;
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return mins > 0 ? `${hours}h${mins.toString().padStart(2, '0')}` : `${hours}h`;
-  };
-
-  const handleWeeklyTimeChange = (minutes: number) => {
-    setWeeklyTimeMinutes(minutes);
-  };
+  // Validation temps réel
+  useEffect(() => {
+    const newErrors: { [key: string]: string } = {};
+    
+    if (touched.name && !subjectName.trim()) {
+      newErrors.name = 'Le nom est requis';
+    }
+    
+    if (selectedDays.length === 0) {
+      newErrors.days = 'Sélectionnez au moins un jour';
+    }
+    
+    if (timerMode === 'link-existing' && !selectedExistingTimer && availableTimers.length > 0) {
+      newErrors.timer = 'Sélectionnez un timer';
+    }
+    
+    setErrors(newErrors);
+  }, [subjectName, selectedDays, timerMode, selectedExistingTimer, availableTimers.length, touched]);
 
   const handleDayToggle = (dayId: number) => {
-    const newSelectedDays = selectedDays.includes(dayId)
-      ? selectedDays.filter(id => id !== dayId)
-      : [...selectedDays, dayId].sort();
-    
-    setSelectedDays(newSelectedDays);
-  };
-
-  const handleTimerModeChange = (mode: TimerMode) => {
-    setTimerMode(mode);
-    if (mode === 'quick-create') {
-      setSelectedExistingTimer(null);
-    }
-  };
-
-  const handleExistingTimerSelect = (timerId: string) => {
-    setSelectedExistingTimer(timerId);
+    setSelectedDays(prev => 
+      prev.includes(dayId) 
+        ? prev.filter(id => id !== dayId)
+        : [...prev, dayId].sort()
+    );
   };
 
   const handleSave = () => {
-    if (errors.length > 0) {
-      return; // Ne pas sauvegarder s'il y a des erreurs
+    // Marquer tous les champs comme touchés
+    setTouched({ name: true, days: true, timer: true });
+    
+    if (Object.keys(errors).length > 0 || !subjectName.trim()) {
+      return;
     }
 
     const formData: SubjectFormData = {
@@ -179,381 +144,351 @@ export const SubjectConfigCard: React.FC<SubjectConfigCardProps> = ({
     onSave?.(formData);
   };
 
-  const getProgressPercentage = () => {
-    if (!subject?.targetTime) return 0;
-    return Math.min(100, (subject.timeSpent / subject.targetTime) * 100);
+  const formatDailyTime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h${mins.toString().padStart(2, '0')}`;
   };
 
-  const isFormValid = errors.length === 0 && subjectName.trim().length >= 2;
-
-  const dailyAverage = calculateDailyAverage();
+  const dailyAverage = selectedDays.length > 0 ? Math.round(weeklyTimeMinutes / selectedDays.length) : 0;
+  const isValid = Object.keys(errors).length === 0 && subjectName.trim().length > 0;
 
   return (
-    <div className={`bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden w-full max-w-md ${className}`}>
-      {/* Header */}
-      <div className="p-5 bg-gradient-to-r from-indigo-50 to-blue-50 border-b border-gray-200">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2.5 bg-indigo-100 rounded-lg">
-            <BookOpen size={20} className="text-indigo-600" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-bold text-gray-900">
-              {isCreating ? 'Nouvelle Matière' : 'Configuration'}
-            </h3>
-            <p className="text-sm text-gray-600">
-              {isCreating ? 'Créez votre matière d\'étude' : `Modifier ${subject?.name}`}
-            </p>
-          </div>
-        </div>
-
-        {/* Barre de progression (uniquement en mode édition) */}
-        {!isCreating && subject && (
-          <div className="mb-2">
-            <div className="flex justify-between text-xs text-gray-600 mb-1">
-              <span>Progression</span>
-              <span>{Math.round(getProgressPercentage())}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-blue-600 transition-all duration-300"
-                style={{ width: `${getProgressPercentage()}%` }}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Affichage des erreurs */}
-        {errors.length > 0 && (
-          <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <ul className="text-sm text-red-600 space-y-1">
-              {errors.map((error, index) => (
-                <li key={index} className="flex items-start gap-2">
-                  <span className="text-red-400 mt-0.5">•</span>
-                  <span>{error}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+    <div className={`bg-white rounded-xl shadow-lg overflow-hidden ${className}`}>
+      {/* Header simplifié */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6">
+        <h3 className="text-xl font-bold text-gray-900">
+          {isCreating ? 'Nouvelle matière' : `Modifier ${subject?.name}`}
+        </h3>
+        <p className="text-sm text-gray-600 mt-1">
+          Configurez votre matière d'étude
+        </p>
       </div>
 
-      {/* Contenu principal */}
-      <div className="p-5 space-y-6">
-        
-        {/* 1. Nom de la matière */}
-        <div className="space-y-2">
-          <label className="block text-sm font-semibold text-gray-700">
-            Nom de la matière <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            value={subjectName}
-            onChange={(e) => setSubjectName(e.target.value)}
-            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all ${
-              errors.some(e => e.includes('nom')) 
-                ? 'border-red-300 bg-red-50' 
-                : 'border-gray-300 hover:border-gray-400'
-            }`}
-            placeholder="ex: Mathématiques, Histoire..."
-            maxLength={50}
-          />
-          <div className="flex justify-between text-xs text-gray-500">
-            <span>Minimum 2 caractères</span>
-            <span>{subjectName.length}/50</span>
-          </div>
-        </div>
-
-        {/* Séparateur visuel */}
-        <div className="border-t border-gray-100"></div>
-        
-        {/* 2. Temps hebdomadaire */}
-        <div className="space-y-3">
-          <div className="text-center">
-            <h4 className="text-sm font-semibold text-gray-700 mb-1">Objectif hebdomadaire</h4>
-            <div className="text-2xl font-bold text-indigo-600 mb-2">
-              {formatWeeklyTime(weeklyTimeMinutes)}
-            </div>
-          </div>
-          
-          <div className="flex justify-center">
-            <ErgonomicTimeInput
-              value={weeklyTimeMinutes}
-              min={30}
-              max={1200}
-              onChange={handleWeeklyTimeChange}
-              className="mx-auto"
+      <div className="p-6 space-y-6">
+        {/* Section 1: Informations de base */}
+        <div className="space-y-4">
+          <div>
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+              <BookOpen size={16} />
+              Nom de la matière
+              {errors.name && touched.name && (
+                <span className="text-red-500 text-xs flex items-center gap-1">
+                  <AlertCircle size={12} />
+                  {errors.name}
+                </span>
+              )}
+            </label>
+            <input
+              type="text"
+              value={subjectName}
+              onChange={(e) => setSubjectName(e.target.value)}
+              onBlur={() => setTouched(prev => ({ ...prev, name: true }))}
+              className={`w-full px-4 py-2.5 rounded-lg border transition-colors ${
+                errors.name && touched.name
+                  ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
+                  : 'border-gray-300 focus:border-blue-500 focus:ring-blue-200'
+              } focus:outline-none focus:ring-2`}
+              placeholder="Ex: Mathématiques"
             />
           </div>
-          
-          {selectedDays.length > 0 && (
-            <div className="text-center text-sm text-gray-600 bg-indigo-50 rounded-lg py-2 px-3">
-              📅 Moyenne : <span className="font-semibold text-indigo-700">{formatDailyAverage(dailyAverage)}/jour</span>
-            </div>
-          )}
         </div>
 
-        {/* Séparateur visuel */}
-        <div className="border-t border-gray-100"></div>
-
-        {/* 3. Jours d'étude préférés */}
-        <div className="space-y-3">
-          <div className="text-center">
-            <h4 className="text-sm font-semibold text-gray-700 mb-1">Jours d'étude</h4>
-            <p className="text-xs text-gray-500">Sélectionnez vos jours de travail</p>
-          </div>
-          <div className="flex justify-center">
-            <div className="grid grid-cols-7 gap-2">
+        {/* Section 2: Planning hebdomadaire */}
+        <div className="border-t pt-6">
+          <h4 className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-4">
+            <Calendar size={16} />
+            Planning hebdomadaire
+          </h4>
+          
+          {/* Jours d'étude */}
+          <div className="mb-4">
+            <p className="text-xs text-gray-600 mb-3">Jours d'étude prévus</p>
+            <div className="flex gap-2 justify-center">
               {WEEKDAYS.map((day) => (
                 <button
                   key={day.id}
                   onClick={() => handleDayToggle(day.id)}
-                  className={`w-10 h-10 rounded-xl text-xs font-bold transition-all duration-200 ${
+                  className={`w-10 h-10 rounded-lg text-sm font-medium transition-all ${
                     selectedDays.includes(day.id)
-                      ? 'bg-indigo-600 text-white shadow-md ring-2 ring-indigo-200'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:scale-105'
+                      ? 'bg-blue-500 text-white shadow-sm'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                   title={day.full}
                 >
-                  {day.short.charAt(0)}
+                  {day.short}
                 </button>
               ))}
             </div>
+            {errors.days && (
+              <p className="text-xs text-red-500 mt-2 text-center flex items-center justify-center gap-1">
+                <AlertCircle size={12} />
+                {errors.days}
+              </p>
+            )}
           </div>
-          {selectedDays.length === 0 && (
-            <div className="text-center text-xs text-red-500 bg-red-50 rounded-lg py-2">
-              ⚠️ Veuillez sélectionner au moins un jour
+
+          {/* Temps hebdomadaire */}
+          <div className="bg-gray-50 rounded-lg p-4">
+            <div className="text-center mb-3">
+              <p className="text-xs text-gray-600 mb-1">Objectif hebdomadaire</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {Math.floor(weeklyTimeMinutes / 60)}h{(weeklyTimeMinutes % 60).toString().padStart(2, '0')}
+              </p>
+              {selectedDays.length > 0 && (
+                <p className="text-sm text-gray-600 mt-1">
+                  ≈ {formatDailyTime(dailyAverage)} par jour
+                </p>
+              )}
             </div>
-          )}
+            <ErgonomicTimeInput
+              value={weeklyTimeMinutes}
+              min={30}
+              max={1200}
+              onChange={setWeeklyTimeMinutes}
+              className="mx-auto"
+            />
+          </div>
         </div>
 
-        {/* 3. Mode de timer */}
-        <div>
-          <h4 className="text-sm font-semibold text-gray-700 mb-3 text-center">Type de timer</h4>
-          
+        {/* Section 3: Configuration timer simplifiée */}
+        <div className="border-t pt-6">
+          <h4 className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-4">
+            <Clock size={16} />
+            Timer par défaut
+          </h4>
+
           {/* Choix du mode */}
-          <div className="grid grid-cols-2 gap-2 mb-4">
+          <div className="grid grid-cols-2 gap-3 mb-4">
             <button
-              onClick={() => handleTimerModeChange('quick-create')}
-              className={`p-3 rounded-lg border-2 transition-all duration-200 ${
+              onClick={() => setTimerMode('quick-create')}
+              className={`p-3 rounded-lg border-2 transition-all ${
                 timerMode === 'quick-create'
-                  ? 'border-green-500 bg-green-50 text-green-700'
-                  : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 hover:border-gray-300'
               }`}
             >
-              <div className="flex flex-col items-center space-y-1">
-                <Plus size={16} />
-                <span className="text-xs font-medium">Timer rapide</span>
-              </div>
+              <Timer size={20} className={timerMode === 'quick-create' ? 'text-blue-600 mx-auto mb-1' : 'text-gray-400 mx-auto mb-1'} />
+              <p className="text-sm font-medium">Timer rapide</p>
             </button>
             
             <button
-              onClick={() => handleTimerModeChange('link-existing')}
-              className={`p-3 rounded-lg border-2 transition-all duration-200 ${
+              onClick={() => setTimerMode('link-existing')}
+              className={`p-3 rounded-lg border-2 transition-all ${
                 timerMode === 'link-existing'
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
-                  : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-              }`}
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 hover:border-gray-300'
+              } ${availableTimers.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
               disabled={availableTimers.length === 0}
             >
-              <div className="flex flex-col items-center space-y-1">
-                <Link2 size={16} />
-                <span className="text-xs font-medium">Timer lié</span>
-              </div>
+              <Link2 size={20} className={timerMode === 'link-existing' ? 'text-blue-600 mx-auto mb-1' : 'text-gray-400 mx-auto mb-1'} />
+              <p className="text-sm font-medium">Timer existant</p>
             </button>
           </div>
 
-          {/* Interface selon le mode */}
+          {/* Configuration selon le mode */}
           {timerMode === 'quick-create' ? (
             <div className="space-y-4">
-              {/* Choix du type de timer rapide */}
-              <div className="grid grid-cols-2 gap-2">
+              {/* Type de timer */}
+              <div className="flex gap-2">
                 <button
                   onClick={() => setQuickTimerType('simple')}
-                  className={`p-2 rounded-lg border transition-all duration-200 ${
+                  className={`flex-1 py-2 px-3 rounded-lg border transition-all ${
                     quickTimerType === 'simple'
                       ? 'border-green-500 bg-green-50 text-green-700'
-                      : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                      : 'border-gray-200 text-gray-600'
                   }`}
                 >
-                  <div className="flex items-center justify-center gap-1">
-                    <Timer size={14} />
-                    <span className="text-xs font-medium">Simple</span>
-                  </div>
+                  <span className="text-sm font-medium">Simple</span>
                 </button>
-                
                 <button
                   onClick={() => setQuickTimerType('pomodoro')}
-                  className={`p-2 rounded-lg border transition-all duration-200 ${
+                  className={`flex-1 py-2 px-3 rounded-lg border transition-all ${
                     quickTimerType === 'pomodoro'
                       ? 'border-red-500 bg-red-50 text-red-700'
-                      : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                      : 'border-gray-200 text-gray-600'
                   }`}
                 >
-                  <div className="flex items-center justify-center gap-1">
-                    <Coffee size={14} />
-                    <span className="text-xs font-medium">Pomodoro</span>
-                  </div>
+                  <span className="text-sm font-medium">Pomodoro</span>
                 </button>
               </div>
 
-              {/* Configuration avec sliders horizontaux */}
-              {quickTimerType === 'simple' ? (
-                <div className="text-center">
-                  <HorizontalSlider
-                    value={simpleTimerDuration}
-                    min={5}
-                    max={120}
-                    step={5}
-                    onChange={setSimpleTimerDuration}
-                    width={200}
-                    unit="min"
-                    label="Durée totale"
-                    className="mx-auto"
-                  />
-                </div>
-              ) : (
-                <div>
-                  <div className="space-y-4 mb-3">
-                    <HorizontalSlider
-                      value={pomodoroWorkTime}
-                      min={15}
-                      max={60}
-                      step={5}
-                      onChange={setPomodoroWorkTime}
-                      width={200}
-                      unit="min"
-                      label="Temps de travail"
-                      className="mx-auto"
-                    />
-                    
-                    <HorizontalSlider
-                      value={pomodoroBreakTime}
-                      min={3}
-                      max={15}
-                      step={1}
-                      onChange={setPomodoroBreakTime}
-                      width={200}
-                      unit="min"
-                      label="Temps de pause"
-                      className="mx-auto"
-                    />
-                    
-                    <HorizontalSlider
-                      value={pomodoroCycles}
-                      min={2}
-                      max={8}
-                      step={1}
-                      onChange={setPomodoroCycles}
-                      width={200}
-                      unit=""
-                      label="Nombre de cycles"
-                      className="mx-auto"
-                    />
+              {/* Configuration du timer */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                {quickTimerType === 'simple' ? (
+                  <div>
+                    <p className="text-sm text-gray-600 text-center mb-3">Durée de la session</p>
+                    <div className="flex justify-center items-center gap-4">
+                      <button
+                        onClick={() => setSimpleTimerDuration(Math.max(5, simpleTimerDuration - 5))}
+                        className="w-8 h-8 rounded-full bg-white border border-gray-300 hover:bg-gray-50"
+                      >
+                        -
+                      </button>
+                      <span className="text-lg font-semibold w-16 text-center">{simpleTimerDuration} min</span>
+                      <button
+                        onClick={() => setSimpleTimerDuration(Math.min(120, simpleTimerDuration + 5))}
+                        className="w-8 h-8 rounded-full bg-white border border-gray-300 hover:bg-gray-50"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
-                  
-                  <div className="text-center text-xs text-gray-600 bg-red-50 rounded-lg p-2">
-                    {pomodoroWorkTime}min travail • {pomodoroBreakTime}min pause • {pomodoroCycles} cycles
+                ) : (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div>
+                        <p className="text-xs text-gray-600 mb-1">Travail</p>
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => setPomodoroWorkTime(Math.max(15, pomodoroWorkTime - 5))}
+                            className="w-6 h-6 rounded bg-white border border-gray-300 text-xs hover:bg-gray-50"
+                          >
+                            -
+                          </button>
+                          <span className="text-sm font-medium w-12">{pomodoroWorkTime}m</span>
+                          <button
+                            onClick={() => setPomodoroWorkTime(Math.min(60, pomodoroWorkTime + 5))}
+                            className="w-6 h-6 rounded bg-white border border-gray-300 text-xs hover:bg-gray-50"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600 mb-1">Pause</p>
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => setPomodoroBreakTime(Math.max(3, pomodoroBreakTime - 1))}
+                            className="w-6 h-6 rounded bg-white border border-gray-300 text-xs hover:bg-gray-50"
+                          >
+                            -
+                          </button>
+                          <span className="text-sm font-medium w-12">{pomodoroBreakTime}m</span>
+                          <button
+                            onClick={() => setPomodoroBreakTime(Math.min(15, pomodoroBreakTime + 1))}
+                            className="w-6 h-6 rounded bg-white border border-gray-300 text-xs hover:bg-gray-50"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600 mb-1">Cycles</p>
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => setPomodoroCycles(Math.max(2, pomodoroCycles - 1))}
+                            className="w-6 h-6 rounded bg-white border border-gray-300 text-xs hover:bg-gray-50"
+                          >
+                            -
+                          </button>
+                          <span className="text-sm font-medium w-12">{pomodoroCycles}</span>
+                          <button
+                            onClick={() => setPomodoroCycles(Math.min(8, pomodoroCycles + 1))}
+                            className="w-6 h-6 rounded bg-white border border-gray-300 text-xs hover:bg-gray-50"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div>
+              {/* Timer actuellement lié */}
+              {linkedTimer && (
+                <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-xs text-green-700 mb-1 font-medium">Timer actuellement lié :</p>
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded bg-green-100">
+                      {linkedTimer.isPomodoroMode ? <Coffee size={14} className="text-green-600" /> : <Timer size={14} className="text-green-600" />}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-green-800">{linkedTimer.title}</p>
+                      <p className="text-xs text-green-600">{Math.round(linkedTimer.config.workDuration / 60)} min</p>
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* Bouton créer */}
-            </div>
-          ) : (
-            /* Mode timer lié */
-            <div className="space-y-3">
-              {linkedTimer ? (
-                /* Timer déjà lié */
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1 bg-blue-100 rounded">
-                        {linkedTimer.isPomodoroMode ? '🍅' : '⏱️'}
-                      </div>
-                      <div>
-                        <div className="text-sm font-medium text-blue-900">
-                          {linkedTimer.title}
-                        </div>
-                        <div className="text-xs text-blue-700">
-                          {Math.round(linkedTimer.config.workDuration / 60)}min
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setSelectedExistingTimer(null);
-                      }}
-                      className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
-                    >
-                      <Link2 size={14} className="rotate-45" />
-                    </button>
+              {/* Liste des timers disponibles */}
+              {availableTimers.length > 0 || linkedTimer ? (
+                <div>
+                  <p className="text-xs text-gray-600 mb-2">
+                    {linkedTimer ? 'Changer pour un autre timer :' : 'Sélectionnez un timer :'}
+                  </p>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {/* Créer une liste combinée de tous les timers */}
+                    {(() => {
+                      // Combiner le timer lié actuel avec les timers disponibles
+                      const allTimers = linkedTimer 
+                        ? [linkedTimer, ...availableTimers.filter(t => t.id !== linkedTimer.id)]
+                        : availableTimers;
+                      
+                      return allTimers.map((timer) => (
+                        <button
+                          key={timer.id}
+                          onClick={() => setSelectedExistingTimer(timer.id)}
+                          className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                            selectedExistingTimer === timer.id
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-200 hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className="p-2 rounded bg-gray-100">
+                            {timer.isPomodoroMode ? <Coffee size={16} className="text-gray-600" /> : <Timer size={16} className="text-gray-600" />}
+                          </div>
+                          <div className="flex-1 text-left">
+                            <p className="font-medium text-sm">{timer.title}</p>
+                            <p className="text-xs text-gray-500">{Math.round(timer.config.workDuration / 60)} min</p>
+                          </div>
+                          {selectedExistingTimer === timer.id && (
+                            <Check size={16} className="text-blue-600" />
+                          )}
+                        </button>
+                      ));
+                    })()}
                   </div>
                 </div>
               ) : (
-                /* Sélection de timer */
-                <div className="space-y-2 max-h-32 overflow-y-auto">
-                  {availableTimers.length > 0 ? (
-                    availableTimers.map((timer) => (
-                      <button
-                        key={timer.id}
-                        onClick={() => handleExistingTimerSelect(timer.id)}
-                        className={`w-full flex items-center gap-3 p-2 rounded-lg border transition-colors text-left ${
-                          selectedExistingTimer === timer.id
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 hover:bg-gray-50'
-                        }`}
-                      >
-                        <div className="p-1 bg-gray-100 rounded text-sm">
-                          {timer.isPomodoroMode ? '🍅' : '⏱️'}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-gray-900 truncate">
-                            {timer.title}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {Math.round(timer.config.workDuration / 60)}min
-                          </div>
-                        </div>
-                        {selectedExistingTimer === timer.id && (
-                          <Check size={16} className="text-blue-600" />
-                        )}
-                      </button>
-                    ))
-                  ) : (
-                    <div className="text-center text-xs text-gray-500 py-4">
-                      Aucun timer disponible
-                    </div>
-                  )}
-                </div>
+                <p className="text-center text-sm text-gray-500 py-4">
+                  Aucun timer disponible
+                </p>
+              )}
+              {errors.timer && (
+                <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
+                  <AlertCircle size={12} />
+                  {errors.timer}
+                </p>
               )}
             </div>
           )}
         </div>
       </div>
 
-      {/* Boutons d'action intégrés */}
-      <div className="p-5 bg-gray-50 border-t border-gray-200 flex gap-3">
+      {/* Actions */}
+      <div className="flex gap-3 p-6 bg-gray-50 border-t">
         {onCancel && (
           <button
             onClick={onCancel}
-            className="flex-1 px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+            className="flex-1 py-2.5 px-4 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
           >
             Annuler
           </button>
         )}
         <button
           onClick={handleSave}
-          disabled={!isFormValid}
-          className={`flex-1 px-4 py-3 rounded-lg transition-colors font-medium ${
-            isFormValid
-              ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md'
+          disabled={!isValid}
+          className={`flex-1 py-2.5 px-4 rounded-lg font-medium transition-all ${
+            isValid
+              ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'
               : 'bg-gray-200 text-gray-400 cursor-not-allowed'
           }`}
         >
-          <div className="flex items-center justify-center gap-2">
-            {isCreating ? <Plus size={16} /> : <Check size={16} />}
-            {isCreating ? 'Créer la Matière' : 'Sauvegarder'}
-          </div>
+          {isCreating ? 'Créer' : 'Enregistrer'}
         </button>
       </div>
     </div>

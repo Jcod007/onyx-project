@@ -1,72 +1,38 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { ModernTimerCard } from '@/components/ModernTimerCard';
 import { TimerConfigDialog } from '@/components/TimerConfigDialog';
-import { DailySummary } from '@/components/DailySummary';
 import { TimerConfig } from '@/services/timerService';
 import { Subject } from '@/types/Subject';
-import { subjectService } from '@/services/subjectService';
-import { useReactiveTimers } from '@/hooks/useReactiveTimers';
-import { useTimerExecution } from '@/hooks/useTimerExecution';
+import { useTimerContext } from '@/contexts/TimerContext';
 import { ActiveTimer } from '@/types/ActiveTimer';
-import { Plus, Settings, Volume2, VolumeX, BarChart3 } from 'lucide-react';
+import { courseTimerLinkManager } from '@/services/courseTimerLinkManager';
+import { Plus, Settings, Volume2, VolumeX } from 'lucide-react';
 
 export const TimersPage: React.FC = () => {
+  // Utiliser uniquement le contexte global - source unique de vérité
   const {
     timers,
-    timerCounter,
-    setTimerCounter,
-    addTimer,
-    updateTimer,
-    removeTimer: removeTimerFromStorage,
-    updateTimerLastUsed
-  } = useReactiveTimers();
-  
-  const [showConfigDialog, setShowConfigDialog] = useState(false);
-  const [editingTimer, setEditingTimer] = useState<ActiveTimer | null>(null);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [completedSessions, setCompletedSessions] = useState(0);
-  const [showDailySummary, setShowDailySummary] = useState(false);
-
-  const {
     startTimer,
     pauseTimer,
     resetTimer,
     getTimerState,
-    cleanupTimer
-  } = useTimerExecution(
-    // onTimerFinish callback
-    useCallback(async (timerId: string, timer: ActiveTimer, totalTime: number) => {
-      updateTimerLastUsed(timerId);
-      if (timer.linkedSubject) {
-        try {
-          await subjectService.addStudyTime(timer.linkedSubject.id, totalTime);
-        } catch (error) {
-          console.error('Erreur lors de l\'ajout du temps d\'étude:', error);
-        }
-      }
-    }, [updateTimerLastUsed]),
-    // onSessionComplete callback
-    useCallback(async (timerId: string, timer: ActiveTimer) => {
-      setCompletedSessions(prev => prev + 1);
-      updateTimerLastUsed(timerId);
-      
-      if (timer.linkedSubject) {
-        try {
-          await subjectService.addStudyTime(
-            timer.linkedSubject.id, 
-            timer.config.workDuration
-          );
-        } catch (error) {
-          console.error('Erreur lors de l\'ajout du temps d\'étude:', error);
-        }
-      }
+    cleanupTimer,
+    // Fonctions de gestion des timers
+    addTimer,
+    updateTimer,
+    removeTimer: removeTimerFromStorage,
+    timerCounter,
+    setTimerCounter
+  } = useTimerContext();
+  
+  const [showConfigDialog, setShowConfigDialog] = useState(false);
+  const [editingTimer, setEditingTimer] = useState<ActiveTimer | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [completedSessions] = useState(0);
+  // Suppression de showDailySummary et variables utilisées seulement pour le debug
 
-      // Jouer un son si activé
-      if (soundEnabled) {
-        playNotificationSound();
-      }
-    }, [updateTimerLastUsed, soundEnabled])
-  );
+  // Note: La synchronisation est maintenant automatique via TimerProvider
+  // Plus besoin de synchroniser manuellement
 
   const handleCreateTimer = () => {
     setShowConfigDialog(true);
@@ -109,26 +75,61 @@ export const TimersPage: React.FC = () => {
       };
     }
 
-    addTimer({
+    // Gérer la liaison avec un cours (relation 1:1 avec toggle)
+    let finalLinkedSubject = config.linkedSubject;
+    
+    if (config.linkedSubject) {
+      // Vérifier s'il y a déjà un timer lié à ce cours
+      const existingTimerForCourse = timers.find(t => 
+        t.linkedSubject && t.linkedSubject.id === config.linkedSubject!.id
+      );
+      
+      if (existingTimerForCourse) {
+        // Toggle : délier l'ancien timer de ce cours
+        console.log(`🔄 Toggle: déliaison timer "${existingTimerForCourse.title}" du cours "${config.linkedSubject.name}"`);
+        await updateTimer(existingTimerForCourse.id, { linkedSubject: undefined });
+        
+        // Si c'est le même timer qu'on essaie de lier, ne pas le re-lier (toggle off)
+        if (existingTimerForCourse.id !== editingTimer?.id) {
+          console.log(`✅ Nouveau timer sera lié au cours "${config.linkedSubject.name}"`);
+        } else {
+          console.log(`❌ Toggle off: timer ne sera pas re-lié au même cours`);
+          finalLinkedSubject = undefined;
+        }
+      }
+    }
+
+    // Créer le nouveau timer avec la liaison finale
+    await addTimer({
       title: config.name || `Timer ${timerCounter}`,
       config: timerConfig,
-      linkedSubject: config.linkedSubject,
+      linkedSubject: finalLinkedSubject,
       isPomodoroMode,
       maxCycles
     });
     
     setTimerCounter(prev => prev + 1);
     setShowConfigDialog(false);
+    
+    console.log(`✅ Timer "${config.name || `Timer ${timerCounter}`}" créé${finalLinkedSubject ? ` et lié au cours "${finalLinkedSubject.name}"` : ''}`);
   };
 
 
 
-  const handleRemoveTimer = (timerId: string) => {
+  const handleRemoveTimer = async (timerId: string) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce timer ?')) {
-      // Arrêter et nettoyer le timer s'il est en cours d'exécution
-      cleanupTimer(timerId);
-      // Supprimer de la storage
-      removeTimerFromStorage(timerId);
+      try {
+        // Arrêter et nettoyer le timer s'il est en cours d'exécution
+        cleanupTimer(timerId);
+        
+        // Utiliser courseTimerLinkManager pour gérer la suppression
+        // Cela convertira automatiquement les cours liés en timers rapides
+        await courseTimerLinkManager.handleTimerDeletion(timerId);
+        
+        console.log(`✅ Timer ${timerId} supprimé et cours liés convertis en timers rapides`);
+      } catch (error) {
+        console.error('Erreur lors de la suppression du timer:', error);
+      }
     }
   };
 
@@ -154,6 +155,13 @@ export const TimersPage: React.FC = () => {
   }) => {
     if (!editingTimer) return;
 
+    // Vérifier si le timer est en cours d'exécution
+    const timerState = getTimerState(editingTimer.id);
+    if (timerState && timerState.state === 'running') {
+      // Arrêter le timer avant modification
+      cleanupTimer(editingTimer.id);
+    }
+
     let timerConfig: TimerConfig;
     let isPomodoroMode = false;
     let maxCycles = 0;
@@ -176,36 +184,48 @@ export const TimersPage: React.FC = () => {
       };
     }
 
-    updateTimer(editingTimer.id, {
+    // Gérer la liaison avec un cours (relation 1:1 avec toggle) lors de l'édition
+    let finalLinkedSubject = config.linkedSubject;
+    
+    if (config.linkedSubject) {
+      // Vérifier s'il y a déjà un AUTRE timer lié à ce cours (pas le timer actuel)
+      const existingTimerForCourse = timers.find(t => 
+        t.linkedSubject && 
+        t.linkedSubject.id === config.linkedSubject!.id &&
+        t.id !== editingTimer.id  // Exclure le timer qu'on est en train d'éditer
+      );
+      
+      if (existingTimerForCourse) {
+        // Toggle : délier l'ancien timer de ce cours
+        console.log(`🔄 Toggle: déliaison timer "${existingTimerForCourse.title}" du cours "${config.linkedSubject.name}"`);
+        await updateTimer(existingTimerForCourse.id, { linkedSubject: undefined });
+      }
+      
+      // Si le timer était déjà lié au même cours, on peut le garder lié ou le délier selon l'intention
+      if (editingTimer.linkedSubject?.id === config.linkedSubject.id) {
+        console.log(`🔄 Timer "${editingTimer.title}" reste lié au cours "${config.linkedSubject.name}"`);
+      } else {
+        console.log(`✅ Timer "${editingTimer.title}" sera lié au cours "${config.linkedSubject.name}"`);
+      }
+    } else if (editingTimer.linkedSubject) {
+      // Si on retire la liaison d'un cours
+      console.log(`🔓 Timer "${editingTimer.title}" délié du cours "${editingTimer.linkedSubject.name}"`);
+    }
+
+    await updateTimer(editingTimer.id, {
       title: config.name || editingTimer.title,
       config: timerConfig,
-      linkedSubject: config.linkedSubject,
+      linkedSubject: finalLinkedSubject,
       isPomodoroMode,
       maxCycles
     });
 
     setShowConfigDialog(false);
     setEditingTimer(null);
-  };
-
-  const playNotificationSound = () => {
-    // Utiliser l'API Audio Web pour jouer un son
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-
-    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-    oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
     
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-
-    oscillator.start(audioContext.currentTime);
-    oscillator.stop(audioContext.currentTime + 0.5);
+    console.log(`✅ Timer "${config.name || editingTimer.title}" mis à jour${finalLinkedSubject ? ` et lié au cours "${finalLinkedSubject.name}"` : ''}`);
   };
+
 
   return (
     <div className="space-y-8">
@@ -219,18 +239,6 @@ export const TimersPage: React.FC = () => {
         </div>
         
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowDailySummary(!showDailySummary)}
-            className={`p-3 rounded-lg border transition-colors ${
-              showDailySummary 
-                ? 'bg-purple-50 border-purple-200 text-purple-600' 
-                : 'bg-gray-50 border-gray-200 text-gray-400'
-            }`}
-            title={showDailySummary ? 'Masquer le résumé' : 'Afficher le résumé journalier'}
-          >
-            <BarChart3 size={20} />
-          </button>
-          
           <button
             onClick={() => setSoundEnabled(!soundEnabled)}
             className={`p-3 rounded-lg border transition-colors ${
@@ -253,36 +261,9 @@ export const TimersPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Daily Summary */}
-      {showDailySummary && (
-        <DailySummary
-          sessions={[
-            // Exemple de données - à remplacer par de vraies données
-            {
-              id: '1',
-              subject: { id: '1', name: 'Mathématiques', targetTime: 7200, defaultTimerDuration: 1500, timeSpent: 3600, status: 'IN_PROGRESS', weeklyTimeGoal: 240, studyDays: ['MONDAY', 'WEDNESDAY', 'FRIDAY'], createdAt: new Date(), updatedAt: new Date() },
-              plannedDuration: 3600,
-              studiedTime: 1800,
-              isCompleted: false,
-              progress: 50
-            },
-            {
-              id: '2', 
-              subject: { id: '2', name: 'Histoire', targetTime: 3600, defaultTimerDuration: 1500, timeSpent: 3600, status: 'COMPLETED', weeklyTimeGoal: 180, studyDays: ['TUESDAY', 'THURSDAY'], createdAt: new Date(), updatedAt: new Date() },
-              plannedDuration: 3600,
-              studiedTime: 3600,
-              isCompleted: true,
-              progress: 100
-            }
-          ]}
-          onStartSession={(sessionId) => {
-            console.log('Starting session:', sessionId);
-          }}
-        />
-      )}
 
       {/* Statistics */}
-      {completedSessions > 0 && !showDailySummary && (
+      {completedSessions > 0 && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-100 rounded-lg">
@@ -409,7 +390,25 @@ export const TimersPage: React.FC = () => {
         } : { hours: 0, minutes: 25, seconds: 0 }}
         defaultName={editingTimer?.title}
         preselectedSubject={editingTimer?.linkedSubject}
+        isEditMode={!!editingTimer}
+        editingTimerData={editingTimer ? {
+          id: editingTimer.id,
+          mode: editingTimer.isPomodoroMode ? 'pomodoro' : 'simple',
+          isPomodoroMode: editingTimer.isPomodoroMode || false,
+          pomodoroConfig: editingTimer.isPomodoroMode ? {
+            workDuration: editingTimer.config.workDuration,
+            breakDuration: editingTimer.config.shortBreakDuration,
+            longBreakDuration: editingTimer.config.longBreakDuration,
+            cycles: editingTimer.maxCycles || 4
+          } : undefined
+        } : undefined}
+        existingTimers={timers.map(t => ({
+          id: t.id,
+          title: t.title,
+          linkedSubject: t.linkedSubject
+        }))}
       />
+
     </div>
   );
 };

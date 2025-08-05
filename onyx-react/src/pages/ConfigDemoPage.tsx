@@ -5,8 +5,7 @@ import { SubjectConfigCard } from '@/components/SubjectConfigCard';
 import { TimerConfigDialog } from '@/components/TimerConfigDialog';
 import { Subject } from '@/types/Subject';
 import { ActiveTimer } from '@/types/ActiveTimer';
-import { TimerConfig } from '@/services/timerService';
-import { Play, Settings, Eye } from 'lucide-react';
+import { Play, Settings } from 'lucide-react';
 
 export const ConfigDemoPage: React.FC = () => {
   const [showTimerConfig, setShowTimerConfig] = useState(false);
@@ -33,9 +32,9 @@ export const ConfigDemoPage: React.FC = () => {
       config: { workDuration: 1500, shortBreakDuration: 300, longBreakDuration: 900, longBreakInterval: 4 },
       isPomodoroMode: false,
       maxCycles: 0,
-      linkedSubject: null,
+      linkedSubject: undefined,
       createdAt: new Date(),
-      lastUsedAt: new Date()
+      lastUsed: new Date()
     },
     {
       id: 'timer2',
@@ -43,9 +42,9 @@ export const ConfigDemoPage: React.FC = () => {
       config: { workDuration: 1500, shortBreakDuration: 300, longBreakDuration: 900, longBreakInterval: 4 },
       isPomodoroMode: true,
       maxCycles: 4,
-      linkedSubject: null,
+      linkedSubject: undefined,
       createdAt: new Date(),
-      lastUsedAt: new Date()
+      lastUsed: new Date()
     }
   ];
 
@@ -221,64 +220,19 @@ export const ConfigDemoPage: React.FC = () => {
                 <SubjectConfigCard
                   subject={demoSubject}
                   availableTimers={demoTimers}
-                  linkedTimer={null}
-                  onTimeAllocationChange={(subjectId, time) => 
-                    console.log('Time allocation:', subjectId, time)
-                  }
-                  onStudyDaysChange={(subjectId, days) => 
-                    console.log('Study days:', subjectId, days)
-                  }
-                  onLinkTimer={(subjectId, timerId) => 
-                    console.log('Link timer:', subjectId, timerId)
-                  }
-                  onUnlinkTimer={(subjectId) => 
-                    console.log('Unlink timer:', subjectId)
-                  }
-                  onCreateQuickTimer={(subjectId, config) => 
-                    console.log('Create quick timer:', subjectId, config)
-                  }
+                  linkedTimer={undefined}
                 />
                 
                 <SubjectConfigCard
                   subject={{ ...demoSubject, name: 'Histoire', timeSpent: 5400 }}
                   availableTimers={[demoTimers[1]]}
                   linkedTimer={demoTimers[0]}
-                  onTimeAllocationChange={(subjectId, time) => 
-                    console.log('Time allocation:', subjectId, time)
-                  }
-                  onStudyDaysChange={(subjectId, days) => 
-                    console.log('Study days:', subjectId, days)
-                  }
-                  onLinkTimer={(subjectId, timerId) => 
-                    console.log('Link timer:', subjectId, timerId)
-                  }
-                  onUnlinkTimer={(subjectId) => 
-                    console.log('Unlink timer:', subjectId)
-                  }
-                  onCreateQuickTimer={(subjectId, config) => 
-                    console.log('Create quick timer:', subjectId, config)
-                  }
                 />
                 
                 <SubjectConfigCard
                   subject={{ ...demoSubject, name: 'Physique', timeSpent: 1800, targetTime: 10800 }}
                   availableTimers={[]}
-                  linkedTimer={null}
-                  onTimeAllocationChange={(subjectId, time) => 
-                    console.log('Time allocation:', subjectId, time)
-                  }
-                  onStudyDaysChange={(subjectId, days) => 
-                    console.log('Study days:', subjectId, days)
-                  }
-                  onLinkTimer={(subjectId, timerId) => 
-                    console.log('Link timer:', subjectId, timerId)
-                  }
-                  onUnlinkTimer={(subjectId) => 
-                    console.log('Unlink timer:', subjectId)
-                  }
-                  onCreateQuickTimer={(subjectId, config) => 
-                    console.log('Create quick timer:', subjectId, config)
-                  }
+                  linkedTimer={undefined}
                 />
               </div>
             </div>
