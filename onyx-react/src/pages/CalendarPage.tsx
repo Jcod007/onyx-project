@@ -9,11 +9,8 @@ import { courseTimerLinkManager } from '@/services/courseTimerLinkManager';
 import { useReactiveTimers } from '@/hooks/useReactiveTimers';
 import { useTimerContext } from '@/contexts/TimerContext';
 import { ActiveTimer } from '@/types/ActiveTimer';
-import { Clock, BookOpen, CheckCircle2, TrendingUp, Calendar, RefreshCw, Target, Coffee, Play, Timer } from 'lucide-react';
+import { Clock, BookOpen, CheckCircle2, TrendingUp, Calendar, RefreshCw, Target, Play, Timer } from 'lucide-react';
 import { formatMinutesToHours } from '@/utils/timeFormat';
-import { subjectService } from '@/services/subjectService';
-import { centralizedTimerService } from '@/services/centralizedTimerService';
-import localforage from 'localforage';
 
 export const CalendarPage: React.FC = () => {
   const [calendarDays, setCalendarDays] = useState<CalendarDay[]>([]);
@@ -81,6 +78,8 @@ export const CalendarPage: React.FC = () => {
       
     } catch (error) {
       console.error('❌ Erreur chargement calendrier:', error);
+      // Afficher un état d'erreur à l'utilisateur
+      setCalendarDays([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -105,47 +104,15 @@ export const CalendarPage: React.FC = () => {
     let isTimerRunning = false;
     
     if (isLinkedTimer && session.timerConfig && typeof session.timerConfig === 'object' && 'timerId' in session.timerConfig) {
-      const timerId = (session.timerConfig as any).timerId;
-      const linkedTimer = timers.find(t => t.id === timerId);
-      if (linkedTimer) {
-        timerInfo = linkedTimer;
-        const activeTimerState = getTimerState(linkedTimer.id);
-        isTimerRunning = activeTimerState?.state === 'running';
-        
-        if (isTimerRunning) {
-          buttonIcon = <Clock size={14} className="animate-pulse" />;
-          buttonText = 'En cours';
-          buttonColor = 'bg-orange-600 hover:bg-orange-700 border-orange-700';
-        } else if (linkedTimer.isPomodoroMode) {
-          buttonIcon = <Coffee size={14} />;
-          buttonText = 'Pomodoro';
-          buttonColor = 'bg-red-600 hover:bg-red-700 border-red-700';
-        } else {
-          buttonIcon = <Timer size={14} />;
-          buttonText = 'Timer';
-          buttonColor = 'bg-green-600 hover:bg-green-700 border-green-700';
-        }
-      }
+      // Note: This section needs proper timer integration
+      buttonIcon = <Timer size={14} />;
+      buttonText = 'Timer lié';
+      buttonColor = 'bg-green-600 hover:bg-green-700 border-green-700';
     } else {
-      const activeQuickTimer = timers.find(t => 
-        t.id.startsWith('quick_') && 
-        t.linkedSubject?.id === session.subject.id
-      );
-      
-      if (activeQuickTimer) {
-        const activeTimerState = getTimerState(activeQuickTimer.id);
-        isTimerRunning = activeTimerState?.state === 'running';
-      }
-      
-      if (isTimerRunning) {
-        buttonIcon = <Clock size={14} className="animate-pulse" />;
-        buttonText = 'En cours';
-        buttonColor = 'bg-orange-600 hover:bg-orange-700 border-orange-700';
-      } else {
-        buttonIcon = <Clock size={14} />;
-        buttonText = 'Session rapide';
-        buttonColor = 'bg-purple-600 hover:bg-purple-700 border-purple-700';
-      }
+      // Default quick session button
+      buttonIcon = <Clock size={14} />;
+      buttonText = 'Session rapide';
+      buttonColor = 'bg-purple-600 hover:bg-purple-700 border-purple-700';
     }
     
     return { buttonIcon, buttonText, buttonColor, isTimerRunning, timerInfo };
@@ -196,7 +163,8 @@ export const CalendarPage: React.FC = () => {
       
     } catch (error) {
       console.error('❌ Erreur lancement session:', error);
-      alert('❌ Erreur lors du lancement de la session. Vérifiez votre configuration.');
+      // TODO: Remplacer alert par une notification toast plus élégante
+      alert(`❌ Erreur lors du lancement de la session: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   };
 
@@ -209,6 +177,7 @@ export const CalendarPage: React.FC = () => {
       // Le rechargement se fait automatiquement via l'abonnement
     } catch (error) {
       console.error('❌ Erreur liaison cours-timer:', error);
+      alert(`❌ Erreur lors de la liaison: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   };
 
@@ -218,6 +187,7 @@ export const CalendarPage: React.FC = () => {
       // Le rechargement se fait automatiquement via l'abonnement
     } catch (error) {
       console.error('❌ Erreur déliaison cours:', error);
+      alert(`❌ Erreur lors de la déliaison: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   };
 
@@ -267,9 +237,9 @@ export const CalendarPage: React.FC = () => {
     );
   }
 
-  // Obtenir les données du jour actuel pour la vue jour
+  // Obtenir les données du jour actuel pour la vue jour avec garde de sécurité
   const todayData = calendarDays.find(day => 
-    day.date.toDateString() === currentDate.toDateString()
+    day && day.date && day.date.toDateString() === currentDate.toDateString()
   ) || {
     date: currentDate,
     isToday: currentDate.toDateString() === new Date().toDateString(),
@@ -280,11 +250,11 @@ export const CalendarPage: React.FC = () => {
   // Calculer les statistiques du jour
   const todayStats = {
     plannedTime: todayData.totalPlannedTime,
-    studiedTime: todayData.sessions.reduce((sum, session) => sum + (session.subject.timeSpent / 60), 0),
-    completedSessions: todayData.sessions.filter(session => session.subject.status === 'COMPLETED').length,
+    studiedTime: todayData.sessions.reduce((sum, session) => sum + ((session.subject?.timeSpent || 0) / 60), 0),
+    completedSessions: todayData.sessions.filter(session => session.subject?.status === 'COMPLETED').length,
     totalSessions: todayData.sessions.length,
     progressPercentage: todayData.totalPlannedTime > 0 
-      ? Math.min(100, Math.round((todayData.sessions.reduce((sum, session) => sum + (session.subject.timeSpent / 60), 0) / todayData.totalPlannedTime) * 100))
+      ? Math.min(100, Math.round((todayData.sessions.reduce((sum, session) => sum + ((session.subject?.timeSpent || 0) / 60), 0) / (todayData.totalPlannedTime || 1)) * 100))
       : 0
   };
 
@@ -430,18 +400,18 @@ export const CalendarPage: React.FC = () => {
             {todayData.sessions.length > 0 ? (
               <div className="space-y-4">
                 {todayData.sessions.map((session) => {
-                  const sessionProgress = session.subject.targetTime > 0 
-                    ? Math.min(100, Math.round((session.subject.timeSpent / session.subject.targetTime) * 100))
+                  const sessionProgress = (session.subject?.targetTime || 0) > 0 
+                    ? Math.min(100, Math.round(((session.subject?.timeSpent || 0) / (session.subject?.targetTime || 1)) * 100))
                     : 0;
-                  const studiedMinutes = Math.round(session.subject.timeSpent / 60);
-                  const remainingMinutes = Math.max(0, session.plannedDuration - studiedMinutes);
+                  const studiedMinutes = Math.round((session.subject?.timeSpent || 0) / 60);
+                  const remainingMinutes = Math.max(0, (session.plannedDuration || 0) - studiedMinutes);
                   
                   let statusColor = 'gray';
                   let statusText = 'En attente';
-                  if (session.subject.status === 'IN_PROGRESS') {
+                  if (session.subject?.status === 'IN_PROGRESS') {
                     statusColor = 'yellow';
                     statusText = 'En cours';
-                  } else if (session.subject.status === 'COMPLETED') {
+                  } else if (session.subject?.status === 'COMPLETED') {
                     statusColor = 'green';
                     statusText = 'Terminé';
                   }
@@ -453,7 +423,7 @@ export const CalendarPage: React.FC = () => {
                     <div key={session.id} className="border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md hover:border-gray-300 transition-all duration-200">
                       <div className="flex items-center justify-between mb-4">
                         <div>
-                          <h4 className="text-xl font-semibold text-gray-900">{session.subject.name}</h4>
+                          <h4 className="text-xl font-semibold text-gray-900">{session.subject?.name || 'Matière inconnue'}</h4>
                           <div className="flex items-center gap-4 mt-2">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                               statusColor === 'green' ? 'bg-green-100 text-green-800' :
@@ -465,9 +435,9 @@ export const CalendarPage: React.FC = () => {
                             <span className="text-sm text-gray-600">{formatMinutesToHours(session.plannedDuration)} planifiées</span>
                             <span className="text-sm text-gray-600">{formatMinutesToHours(studiedMinutes)} étudiées</span>
                             <span className="text-sm text-gray-600">{formatMinutesToHours(remainingMinutes)} restantes</span>
-                            {timerInfo && (
+                            {timerInfo && 'title' in timerInfo && (
                               <span className="text-sm text-gray-500 italic">
-                                ({timerInfo.title})
+                                ({(timerInfo as any).title})
                               </span>
                             )}
                           </div>

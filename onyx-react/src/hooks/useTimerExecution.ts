@@ -20,6 +20,7 @@ interface UseTimerExecutionReturn {
   stopTimer: (timerId: string) => void;
   getTimerState: (timerId: string) => TimerExecutionState | null;
   cleanupTimer: (timerId: string) => void;
+  updateRunningTimer: (timerId: string, timer: ActiveTimer) => void;
 }
 
 export const useTimerExecution = (
@@ -155,6 +156,71 @@ export const useTimerExecution = (
     }
   }, []);
 
+  // Mettre à jour un timer en cours d'exécution avec une nouvelle configuration
+  const updateRunningTimer = useCallback((timerId: string, timer: ActiveTimer) => {
+    const currentTimerData = timerServices.current.get(timerId);
+    const currentState = timersState.get(timerId);
+    
+    if (currentTimerData && currentState) {
+      // Sauvegarder l'état actuel
+      const wasRunning = currentState.state === 'running';
+      
+      // Détruire l'ancien service
+      currentTimerData.service.destroy();
+      timerServices.current.delete(timerId);
+      
+      // Créer un nouveau service avec la nouvelle configuration
+      const newTimerService = new TimerService(
+        timer.config,
+        timer.isPomodoroMode || false,
+        timer.maxCycles || 0
+      );
+
+      // Configurer les callbacks
+      newTimerService.onStateChanged((data) => {
+        updateTimerState(timerId, data);
+      });
+
+      newTimerService.onTick((data) => {
+        updateTimerState(timerId, data);
+      });
+
+      newTimerService.onFinished((data) => {
+        updateTimerState(timerId, data);
+        
+        // Jouer le son approprié selon le mode
+        if (data.mode === 'work') {
+          playTimerFinishedSound();
+        } else if (data.mode === 'break') {
+          playBreakFinishedSound();
+        } else {
+          playTimerFinishedSound();
+        }
+        
+        // Notifier la fin du timer
+        if (onTimerFinish) {
+          onTimerFinish(timerId, timer, data.totalTime);
+        }
+      });
+
+      newTimerService.onCycleComplete((data) => {
+        updateTimerState(timerId, data);
+        console.log(`Timer ${timerId}: Session Pomodoro complète après ${data.currentCycle} cycles`);
+      });
+
+      // Sauvegarder le nouveau service
+      timerServices.current.set(timerId, { service: newTimerService, timer });
+      timersData.current.set(timerId, timer);
+      
+      // Si le timer était en cours, le redémarrer
+      if (wasRunning) {
+        newTimerService.start();
+      }
+      
+      console.log(`🔄 Timer ${timerId} mis à jour avec nouvelle configuration`);
+    }
+  }, [timersState, updateTimerState, onTimerFinish, onSessionComplete]);
+
   return {
     timersState,
     startTimer,
@@ -162,6 +228,7 @@ export const useTimerExecution = (
     resetTimer,
     stopTimer,
     getTimerState,
-    cleanupTimer
+    cleanupTimer,
+    updateRunningTimer
   };
 };

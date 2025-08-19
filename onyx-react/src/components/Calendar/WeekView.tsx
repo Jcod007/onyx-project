@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CalendarDay, DayStudySession } from '@/types/Subject';
-import { BookOpen, Clock, Coffee, Play, Target, Timer, TrendingUp } from 'lucide-react';
+import { BookOpen, Clock, Play, Target, TrendingUp } from 'lucide-react';
 import { formatMinutesToHours } from '@/utils/timeFormat';
 
 interface WeekViewProps {
@@ -36,7 +36,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
   };
   
   const weekStart = getWeekStart(currentDate);
-  const weekDays = [];
+  const weekDays: Array<{date: Date; data: CalendarDay}> = [];
   for (let i = 0; i < 7; i++) {
     const day = new Date(weekStart);
     day.setDate(weekStart.getDate() + i);
@@ -53,7 +53,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
 
   // Calculer la hauteur adaptative basée sur le nombre maximum de sessions par jour
   const getGridHeight = () => {
-    const maxSessionsPerDay = Math.max(...weekDays.map(day => day.data.sessions.length), 1);
+    const maxSessionsPerDay = Math.max(...weekDays.map((day: {date: Date; data: CalendarDay}) => day.data.sessions.length), 1);
     
     if (maxSessionsPerDay <= 1) return 'min-h-[200px]';
     if (maxSessionsPerDay <= 2) return 'min-h-[300px]';

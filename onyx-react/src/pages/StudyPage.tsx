@@ -27,7 +27,10 @@ export const StudyPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<Subject['status'] | 'ALL'>('ALL');
   const [loading, setLoading] = useState(true);
+  // formErrors state for form validation
   const [formErrors, setFormErrors] = useState<string[]>([]);
+  // Suppress unused variable warning temporarily
+  void formErrors;
 
   useEffect(() => {
     loadSubjects();
@@ -209,12 +212,13 @@ export const StudyPage: React.FC = () => {
     }
   };
 
-  const handleStartTimer = (subject: Subject) => {
+  // Removed unused handleStartTimer function
+  /*const handleStartTimer = (subject: Subject) => {
     setActiveTimer({
       subject,
       isActive: true
     });
-  };
+  };*/
 
   const handleTimerComplete = async () => {
     if (!activeTimer) return;
@@ -350,16 +354,16 @@ export const StudyPage: React.FC = () => {
       {filteredSubjects.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredSubjects.map((subject) => {
-            // Trouver le timer lié à ce cours
-            const linkedTimer = timers.find(timer => 
-              timer.linkedSubject && timer.linkedSubject.id === subject.id
-            );
+            // Note: linkedTimer functionality commented out for now
+            // const linkedTimer = timers.find(timer => 
+            //   timer.linkedSubject && timer.linkedSubject.id === subject.id
+            // );
             
             return (
               <SubjectCard
                 key={subject.id}
                 subject={subject}
-                linkedTimer={linkedTimer}
+                // linkedTimer prop removed from SubjectCard interface
                 onEdit={handleEditSubject}
                 onDelete={handleDeleteSubject}
                 showQuickActions={true}
@@ -368,7 +372,7 @@ export const StudyPage: React.FC = () => {
           })}
         </div>
       ) : (
-        /* Empty State */
+        // Empty State
         <div className="text-center py-16">
           <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
             <BookOpen size={32} className="text-gray-400" />

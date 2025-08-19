@@ -52,7 +52,7 @@ class CalendarRenderer {
    * 📋 SESSIONS D'UN JOUR SPÉCIFIQUE  
    * Génère les sessions planifiées pour un jour donné
    */
-  async generateDayData(date: Date, subjects?: Subject[], timers?: ActiveTimer[]): Promise<CalendarDay> {
+  async generateDayData(date: Date, _subjects?: Subject[], _timers?: ActiveTimer[]): Promise<CalendarDay> {
     const dayOfWeek = this.getDayOfWeekFromDate(date);
     const isToday = this.isSameDay(date, new Date());
 
@@ -198,7 +198,7 @@ class CalendarRenderer {
     mode: 'quick' | 'linked';
     timer?: ActiveTimer;
   }> {
-    console.log(`▶️ Lancement session ${session.subject.name} (${session.timerType})`);
+    console.log(`▶️ Lancement session ${session.subject?.name || 'Matière inconnue'} (${session.timerType})`);
 
     try {
       if (session.timerType === 'linked') {

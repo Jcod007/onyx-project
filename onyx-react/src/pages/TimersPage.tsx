@@ -20,9 +20,8 @@ export const TimersPage: React.FC = () => {
     // Fonctions de gestion des timers
     addTimer,
     updateTimer,
-    removeTimer: removeTimerFromStorage,
-    timerCounter,
-    setTimerCounter
+    // removeTimer - commented out as unused"
+    // Removed unused timerCounter and setTimerCounter
   } = useTimerContext();
   
   const [showConfigDialog, setShowConfigDialog] = useState(false);

@@ -30,6 +30,7 @@ interface TimerContextType {
   removeTimer: (id: string) => Promise<void>;
   timerCounter: number;
   setTimerCounter: (counter: number | ((prev: number) => number)) => void;
+  updateRunningTimer: (timerId: string, timer: ActiveTimer) => void;
 }
 
 const TimerContext = createContext<TimerContextType | undefined>(undefined);
@@ -88,7 +89,8 @@ export const TimerProvider: React.FC<TimerProviderProps> = ({ children }) => {
     pauseTimer,
     resetTimer,
     getTimerState,
-    cleanupTimer
+    cleanupTimer,
+    updateRunningTimer
   } = useTimerExecution(
     // onTimerFinish callback
     useCallback(async (_timerId: string, timer: ActiveTimer, totalTime: number) => {
@@ -135,6 +137,24 @@ export const TimerProvider: React.FC<TimerProviderProps> = ({ children }) => {
     setTimers(newTimers);
   }, []);
 
+  // Wrapper pour updateTimer qui met à jour aussi les timers en cours
+  const updateTimerWithSync = useCallback(async (id: string, updates: Partial<Omit<ActiveTimer, 'id' | 'createdAt'>>) => {
+    // Mettre à jour dans le storage
+    await updateTimer(id, updates);
+    
+    // Si le timer est en cours d'exécution, le mettre à jour aussi
+    const timerState = getTimerState(id);
+    if (timerState && (timerState.state === 'running' || timerState.state === 'paused')) {
+      const updatedTimer = timers.find(t => t.id === id);
+      if (updatedTimer) {
+        // Créer le timer avec les mises à jour appliquées
+        const mergedTimer = { ...updatedTimer, ...updates, lastUsed: new Date() };
+        updateRunningTimer(id, mergedTimer);
+        console.log(`🔄 Timer en cours ${id} synchronisé avec nouvelles modifications`);
+      }
+    }
+  }, [updateTimer, getTimerState, timers, updateRunningTimer]);
+
   const value: TimerContextType = {
     timers,
     startTimer,
@@ -145,10 +165,11 @@ export const TimerProvider: React.FC<TimerProviderProps> = ({ children }) => {
     setTimers: updateTimers,
     // Exposer les fonctions de gestion des timers
     addTimer,
-    updateTimer,
+    updateTimer: updateTimerWithSync,
     removeTimer,
     timerCounter,
-    setTimerCounter
+    setTimerCounter,
+    updateRunningTimer
   };
 
   return (
