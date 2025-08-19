@@ -26,11 +26,15 @@ export function formatHoursMinutes(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   
-  if (hours === 0) {
-    return `${minutes}min`;
-  }
+  return `${hours.toString().padStart(2, '0')}h${minutes.toString().padStart(2, '0')}`;
+}
+
+// Formater les minutes en format 00h00
+export function formatMinutesToHours(totalMinutes: number): string {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
   
-  return `${hours}h${minutes > 0 ? `${minutes.toString().padStart(2, '0')}` : ''}`;
+  return `${hours.toString().padStart(2, '0')}h${minutes.toString().padStart(2, '0')}`;
 }
 
 export function parseTimeInput(timeStr: string): { hours: number; minutes: number; seconds: number } {

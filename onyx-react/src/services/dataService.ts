@@ -76,6 +76,7 @@ class DataService {
 
     subjects[index] = updatedSubject;
     await localforage.setItem(STORAGE_KEYS.SUBJECTS, subjects);
+    
     return updatedSubject;
   }
 

@@ -38,13 +38,13 @@ const CompactTimerCard: React.FC<{
   const getStateColor = () => {
     switch (state) {
       case 'running':
-        return 'border-l-green-500 bg-green-50/50 dark:bg-green-900/10';
+        return 'border-l-green-500 bg-white dark:bg-white';
       case 'paused':
-        return 'border-l-orange-500 bg-orange-50/50 dark:bg-orange-900/10';
+        return 'border-l-orange-500 bg-white dark:bg-white';
       case 'finished':
-        return 'border-l-purple-500 bg-purple-50/50 dark:bg-purple-900/10';
+        return 'border-l-purple-500 bg-white dark:bg-white';
       default:
-        return 'border-l-gray-300 bg-white dark:bg-gray-800';
+        return 'border-l-gray-300 bg-white dark:bg-white';
     }
   };
 
@@ -59,7 +59,7 @@ const CompactTimerCard: React.FC<{
     // Version minimale - juste un indicateur
     return (
       <div className={`
-        flex items-center gap-2 px-2 py-1 rounded border-l-2 backdrop-blur-sm
+        flex items-center gap-2 px-2 py-1 rounded border-l-2
         ${getStateColor()}
       `}>
         {getTimerIcon()}
@@ -74,7 +74,7 @@ const CompactTimerCard: React.FC<{
 
   return (
     <div className={`
-      p-2 rounded border-l-4 shadow-sm backdrop-blur-sm transition-all duration-300 min-w-52
+      p-2 rounded border-l-4 shadow-sm transition-all duration-300 min-w-52
       ${getStateColor()}
     `}>
       {/* Header compact */}
@@ -260,8 +260,8 @@ export const SimpleActiveTimerWidget: React.FC<SimpleActiveTimerWidgetProps> = (
       {/* En-tête du widget avec bouton de réduction */}
       <div className={`
         flex items-center justify-between px-2 py-1 mb-2 rounded-t
-        ${isDark ? 'bg-gray-800/90 text-gray-300' : 'bg-white/90 text-gray-600'}
-        backdrop-blur-sm shadow-sm
+        bg-white text-gray-600
+        shadow-sm
       `}>
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full bg-green-500 ${activeTimers.some(t => getTimerState(t.id)?.state === 'running') ? 'animate-pulse' : ''}`} />
@@ -310,7 +310,7 @@ export const SimpleActiveTimerWidget: React.FC<SimpleActiveTimerWidgetProps> = (
         {isCollapsed && activeTimers.length > 2 && (
           <div className={`
             text-center text-xs py-1 px-2 rounded
-            ${isDark ? 'bg-gray-800/50 text-gray-400' : 'bg-gray-100/50 text-gray-500'}
+            bg-white text-gray-500
           `}>
             +{activeTimers.length - 2} autre{activeTimers.length - 2 > 1 ? 's' : ''}
           </div>

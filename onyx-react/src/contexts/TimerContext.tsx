@@ -6,6 +6,7 @@ import { subjectService } from '@/services/subjectService';
 import { SimpleActiveTimerWidget } from '@/components/SimpleActiveTimerWidget';
 import { TopTimerIndicator } from '@/components/TopTimerIndicator';
 import { useReactiveTimers } from '@/hooks/useReactiveTimers';
+import { requestNotificationPermission } from '@/utils/audioNotifications';
 
 interface TimerExecutionState {
   state: TimerState;
@@ -70,6 +71,17 @@ export const TimerProvider: React.FC<TimerProviderProps> = ({ children }) => {
       return persistedTimers;
     });
   }, [persistedTimers]);
+
+  // Demander la permission pour les notifications au chargement
+  useEffect(() => {
+    requestNotificationPermission().then(granted => {
+      if (granted) {
+        console.log('✅ Permission de notification accordée');
+      } else {
+        console.log('❌ Permission de notification refusée');
+      }
+    });
+  }, []);
 
   const {
     startTimer,

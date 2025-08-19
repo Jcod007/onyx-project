@@ -56,9 +56,9 @@ class CalendarRenderer {
     const dayOfWeek = this.getDayOfWeekFromDate(date);
     const isToday = this.isSameDay(date, new Date());
 
-    // Charger les données si non fournies
-    const allSubjects = subjects || await subjectService.getAllSubjects();
-    const allTimers = timers || centralizedTimerService.getTimers();
+    // Toujours recharger les données pour éviter les problèmes de cache
+    const allSubjects = await subjectService.getAllSubjects();
+    const allTimers = centralizedTimerService.getTimers();
 
     // Filtrer les cours planifiés pour ce jour
     const scheduledSubjects = allSubjects.filter(subject => 
@@ -104,10 +104,55 @@ class CalendarRenderer {
       let timerType: 'quick' | 'linked';
       let timerConfig: QuickTimerConfig | { timerId: string };
 
+      console.log(`🔍 Analyse cours ${subject.name}:`, {
+        id: subject.id,
+        linkedTimerId: subject.linkedTimerId,
+        hasLinkedTimer: !!subject.linkedTimerId,
+        quickTimerConfig: subject.quickTimerConfig,
+        defaultTimerMode: subject.defaultTimerMode
+      });
+      
+      // Vérification spéciale pour Histoire
+      if (subject.name.toLowerCase().includes('histoire')) {
+        console.log(`🔍 HISTOIRE DÉTECTION - linkedTimerId:`, subject.linkedTimerId);
+        console.log(`🔍 HISTOIRE DÉTECTION - hasLinkedTimer:`, !!subject.linkedTimerId);
+        
+        // Vérifier s'il y a une incohérence dans les timers
+        const possibleTimer = allTimers.find(t => t.linkedSubject && t.linkedSubject.name.toLowerCase().includes('histoire'));
+        if (possibleTimer) {
+          console.log(`🔍 HISTOIRE - Timer trouvé dans les timers actifs:`, {
+            timerId: possibleTimer.id,
+            timerTitle: possibleTimer.title,
+            linkedSubjectId: possibleTimer.linkedSubject?.id,
+            courseId: subject.id,
+            courseName: subject.name,
+            MISMATCH: possibleTimer.linkedSubject?.id !== subject.id || possibleTimer.id !== subject.linkedTimerId
+          });
+          
+          // RÉPARATION AUTOMATIQUE: Si le timer est lié au cours mais le cours n'a pas le linkedTimerId
+          if (possibleTimer.linkedSubject?.id === subject.id && !subject.linkedTimerId) {
+            console.log(`🔧 RÉPARATION AUTOMATIQUE: Ajout linkedTimerId au cours Histoire`);
+            try {
+              await subjectService.updateSubject(subject.id, {
+                linkedTimerId: possibleTimer.id,
+                defaultTimerMode: 'simple'
+              });
+              // Mettre à jour l'objet local
+              subject.linkedTimerId = possibleTimer.id;
+              subject.defaultTimerMode = 'simple';
+              console.log(`✅ RÉPARATION TERMINÉE: linkedTimerId ajouté`);
+            } catch (error) {
+              console.error(`❌ ÉCHEC RÉPARATION:`, error);
+            }
+          }
+        }
+      }
+
       if (subject.linkedTimerId) {
         // Timer lié
         const linkedTimer = allTimers.find(t => t.id === subject.linkedTimerId);
         if (linkedTimer) {
+          console.log(`✅ Timer lié trouvé pour ${subject.name}: ${linkedTimer.title}`);
           timerType = 'linked';
           timerConfig = { timerId: subject.linkedTimerId };
         } else {
@@ -118,6 +163,7 @@ class CalendarRenderer {
         }
       } else {
         // Timer rapide
+        console.log(`⚡ Pas de timer lié pour ${subject.name}, utilisation timer rapide`);
         timerType = 'quick';
         if (subject.quickTimerConfig) {
           timerConfig = subject.quickTimerConfig;

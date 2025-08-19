@@ -1,17 +1,26 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CalendarView } from '@/components/Calendar/CalendarView';
 import { CalendarHeader } from '@/components/Calendar/CalendarHeader';
+import { MobileCalendarHeader } from '@/components/Calendar/MobileCalendarHeader';
 import { CalendarDay, DayStudySession } from '@/types/Subject';
 import { calendarRenderer } from '@/services/calendarRenderer';
 import { courseTimerLinkManager } from '@/services/courseTimerLinkManager';
 import { useReactiveTimers } from '@/hooks/useReactiveTimers';
-import { Clock, BookOpen, CheckCircle2, TrendingUp, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useTimerContext } from '@/contexts/TimerContext';
+import { ActiveTimer } from '@/types/ActiveTimer';
+import { Clock, BookOpen, CheckCircle2, TrendingUp, Calendar, RefreshCw, Target } from 'lucide-react';
+import { formatMinutesToHours } from '@/utils/timeFormat';
+import { subjectService } from '@/services/subjectService';
+import { centralizedTimerService } from '@/services/centralizedTimerService';
+import localforage from 'localforage';
 
 export const CalendarPage: React.FC = () => {
   const [calendarDays, setCalendarDays] = useState<CalendarDay[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'week' | 'day'>('week');
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [weeklyStats, setWeeklyStats] = useState({
     totalPlannedTime: 0,
     plannedSessions: 0,
@@ -20,6 +29,8 @@ export const CalendarPage: React.FC = () => {
   });
   
   const { ensureDataConsistency } = useReactiveTimers();
+  const { startTimer, addTimer } = useTimerContext();
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadCalendarData();
@@ -29,14 +40,21 @@ export const CalendarPage: React.FC = () => {
   useEffect(() => {
     const unsubscribe = courseTimerLinkManager.subscribe(() => {
       console.log('🔄 Changement de liaison détecté, rechargement calendrier');
-      loadCalendarData();
+      // Forcer un rechargement complet avec un léger délai pour s'assurer que les données sont sauvegardées
+      setTimeout(() => {
+        loadCalendarData(true);
+      }, 100);
     });
     return unsubscribe;
   }, []);
 
-  const loadCalendarData = async () => {
+  const loadCalendarData = async (isRefresh = false) => {
     try {
-      setLoading(true);
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       
       // Vérifier la cohérence des données
       await ensureDataConsistency();
@@ -53,6 +71,7 @@ export const CalendarPage: React.FC = () => {
       const stats = await calendarRenderer.getWeeklyStats(weekStart);
       setWeeklyStats(stats);
       
+      
       console.log('📅 Calendrier généré:', {
         période: `${startDate.toLocaleDateString()} → ${endDate.toLocaleDateString()}`,
         jours: days.length,
@@ -64,8 +83,14 @@ export const CalendarPage: React.FC = () => {
       console.error('❌ Erreur chargement calendrier:', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
+  
+  const handleRefresh = () => {
+    loadCalendarData(true);
+  };
+
 
   /**
    * ▶️ LANCEMENT DE SESSION D'ÉTUDE
@@ -77,21 +102,42 @@ export const CalendarPage: React.FC = () => {
       
       const launchResult = await calendarRenderer.launchStudySession(session);
       
-      // TODO: Intégrer avec le composant Timer existant
-      // Pour l'instant, on log les informations
-      console.log('🎯 Configuration session:', {
-        cours: session.subject.name,
-        mode: launchResult.mode,
-        config: launchResult.timerConfig,
-        durée: session.plannedDuration + 'min'
-      });
+      if (launchResult.mode === 'linked' && launchResult.timer) {
+        // Timer lié - lancer le timer existant ET rediriger vers la page des timers
+        console.log(`🔗 Lancement timer lié: ${launchResult.timer.title}`);
+        startTimer(launchResult.timer.id, launchResult.timer);
+        
+        console.log('🚀 Session timer lié lancée avec succès');
+        
+        // Rediriger vers la page des timers pour les timers liés
+        navigate('/timers');
+        
+      } else {
+        // Timer rapide/simple - créer et lancer UNIQUEMENT dans le widget (pas de redirection)
+        console.log(`⚡ Lancement timer rapide pour ${session.subject.name}`);
+        
+        const quickTimer: ActiveTimer = {
+          id: `quick_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          title: `${session.subject.name} - Session`,
+          config: launchResult.timerConfig,
+          isPomodoroMode: launchResult.timerConfig.shortBreakDuration > 0,
+          createdAt: new Date(),
+          lastUsed: new Date(),
+          linkedSubject: session.subject
+        };
 
-      // Simulation de démarrage (à remplacer par vraie intégration)
-      alert(`🎯 Session démarrée !\n\nCours: ${session.subject.name}\nDurée: ${session.plannedDuration} min\nMode: ${launchResult.mode === 'linked' ? 'Timer lié' : 'Timer rapide'}`);
+        // Ajouter et lancer le timer temporaire - VISIBLE UNIQUEMENT dans le widget
+        const addedTimer = await addTimer(quickTimer);
+        startTimer(addedTimer.id, addedTimer);
+        
+        console.log('🚀 Session timer rapide lancée dans le widget');
+        
+        // PAS de redirection pour les timers rapides - reste sur la page calendrier
+      }
       
     } catch (error) {
       console.error('❌ Erreur lancement session:', error);
-      alert('Erreur lors du lancement de la session');
+      alert('❌ Erreur lors du lancement de la session. Vérifiez votre configuration.');
     }
   };
 
@@ -114,6 +160,15 @@ export const CalendarPage: React.FC = () => {
     } catch (error) {
       console.error('❌ Erreur déliaison cours:', error);
     }
+  };
+
+  /**
+   * 📅 NAVIGATION VERS VUE JOUR
+   * Basculer vers la vue jour et changer la date
+   */
+  const handleDateClick = (date: Date) => {
+    setCurrentDate(date);
+    setViewMode('day');
   };
 
   /**
@@ -174,124 +229,142 @@ export const CalendarPage: React.FC = () => {
       : 0
   };
 
-  // Navigation entre les jours
-  const navigateDay = (direction: 'prev' | 'next') => {
-    const newDate = new Date(currentDate);
-    newDate.setDate(currentDate.getDate() + (direction === 'next' ? 1 : -1));
-    setCurrentDate(newDate);
-  };
-
-  const goToToday = () => {
-    setCurrentDate(new Date());
-  };
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('fr-FR', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
-  };
 
   return (
     <div className="space-y-6">
+      {/* Header unifié pour les deux vues */}
+      <div className="space-y-4">
+        {/* Header desktop */}
+        <CalendarHeader
+          currentDate={currentDate}
+          onDateChange={setCurrentDate}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          onRefresh={handleRefresh}
+          isLoading={loading || refreshing}
+        />
+        
+        {/* Header mobile */}
+        <MobileCalendarHeader
+          currentDate={currentDate}
+          onDateChange={setCurrentDate}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          onRefresh={handleRefresh}
+          isLoading={loading || refreshing}
+        />
+      </div>
+
       {viewMode === 'day' ? (
         // Vue jour complète avec toutes les fonctionnalités
         <>
-          {/* 📆 Navigation et date */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 capitalize">
-                  {formatDate(currentDate)}
-                </h1>
-                <p className="text-gray-600 mt-1">Planification de votre journée d'étude</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => navigateDay('prev')}
-                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <ChevronLeft size={20} />
-                </button>
-                <button 
-                  onClick={goToToday}
-                  className="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-                >
-                  Aujourd'hui
-                </button>
-                <button 
-                  onClick={() => navigateDay('next')}
-                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <ChevronRight size={20} />
-                </button>
-                <button 
-                  onClick={() => setViewMode('week')}
-                  className="ml-4 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                >
-                  Vue semaine
-                </button>
-              </div>
-            </div>
-          </div>
 
-          {/* 📊 Résumé de la journée */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <Clock className="text-blue-600" size={24} />
-                <div className="text-sm font-medium text-blue-700">Temps planifié</div>
+          {/* 📊 Résumé de la journée uniforme */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-1.5 bg-blue-50 rounded-lg shadow-sm">
+                  <Clock className="text-blue-600" size={16} />
+                </div>
+                <div className="text-sm font-medium text-gray-700">Temps planifié</div>
               </div>
-              <div className="text-3xl font-bold text-blue-900">
-                {todayStats.plannedTime} min
-              </div>
-            </div>
-            
-            <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <TrendingUp className="text-green-600" size={24} />
-                <div className="text-sm font-medium text-green-700">Temps étudié</div>
-              </div>
-              <div className="text-3xl font-bold text-green-900">
-                {Math.round(todayStats.studiedTime)} min
+              <div className="text-xl font-bold text-gray-900">
+                {formatMinutesToHours(todayStats.plannedTime)}
               </div>
             </div>
             
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
-              <div className="flex items-center gap-3 mb-2">
-                <CheckCircle2 className="text-purple-600" size={24} />
-                <div className="text-sm font-medium text-purple-700">Sessions terminées</div>
+            <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-1.5 bg-green-50 rounded-lg shadow-sm">
+                  <TrendingUp className="text-green-600" size={16} />
+                </div>
+                <div className="text-sm font-medium text-gray-700">Temps étudié</div>
               </div>
-              <div className="text-3xl font-bold text-purple-900">
+              <div className="text-xl font-bold text-gray-900">
+                {formatMinutesToHours(Math.round(todayStats.studiedTime))}
+              </div>
+            </div>
+            
+            <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-1.5 bg-purple-50 rounded-lg shadow-sm">
+                  <CheckCircle2 className="text-purple-600" size={16} />
+                </div>
+                <div className="text-sm font-medium text-gray-700">Sessions terminées</div>
+              </div>
+              <div className="text-xl font-bold text-gray-900">
                 {todayStats.completedSessions} / {todayStats.totalSessions}
               </div>
             </div>
           </div>
 
-          {/* 📈 Barre de progression du jour */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
+          {/* 📈 Barre de progression du jour uniforme */}
+          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Progression du jour</h3>
-              <span className="text-2xl font-bold text-blue-600">{todayStats.progressPercentage}%</span>
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-blue-50 rounded-lg shadow-sm">
+                  <Target size={16} className="text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Progression du jour</h3>
+                  <p className="text-sm text-gray-700">
+                    {todayStats.completedSessions} / {todayStats.totalSessions} sessions terminées
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-2xl font-bold text-gray-900">
+                  {todayStats.progressPercentage}%
+                </span>
+                <div className="text-sm text-gray-700">
+                  {todayStats.progressPercentage >= 100 ? 'Objectif atteint !' : 'En cours'}
+                </div>
+              </div>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-4 mb-3">
-              <div 
-                className="bg-gradient-to-r from-blue-500 to-blue-600 h-4 rounded-full transition-all duration-500"
-                style={{ width: `${todayStats.progressPercentage}%` }}
-              ></div>
+            
+            <div className="relative">
+              <div className="w-full bg-gray-200 rounded-full h-4 mb-3 overflow-hidden">
+                <div 
+                  className={`h-4 rounded-full transition-all duration-700 ease-out ${
+                    todayStats.progressPercentage >= 100 
+                      ? 'bg-gradient-to-r from-green-500 to-emerald-500 animate-pulse' 
+                      : 'bg-gradient-to-r from-blue-500 via-purple-500 to-blue-600'
+                  }`}
+                  style={{ width: `${Math.min(todayStats.progressPercentage, 100)}%` }}
+                >
+                  <div className="h-full bg-gradient-to-t from-black/10 to-white/20 rounded-full"></div>
+                </div>
+              </div>
+              
+              {/* Indicateur de progression */}
+              {todayStats.progressPercentage > 5 && (
+                <div 
+                  className="absolute top-0.5 text-white text-xs font-medium px-1.5 py-0.5 rounded-full bg-black/20 backdrop-blur-sm"
+                  style={{ left: `${Math.min(todayStats.progressPercentage - 8, 85)}%` }}
+                >
+                  {todayStats.progressPercentage}%
+                </div>
+              )}
             </div>
-            <div className="flex justify-between text-sm text-gray-600">
-              <span>{Math.round(todayStats.studiedTime)} min étudiées</span>
-              <span>{Math.max(0, todayStats.plannedTime - Math.round(todayStats.studiedTime))} min restantes</span>
+            
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="flex items-center gap-2 text-gray-700">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span>{formatMinutesToHours(Math.round(todayStats.studiedTime))} étudiées</span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-700">
+                <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+                <span>{formatMinutesToHours(Math.max(0, todayStats.plannedTime - Math.round(todayStats.studiedTime)))} restantes</span>
+              </div>
             </div>
           </div>
 
-          {/* 📚 Liste des sessions du jour */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
-              <BookOpen className="text-blue-600" size={20} />
+          {/* 📚 Liste des sessions du jour uniforme */}
+          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <div className="p-1.5 bg-blue-50 rounded-lg shadow-sm">
+                <BookOpen size={16} className="text-blue-600" />
+              </div>
               Sessions d'aujourd'hui
             </h3>
             
@@ -315,7 +388,7 @@ export const CalendarPage: React.FC = () => {
                   }
                   
                   return (
-                    <div key={session.id} className="border border-gray-200 rounded-lg p-6 hover:border-gray-300 transition-colors">
+                    <div key={session.id} className="border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md hover:border-gray-300 transition-all duration-200">
                       <div className="flex items-center justify-between mb-4">
                         <div>
                           <h4 className="text-xl font-semibold text-gray-900">{session.subject.name}</h4>
@@ -327,16 +400,16 @@ export const CalendarPage: React.FC = () => {
                             }`}>
                               {statusText}
                             </span>
-                            <span className="text-sm text-gray-600">{session.plannedDuration} min planifiées</span>
-                            <span className="text-sm text-gray-600">{studiedMinutes} min étudiées</span>
-                            <span className="text-sm text-gray-600">{remainingMinutes} min restantes</span>
+                            <span className="text-sm text-gray-600">{formatMinutesToHours(session.plannedDuration)} planifiées</span>
+                            <span className="text-sm text-gray-600">{formatMinutesToHours(studiedMinutes)} étudiées</span>
+                            <span className="text-sm text-gray-600">{formatMinutesToHours(remainingMinutes)} restantes</span>
                           </div>
                         </div>
                         <button 
                           onClick={() => handleLaunchSession(session)}
-                          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg border border-blue-700 shadow-sm transition-all duration-200 flex items-center gap-2"
                         >
-                          <Clock size={16} />
+                          <Clock size={14} />
                           Démarrer la session
                         </button>
                       </div>
@@ -371,24 +444,24 @@ export const CalendarPage: React.FC = () => {
             )}
           </div>
 
-          {/* 📌 Pied de page avec résumé */}
-          <div className="bg-gray-50 rounded-lg border border-gray-200 p-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          {/* 📌 Résumé uniforme */}
+          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div>
-                <div className="text-2xl font-bold text-gray-900">{todayStats.totalSessions}</div>
-                <div className="text-sm text-gray-600">sessions planifiées</div>
+                <div className="text-xl font-bold text-gray-900">{todayStats.totalSessions}</div>
+                <div className="text-sm text-gray-700">sessions planifiées</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-gray-900">{todayStats.plannedTime} min</div>
-                <div className="text-sm text-gray-600">planifiées</div>
+                <div className="text-xl font-bold text-gray-900">{formatMinutesToHours(todayStats.plannedTime)}</div>
+                <div className="text-sm text-gray-700">planifiées</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-gray-900">{Math.round(todayStats.studiedTime)} min</div>
-                <div className="text-sm text-gray-600">étudiées</div>
+                <div className="text-xl font-bold text-gray-900">{formatMinutesToHours(Math.round(todayStats.studiedTime))}</div>
+                <div className="text-sm text-gray-700">étudiées</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-gray-900">{new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
-                <div className="text-sm text-gray-600">dernière mise à jour</div>
+                <div className="text-xl font-bold text-gray-900">{new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
+                <div className="text-sm text-gray-700">dernière mise à jour</div>
               </div>
             </div>
           </div>
@@ -396,39 +469,53 @@ export const CalendarPage: React.FC = () => {
       ) : (
         // Vue semaine existante
         <>
-          {/* Header du calendrier avec statistiques */}
-          <div className="space-y-4">
-            <CalendarHeader
-              currentDate={currentDate}
-              onDateChange={setCurrentDate}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-            />
-
-            {/* Statistiques hebdomadaires */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="text-sm font-medium text-blue-700">Temps planifié</div>
-                <div className="text-2xl font-bold text-blue-900">
-                  {Math.floor(weeklyStats.totalPlannedTime / 60)}h{String(weeklyStats.totalPlannedTime % 60).padStart(2, '0')}
+          {/* Statistiques hebdomadaires uniformes */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="p-1.5 bg-blue-50 rounded-lg shadow-sm">
+                    <Clock size={16} className="text-blue-600" />
+                  </div>
+                  {refreshing && <RefreshCw size={14} className="animate-spin text-blue-600" />}
+                </div>
+                <div className="text-sm font-medium text-gray-700 mb-1">Temps planifié</div>
+                <div className="text-xl font-bold text-gray-900">
+                  {formatMinutesToHours(weeklyStats.totalPlannedTime)}
                 </div>
               </div>
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="text-sm font-medium text-green-700">Sessions</div>
-                <div className="text-2xl font-bold text-green-900">{weeklyStats.plannedSessions}</div>
+              
+              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="p-1.5 bg-green-50 rounded-lg shadow-sm">
+                    <Target size={16} className="text-green-600" />
+                  </div>
+                </div>
+                <div className="text-sm font-medium text-gray-700 mb-1">Sessions</div>
+                <div className="text-xl font-bold text-gray-900">{weeklyStats.plannedSessions}</div>
               </div>
-              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                <div className="text-sm font-medium text-purple-700">Matières</div>
-                <div className="text-2xl font-bold text-purple-900">{weeklyStats.subjectsCount}</div>
+              
+              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="p-1.5 bg-purple-50 rounded-lg shadow-sm">
+                    <BookOpen size={16} className="text-purple-600" />
+                  </div>
+                </div>
+                <div className="text-sm font-medium text-gray-700 mb-1">Matières</div>
+                <div className="text-xl font-bold text-gray-900">{weeklyStats.subjectsCount}</div>
               </div>
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                <div className="text-sm font-medium text-orange-700">Durée moy.</div>
-                <div className="text-2xl font-bold text-orange-900">
-                  {weeklyStats.averageSessionDuration > 0 ? Math.round(weeklyStats.averageSessionDuration) : 0}min
+              
+              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="p-1.5 bg-orange-50 rounded-lg shadow-sm">
+                    <TrendingUp size={16} className="text-orange-600" />
+                  </div>
+                </div>
+                <div className="text-sm font-medium text-gray-700 mb-1">Durée moy.</div>
+                <div className="text-xl font-bold text-gray-900">
+                  {formatMinutesToHours(weeklyStats.averageSessionDuration > 0 ? Math.round(weeklyStats.averageSessionDuration) : 0)}
                 </div>
               </div>
             </div>
-          </div>
 
           {/* Vue principale du calendrier */}
           <CalendarView
@@ -438,6 +525,7 @@ export const CalendarPage: React.FC = () => {
             onLaunchSession={handleLaunchSession}
             onLinkCourse={handleLinkCourse}
             onUnlinkCourse={handleUnlinkCourse}
+            onDateClick={handleDateClick}
           />
         </>
       )}

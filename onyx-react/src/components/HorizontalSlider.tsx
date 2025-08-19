@@ -158,10 +158,9 @@ export const HorizontalSlider: React.FC<HorizontalSliderProps> = ({
 
   const formatValue = (val: number) => {
     if (unit === 'time') {
-      if (val < 60) return `${val}min`;
       const hours = Math.floor(val / 60);
       const mins = val % 60;
-      return mins > 0 ? `${hours}h${mins.toString().padStart(2, '0')}` : `${hours}h`;
+      return `${hours.toString().padStart(2, '0')}h${mins.toString().padStart(2, '0')}`;
     }
     return `${val}${unit}`;
   };

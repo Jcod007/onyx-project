@@ -300,6 +300,14 @@ export const TimersPage: React.FC = () => {
                 maxCycles={timer.maxCycles}
                 progress={timerState?.progress || 0}
                 onStart={() => {
+                  const currentState = getTimerState(timer.id);
+                  
+                  // Empêcher le lancement multiple si le timer est déjà en cours
+                  if (currentState && (currentState.state === 'running' || currentState.state === 'paused')) {
+                    console.log('Timer already running or paused, ignoring start request');
+                    return;
+                  }
+                  
                   console.log('Starting timer:', timer.id);
                   startTimer(timer.id, timer);
                 }}
@@ -355,7 +363,7 @@ export const TimersPage: React.FC = () => {
           <div className="space-y-3 text-sm text-yellow-800">
             <div className="flex items-start gap-2">
               <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
-              <span>Utilisez la technique Pomodoro : 25 min de travail, 5 min de pause</span>
+              <span>Utilisez la technique Pomodoro : 00h25 de travail, 00h05 de pause</span>
             </div>
             <div className="flex items-start gap-2">
               <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
@@ -365,7 +373,7 @@ export const TimersPage: React.FC = () => {
           <div className="space-y-3 text-sm text-yellow-800">
             <div className="flex items-start gap-2">
               <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
-              <span>Prenez une pause longue (15 min) toutes les 4 sessions</span>
+              <span>Prenez une pause longue (00h15) toutes les 4 sessions</span>
             </div>
             <div className="flex items-start gap-2">
               <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>

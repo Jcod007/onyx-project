@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { TimerService, TimerData } from '@/services/timerService';
 import { ActiveTimer } from '@/types/ActiveTimer';
 import { TimerState } from '@/types/Timer';
+import { playTimerFinishedSound, playBreakFinishedSound } from '@/utils/audioNotifications';
 
 interface TimerExecutionState {
   state: TimerState;
@@ -65,6 +66,16 @@ export const useTimerExecution = (
 
       timerService.onFinished((data) => {
         updateTimerState(timerId, data);
+        
+        // Jouer le son approprié selon le mode
+        if (data.mode === 'work') {
+          playTimerFinishedSound();
+        } else if (data.mode === 'break') {
+          playBreakFinishedSound();
+        } else {
+          // Pour les timers simples
+          playTimerFinishedSound();
+        }
         
         // Notifier la fin du timer
         if (onTimerFinish) {

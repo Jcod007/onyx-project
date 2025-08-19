@@ -137,45 +137,37 @@ class CourseTimerLinkManager {
     console.log(`🗑️ Gestion suppression timer ${timerId}`);
 
     try {
-      // Trouver tous les cours liés à ce timer
-      const allSubjects = await subjectService.getAllSubjects();
-      const linkedCourses = allSubjects.filter(course => course.linkedTimerId === timerId);
-
-      if (linkedCourses.length === 0) {
-        console.log(`Aucun cours lié au timer ${timerId}`);
-        return;
-      }
-
       // Récupérer le timer avant suppression pour conversion
       const timers = centralizedTimerService.getTimers();
       const timerToDelete = timers.find(t => t.id === timerId);
 
+      if (!timerToDelete) {
+        console.log(`Timer ${timerId} introuvable`);
+        return;
+      }
+
+      // Trouver tous les cours liés à ce timer
+      const allSubjects = await subjectService.getAllSubjects();
+      const linkedCourses = allSubjects.filter(course => course.linkedTimerId === timerId);
+
+      // Convertir les cours liés en timers rapides
       for (const course of linkedCourses) {
         console.log(`🔄 Conversion cours "${course.name}" vers timer rapide`);
         
-        // Convertir vers timer rapide
-        let quickConfig: QuickTimerConfig;
-        if (timerToDelete) {
-          quickConfig = this.convertTimerToQuickConfig(timerToDelete);
-        } else {
-          quickConfig = {
-            type: 'simple',
-            workDuration: Math.floor(course.defaultTimerDuration / 60) || 25
-          };
-        }
+        const quickConfig = this.convertTimerToQuickConfig(timerToDelete);
 
         await subjectService.updateSubject(course.id, {
           linkedTimerId: undefined,
           defaultTimerMode: 'quick_timer',
           quickTimerConfig: quickConfig,
-          timerConversionNote: `Timer "${timerToDelete?.title || 'inconnu'}" supprimé le ${new Date().toLocaleString('fr-FR')} et converti en timer rapide`
+          timerConversionNote: `Timer "${timerToDelete.title}" supprimé le ${new Date().toLocaleString('fr-FR')} et converti en timer rapide`
         });
       }
 
-      // Supprimer le timer
+      // Supprimer le timer (qu'il soit lié ou non)
       await centralizedTimerService.removeTimer(timerId);
 
-      console.log(`✅ Timer supprimé et ${linkedCourses.length} cours converti(s)`);
+      console.log(`✅ Timer "${timerToDelete.title}" supprimé${linkedCourses.length > 0 ? ` et ${linkedCourses.length} cours converti(s)` : ''}`);
       this.notifyListeners();
 
     } catch (error) {
