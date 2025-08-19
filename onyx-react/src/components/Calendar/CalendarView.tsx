@@ -11,6 +11,8 @@ interface CalendarViewProps {
   onLinkCourse: (courseId: string, timerId: string) => void;
   onUnlinkCourse: (courseId: string) => void;
   onDateClick?: (date: Date) => void;
+  getSessionButtonInfo?: (session: DayStudySession) => any;
+  navigate?: (path: string) => void;
 }
 
 export const CalendarView: React.FC<CalendarViewProps> = ({
@@ -20,7 +22,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   onLaunchSession,
   onLinkCourse,
   onUnlinkCourse,
-  onDateClick
+  onDateClick,
+  getSessionButtonInfo,
+  navigate
 }) => {
   if (viewMode === 'week') {
     return (
@@ -31,6 +35,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         onLinkCourse={onLinkCourse}
         onUnlinkCourse={onUnlinkCourse}
         onDateClick={onDateClick}
+        getSessionButtonInfo={getSessionButtonInfo}
+        navigate={navigate}
       />
     );
   } else {

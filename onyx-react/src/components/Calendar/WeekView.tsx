@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CalendarDay, DayStudySession } from '@/types/Subject';
-import { BookOpen, Clock, Play, Target, TrendingUp } from 'lucide-react';
+import { BookOpen, Clock, Coffee, Play, Target, Timer, TrendingUp } from 'lucide-react';
 import { formatMinutesToHours } from '@/utils/timeFormat';
 
 interface WeekViewProps {
@@ -10,13 +10,17 @@ interface WeekViewProps {
   onLinkCourse?: (courseId: string, timerId: string) => void;
   onUnlinkCourse?: (courseId: string) => void;
   onDateClick?: (date: Date) => void;
+  getSessionButtonInfo?: (session: DayStudySession) => any;
+  navigate?: (path: string) => void;
 }
 
 export const WeekView: React.FC<WeekViewProps> = ({
   calendarDays,
   currentDate,
   onLaunchSession,
-  onDateClick
+  onDateClick,
+  getSessionButtonInfo,
+  navigate
 }) => {
   const [hoveredSession, setHoveredSession] = useState<string | null>(null);
   const dayNames = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
@@ -189,17 +193,65 @@ export const WeekView: React.FC<WeekViewProps> = ({
                           )}
                         </div>
                         
-                        <button 
-                          onClick={() => onLaunchSession(session)}
-                          className={`w-full px-1.5 py-1 text-xs font-medium rounded transition-all duration-200 flex items-center justify-center gap-1 ${
-                            isCompleted
-                              ? 'bg-green-600 hover:bg-green-700 text-white'
-                              : 'bg-blue-600 hover:bg-blue-700 text-white'
-                          } group-hover:shadow-sm`}
-                        >
-                          <Play size={10} />
-                          {isCompleted ? 'Refaire' : 'Démarrer'}
-                        </button>
+                        {getSessionButtonInfo && navigate ? (
+                          (() => {
+                            try {
+                              const buttonInfo = getSessionButtonInfo(session);
+                              const { buttonIcon, buttonText, buttonColor, isTimerRunning } = buttonInfo;
+                              const smallIcon = buttonIcon && React.isValidElement(buttonIcon) 
+                                ? React.cloneElement(buttonIcon as React.ReactElement<any>, { size: 10 })
+                                : <Play size={10} />;
+                              
+                              return (
+                                <button 
+                                  onClick={() => {
+                                    if (isTimerRunning) {
+                                      navigate('/timers');
+                                    } else {
+                                      onLaunchSession(session);
+                                    }
+                                  }}
+                                  className={`w-full px-1.5 py-1 text-xs font-medium rounded transition-all duration-200 flex items-center justify-center gap-1 ${
+                                    isCompleted
+                                      ? 'bg-green-600 hover:bg-green-700 text-white'
+                                      : buttonColor.replace('px-4 py-2', '').replace('text-sm', '').replace('border-[a-z0-9-]+', '')
+                                  } group-hover:shadow-sm text-white`}
+                                  title={isTimerRunning ? 'Voir le timer en cours' : 'Démarrer la session'}
+                                >
+                                  {smallIcon}
+                                  {isCompleted ? 'Refaire' : buttonText}
+                                </button>
+                              );
+                            } catch (error) {
+                              console.error('Error rendering button:', error);
+                              return (
+                                <button 
+                                  onClick={() => onLaunchSession(session)}
+                                  className={`w-full px-1.5 py-1 text-xs font-medium rounded transition-all duration-200 flex items-center justify-center gap-1 ${
+                                    isCompleted
+                                      ? 'bg-green-600 hover:bg-green-700 text-white'
+                                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                  } group-hover:shadow-sm`}
+                                >
+                                  <Play size={10} />
+                                  {isCompleted ? 'Refaire' : 'Démarrer'}
+                                </button>
+                              );
+                            }
+                          })()
+                        ) : (
+                          <button 
+                            onClick={() => onLaunchSession(session)}
+                            className={`w-full px-1.5 py-1 text-xs font-medium rounded transition-all duration-200 flex items-center justify-center gap-1 ${
+                              isCompleted
+                                ? 'bg-green-600 hover:bg-green-700 text-white'
+                                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                            } group-hover:shadow-sm`}
+                          >
+                            <Play size={10} />
+                            {isCompleted ? 'Refaire' : 'Démarrer'}
+                          </button>
+                        )}
                       </div>
                       
                       {/* Tooltip au hover */}

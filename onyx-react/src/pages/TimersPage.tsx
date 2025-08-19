@@ -99,19 +99,33 @@ export const TimersPage: React.FC = () => {
       }
     }
 
+    // Calculer le prochain numéro de timer disponible
+    const getNextTimerNumber = () => {
+      const timerNumbers = timers
+        .map(t => {
+          const match = t.title.match(/^Timer (\d+)$/);
+          return match ? parseInt(match[1]) : 0;
+        })
+        .filter(n => n > 0);
+      
+      return timerNumbers.length > 0 ? Math.max(...timerNumbers) + 1 : 1;
+    };
+
+    const nextNumber = getNextTimerNumber();
+    const timerTitle = config.name || `Timer ${nextNumber}`;
+    
     // Créer le nouveau timer avec la liaison finale
     await addTimer({
-      title: config.name || `Timer ${timerCounter}`,
+      title: timerTitle,
       config: timerConfig,
       linkedSubject: finalLinkedSubject,
       isPomodoroMode,
       maxCycles
     });
     
-    setTimerCounter(prev => prev + 1);
     setShowConfigDialog(false);
     
-    console.log(`✅ Timer "${config.name || `Timer ${timerCounter}`}" créé${finalLinkedSubject ? ` et lié au cours "${finalLinkedSubject.name}"` : ''}`);
+    console.log(`✅ Timer "${timerTitle}" créé${finalLinkedSubject ? ` et lié au cours "${finalLinkedSubject.name}"` : ''}`);
   };
 
 
@@ -212,8 +226,20 @@ export const TimersPage: React.FC = () => {
       console.log(`🔓 Timer "${editingTimer.title}" délié du cours "${editingTimer.linkedSubject.name}"`);
     }
 
+    // Si pas de nom fourni et que c'est un timer par défaut, garder ou générer un nouveau nom
+    let timerTitle = config.name;
+    if (!timerTitle) {
+      // Si le timer a déjà un nom personnalisé, le garder
+      if (!editingTimer.title.match(/^Timer \d+$/)) {
+        timerTitle = editingTimer.title;
+      } else {
+        // Si c'est un nom par défaut, on peut le mettre à jour si nécessaire
+        timerTitle = editingTimer.title;
+      }
+    }
+    
     await updateTimer(editingTimer.id, {
-      title: config.name || editingTimer.title,
+      title: timerTitle,
       config: timerConfig,
       linkedSubject: finalLinkedSubject,
       isPomodoroMode,
@@ -223,7 +249,7 @@ export const TimersPage: React.FC = () => {
     setShowConfigDialog(false);
     setEditingTimer(null);
     
-    console.log(`✅ Timer "${config.name || editingTimer.title}" mis à jour${finalLinkedSubject ? ` et lié au cours "${finalLinkedSubject.name}"` : ''}`);
+    console.log(`✅ Timer "${timerTitle}" mis à jour${finalLinkedSubject ? ` et lié au cours "${finalLinkedSubject.name}"` : ''}`);
   };
 
 

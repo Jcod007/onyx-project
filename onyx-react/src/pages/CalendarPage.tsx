@@ -9,7 +9,7 @@ import { courseTimerLinkManager } from '@/services/courseTimerLinkManager';
 import { useReactiveTimers } from '@/hooks/useReactiveTimers';
 import { useTimerContext } from '@/contexts/TimerContext';
 import { ActiveTimer } from '@/types/ActiveTimer';
-import { Clock, BookOpen, CheckCircle2, TrendingUp, Calendar, RefreshCw, Target } from 'lucide-react';
+import { Clock, BookOpen, CheckCircle2, TrendingUp, Calendar, RefreshCw, Target, Coffee, Play, Timer } from 'lucide-react';
 import { formatMinutesToHours } from '@/utils/timeFormat';
 import { subjectService } from '@/services/subjectService';
 import { centralizedTimerService } from '@/services/centralizedTimerService';
@@ -91,6 +91,65 @@ export const CalendarPage: React.FC = () => {
     loadCalendarData(true);
   };
 
+
+  /**
+   * 🎨 OBTENIR LES INFOS DU BOUTON DE SESSION
+   * Retourne l'icône, le texte et la couleur du bouton selon l'état du timer
+   */
+  const getSessionButtonInfo = (session: DayStudySession) => {
+    const isLinkedTimer = session.timerType === 'linked';
+    let timerInfo = null;
+    let buttonIcon = <Play size={14} />;
+    let buttonText = 'Démarrer';
+    let buttonColor = 'bg-blue-600 hover:bg-blue-700 border-blue-700';
+    let isTimerRunning = false;
+    
+    if (isLinkedTimer && session.timerConfig && typeof session.timerConfig === 'object' && 'timerId' in session.timerConfig) {
+      const timerId = (session.timerConfig as any).timerId;
+      const linkedTimer = timers.find(t => t.id === timerId);
+      if (linkedTimer) {
+        timerInfo = linkedTimer;
+        const activeTimerState = getTimerState(linkedTimer.id);
+        isTimerRunning = activeTimerState?.state === 'running';
+        
+        if (isTimerRunning) {
+          buttonIcon = <Clock size={14} className="animate-pulse" />;
+          buttonText = 'En cours';
+          buttonColor = 'bg-orange-600 hover:bg-orange-700 border-orange-700';
+        } else if (linkedTimer.isPomodoroMode) {
+          buttonIcon = <Coffee size={14} />;
+          buttonText = 'Pomodoro';
+          buttonColor = 'bg-red-600 hover:bg-red-700 border-red-700';
+        } else {
+          buttonIcon = <Timer size={14} />;
+          buttonText = 'Timer';
+          buttonColor = 'bg-green-600 hover:bg-green-700 border-green-700';
+        }
+      }
+    } else {
+      const activeQuickTimer = timers.find(t => 
+        t.id.startsWith('quick_') && 
+        t.linkedSubject?.id === session.subject.id
+      );
+      
+      if (activeQuickTimer) {
+        const activeTimerState = getTimerState(activeQuickTimer.id);
+        isTimerRunning = activeTimerState?.state === 'running';
+      }
+      
+      if (isTimerRunning) {
+        buttonIcon = <Clock size={14} className="animate-pulse" />;
+        buttonText = 'En cours';
+        buttonColor = 'bg-orange-600 hover:bg-orange-700 border-orange-700';
+      } else {
+        buttonIcon = <Clock size={14} />;
+        buttonText = 'Session rapide';
+        buttonColor = 'bg-purple-600 hover:bg-purple-700 border-purple-700';
+      }
+    }
+    
+    return { buttonIcon, buttonText, buttonColor, isTimerRunning, timerInfo };
+  };
 
   /**
    * ▶️ LANCEMENT DE SESSION D'ÉTUDE
@@ -387,6 +446,9 @@ export const CalendarPage: React.FC = () => {
                     statusText = 'Terminé';
                   }
                   
+                  // Obtenir les infos du bouton selon l'état du timer
+                  const { buttonIcon, buttonText, buttonColor, isTimerRunning, timerInfo } = getSessionButtonInfo(session);
+                  
                   return (
                     <div key={session.id} className="border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md hover:border-gray-300 transition-all duration-200">
                       <div className="flex items-center justify-between mb-4">
@@ -403,14 +465,28 @@ export const CalendarPage: React.FC = () => {
                             <span className="text-sm text-gray-600">{formatMinutesToHours(session.plannedDuration)} planifiées</span>
                             <span className="text-sm text-gray-600">{formatMinutesToHours(studiedMinutes)} étudiées</span>
                             <span className="text-sm text-gray-600">{formatMinutesToHours(remainingMinutes)} restantes</span>
+                            {timerInfo && (
+                              <span className="text-sm text-gray-500 italic">
+                                ({timerInfo.title})
+                              </span>
+                            )}
                           </div>
                         </div>
                         <button 
-                          onClick={() => handleLaunchSession(session)}
-                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg border border-blue-700 shadow-sm transition-all duration-200 flex items-center gap-2"
+                          onClick={() => {
+                            if (isTimerRunning) {
+                              // Si le timer est en cours, rediriger vers la page des timers
+                              navigate('/timers');
+                            } else {
+                              // Sinon, lancer la session
+                              handleLaunchSession(session);
+                            }
+                          }}
+                          className={`px-4 py-2 ${buttonColor} text-white text-sm font-medium rounded-lg border shadow-sm transition-all duration-200 flex items-center gap-2`}
+                          title={isTimerRunning ? 'Voir le timer en cours' : 'Démarrer la session'}
                         >
-                          <Clock size={14} />
-                          Démarrer la session
+                          {buttonIcon}
+                          {buttonText}
                         </button>
                       </div>
                       
@@ -526,6 +602,8 @@ export const CalendarPage: React.FC = () => {
             onLinkCourse={handleLinkCourse}
             onUnlinkCourse={handleUnlinkCourse}
             onDateClick={handleDateClick}
+            getSessionButtonInfo={getSessionButtonInfo}
+            navigate={navigate}
           />
         </>
       )}
