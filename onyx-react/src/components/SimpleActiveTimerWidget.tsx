@@ -22,7 +22,7 @@ interface SimpleActiveTimerWidgetProps {
 }
 
 const getPositionClasses = (): string => {
-  return 'fixed z-[9999] bottom-4 right-4 transition-all duration-300 ease-in-out';
+  return 'fixed bottom-4 right-4 z-[9999]';
 };
 
 const CompactTimerCard: React.FC<{
@@ -216,30 +216,14 @@ export const SimpleActiveTimerWidget: React.FC<SimpleActiveTimerWidgetProps> = (
   // Gestion de l'apparition/disparition avec animation
   useEffect(() => {
     if (activeTimers.length > 0) {
-      console.log('✅ Widget - Affichage des timers actifs:', activeTimers.length);
       setShouldRender(true);
       setTimeout(() => setIsVisible(true), 10);
     } else {
-      console.log('❌ Widget - Masquage (aucun timer actif)');
       setIsVisible(false);
       setTimeout(() => setShouldRender(false), 300);
     }
   }, [activeTimers.length]);
 
-  // Debug logging
-  useEffect(() => {
-    console.log('🎯 SimpleActiveTimerWidget State:', {
-      totalTimers: timers.length,
-      activeTimers: activeTimers.length,
-      shouldRender,
-      isVisible,
-      activeTimersStates: activeTimers.map(t => ({
-        id: t.id,
-        title: t.title,
-        state: getTimerState(t.id)?.state
-      }))
-    });
-  }, [timers.length, activeTimers.length, shouldRender, isVisible, getTimerState]);
 
   // Ne pas afficher si aucun timer actif
   if (!shouldRender) {
@@ -249,25 +233,40 @@ export const SimpleActiveTimerWidget: React.FC<SimpleActiveTimerWidgetProps> = (
   const positionClasses = getPositionClasses();
 
   const widgetContent = (
-    <div className={`
-      ${positionClasses} ${className}
-      transform transition-all duration-300 ease-in-out
-      ${isVisible 
-        ? 'translate-y-0 opacity-100 scale-100' 
-        : 'translate-y-4 opacity-0 scale-95'
-      }
-    `}>
+    <div 
+      className={`
+        ${positionClasses} ${className}
+        transform transition-all duration-300 ease-in-out
+        ${isVisible 
+          ? 'translate-y-0 opacity-100 scale-100' 
+          : 'translate-y-4 opacity-0 scale-95'
+        }
+      `}
+      style={{
+        position: 'fixed',
+        bottom: '16px',
+        right: '16px',
+        zIndex: 9999,
+        top: 'auto',
+        left: 'auto',
+        // Position fixée pour le widget - fond transparent
+      }}
+    >
       {/* En-tête du widget avec bouton de réduction */}
       <div className={`
-        flex items-center justify-between px-2 py-1 mb-2 rounded-t
-        bg-white text-gray-600
-        shadow-sm
+        flex items-center justify-between px-2 py-1 rounded-t
+        bg-white text-gray-600 shadow-sm
       `}>
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full bg-green-500 ${activeTimers.some(t => getTimerState(t.id)?.state === 'running') ? 'animate-pulse' : ''}`} />
           <span className="text-xs font-medium">
             {activeTimers.length} timer{activeTimers.length > 1 ? 's' : ''}
           </span>
+          {activeTimers.length > 3 && !isCollapsed && (
+            <span className="text-xs text-gray-500 bg-gray-100 px-1 rounded">
+              {activeTimers.length - 3}+ ↓
+            </span>
+          )}
         </div>
         
         <button
@@ -281,16 +280,21 @@ export const SimpleActiveTimerWidget: React.FC<SimpleActiveTimerWidgetProps> = (
         </button>
       </div>
 
-      {/* Contenu des timers */}
+      {/* Contenu des timers avec scroll - Affichage du bas vers le haut */}
       <div className={`
-        space-y-1 transition-all duration-300 overflow-hidden
-        ${isCollapsed ? 'max-h-20' : 'max-h-96'}
+        gap-1 transition-all duration-300 flex flex-col mt-2
+        ${isCollapsed 
+          ? 'max-h-20 overflow-hidden' 
+          : activeTimers.length <= 3 
+            ? 'max-h-72'  // Hauteur adaptative pour 1-3 timers
+            : 'h-72 overflow-y-auto'  // Hauteur fixe seulement pour 4+ timers
+        }
       `}>
-        {activeTimers.map((timer, index) => {
+        {activeTimers.map((timer) => {
           const timerState = getTimerState(timer.id);
           
-          // En mode réduit, afficher seulement les 2 premiers timers en version minimale
-          if (isCollapsed && index >= 2) return null;
+          // En mode réduit, afficher tous les timers mais en version minimale
+          // Supprimé la limitation à 2 timers
           
           return (
             <CompactTimerCard
@@ -305,20 +309,30 @@ export const SimpleActiveTimerWidget: React.FC<SimpleActiveTimerWidgetProps> = (
             />
           );
         })}
-        
-        {/* Indicateur si des timers sont masqués */}
-        {isCollapsed && activeTimers.length > 2 && (
-          <div className={`
-            text-center text-xs py-1 px-2 rounded
-            bg-white text-gray-500
-          `}>
-            +{activeTimers.length - 2} autre{activeTimers.length - 2 > 1 ? 's' : ''}
-          </div>
-        )}
       </div>
     </div>
   );
 
   // Utiliser un portail pour s'assurer que le widget est rendu au niveau racine
-  return createPortal(widgetContent, document.body);
+  // Créer ou utiliser un conteneur spécifique pour les widgets
+  let widgetContainer = document.getElementById('widget-container');
+  if (!widgetContainer) {
+    widgetContainer = document.createElement('div');
+    widgetContainer.id = 'widget-container';
+    widgetContainer.style.position = 'fixed';
+    widgetContainer.style.top = '0';
+    widgetContainer.style.left = '0';
+    widgetContainer.style.width = '100vw';
+    widgetContainer.style.height = '100vh';
+    widgetContainer.style.pointerEvents = 'none';
+    widgetContainer.style.zIndex = '9998';
+    document.body.appendChild(widgetContainer);
+  }
+  
+  return createPortal(
+    <div style={{ pointerEvents: 'auto' }}>
+      {widgetContent}
+    </div>, 
+    widgetContainer
+  );
 };

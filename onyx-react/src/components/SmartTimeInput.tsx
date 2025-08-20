@@ -36,7 +36,7 @@ export const SmartTimeInput: React.FC<SmartTimeInputProps> = ({
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const parseSmartInput = (input: string): { hours: number; minutes: number; seconds: number } => {
+  const parseSmartInput = (input: string, normalize: boolean = false): { hours: number; minutes: number; seconds: number } => {
     // Nettoyer l'input (garder seulement les chiffres)
     const digits = input.replace(/\D/g, '');
     
@@ -44,40 +44,49 @@ export const SmartTimeInput: React.FC<SmartTimeInputProps> = ({
       return { hours: 0, minutes: 0, seconds: 0 };
     }
 
-    // Logique de parsing intelligent
-    const len = digits.length;
+    // Logique de parsing avec décalage par suppression (garder format HH:MM:SS)
+    let workingDigits = digits;
+    
+    // Si plus de 6 chiffres, supprimer les premiers pour garder 6 max
+    if (workingDigits.length > 6) {
+      workingDigits = workingDigits.slice(-6); // Garder les 6 derniers
+    }
+    
+    const len = workingDigits.length;
     let h = 0, m = 0, s = 0;
 
     if (len === 1) {
       // 1 -> 00:00:01
-      s = parseInt(digits);
+      s = parseInt(workingDigits);
     } else if (len === 2) {
       // 12 -> 00:00:12
-      s = parseInt(digits);
+      s = parseInt(workingDigits);
     } else if (len === 3) {
       // 123 -> 00:01:23
-      m = parseInt(digits.charAt(0));
-      s = parseInt(digits.substring(1));
+      m = parseInt(workingDigits.charAt(0));
+      s = parseInt(workingDigits.substring(1));
     } else if (len === 4) {
       // 1234 -> 00:12:34
-      m = parseInt(digits.substring(0, 2));
-      s = parseInt(digits.substring(2));
+      m = parseInt(workingDigits.substring(0, 2));
+      s = parseInt(workingDigits.substring(2));
     } else if (len === 5) {
       // 12345 -> 01:23:45
-      h = parseInt(digits.charAt(0));
-      m = parseInt(digits.substring(1, 3));
-      s = parseInt(digits.substring(3));
-    } else if (len >= 6) {
-      // 123456+ -> 12:34:56
-      h = parseInt(digits.substring(0, 2));
-      m = parseInt(digits.substring(2, 4));
-      s = parseInt(digits.substring(4, 6));
+      h = parseInt(workingDigits.charAt(0));
+      m = parseInt(workingDigits.substring(1, 3));
+      s = parseInt(workingDigits.substring(3));
+    } else if (len === 6) {
+      // 123456 -> 12:34:56
+      h = parseInt(workingDigits.substring(0, 2));
+      m = parseInt(workingDigits.substring(2, 4));
+      s = parseInt(workingDigits.substring(4));
     }
 
-    // Validation et normalisation
-    s = Math.min(s, 59);
-    m = Math.min(m, 59);
-    h = Math.min(h, 99);
+    // Validation et normalisation conditionnelle
+    if (normalize) {
+      s = Math.min(s, 59);
+      m = Math.min(m, 59);
+      h = Math.min(h, 99);
+    }
 
     return { hours: h, minutes: m, seconds: s };
   };
@@ -98,8 +107,8 @@ export const SmartTimeInput: React.FC<SmartTimeInputProps> = ({
       // Si rien n'a été tapé, remettre les valeurs actuelles
       setDisplayValue(formatTimeDisplay(hours, minutes, seconds));
     } else {
-      // Parser et appliquer la nouvelle valeur
-      const parsed = parseSmartInput(inputValue);
+      // Parser et appliquer la nouvelle valeur SANS normalisation
+      const parsed = parseSmartInput(inputValue, false);
       onChange(parsed.hours, parsed.minutes, parsed.seconds);
       setInputValue(''); // Vider après application
     }
@@ -119,7 +128,7 @@ export const SmartTimeInput: React.FC<SmartTimeInputProps> = ({
       setInputValue(newInputValue);
       
       if (newInputValue.length > 0) {
-        const parsed = parseSmartInput(newInputValue);
+        const parsed = parseSmartInput(newInputValue, false);
         setDisplayValue(formatTimeDisplay(parsed.hours, parsed.minutes, parsed.seconds));
       } else {
         setDisplayValue('00:00:00');
@@ -129,11 +138,10 @@ export const SmartTimeInput: React.FC<SmartTimeInputProps> = ({
       e.preventDefault();
       const newInputValue = inputValue + e.key;
       
-      if (newInputValue.length <= 6) {
-        setInputValue(newInputValue);
-        const parsed = parseSmartInput(newInputValue);
-        setDisplayValue(formatTimeDisplay(parsed.hours, parsed.minutes, parsed.seconds));
-      }
+      // Aucune limite - décalage infini
+      setInputValue(newInputValue);
+      const parsed = parseSmartInput(newInputValue, false);
+      setDisplayValue(formatTimeDisplay(parsed.hours, parsed.minutes, parsed.seconds));
     } else if (!/^(Tab|Shift|Control|Alt|Meta|Arrow|Home|End)/.test(e.key)) {
       // Bloquer les autres touches sauf les touches de navigation
       e.preventDefault();
@@ -149,16 +157,15 @@ export const SmartTimeInput: React.FC<SmartTimeInputProps> = ({
     if (!/[:]/.test(value)) {
       const digitsOnly = value.replace(/\D/g, '');
       
-      if (digitsOnly.length <= 6) { // Limiter à 6 chiffres max (HHMMSS)
-        setInputValue(digitsOnly);
-        
-        // Affichage en temps réel au format HH:MM:SS pendant la saisie
-        if (digitsOnly.length > 0) {
-          const parsed = parseSmartInput(digitsOnly);
-          setDisplayValue(formatTimeDisplay(parsed.hours, parsed.minutes, parsed.seconds));
-        } else {
-          setDisplayValue('00:00:00');
-        }
+      // Aucune limite - décalage infini
+      setInputValue(digitsOnly);
+      
+      // Affichage en temps réel au format HH:MM:SS pendant la saisie
+      if (digitsOnly.length > 0) {
+        const parsed = parseSmartInput(digitsOnly, false);
+        setDisplayValue(formatTimeDisplay(parsed.hours, parsed.minutes, parsed.seconds));
+      } else {
+        setDisplayValue('00:00:00');
       }
     } else {
       // Si l'utilisateur tape avec ":", laisser tel quel temporairement
@@ -209,6 +216,8 @@ export const SmartTimeInput: React.FC<SmartTimeInputProps> = ({
             <div><code className="bg-white px-1 rounded text-gray-800">123</code> = 00:01:23</div>
             <div><code className="bg-white px-1 rounded text-gray-800">2530</code> = 00:25:30</div>
             <div><code className="bg-white px-1 rounded text-gray-800">12345</code> = 01:23:45</div>
+            <div><code className="bg-white px-1 rounded text-gray-800">99956034</code> = 95:60:34</div>
+            <div>Décalage infini sans limite</div>
           </div>
         </div>
       )}

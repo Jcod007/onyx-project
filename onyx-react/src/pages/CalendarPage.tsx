@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CalendarView } from '@/components/Calendar/CalendarView';
 import { CalendarHeader } from '@/components/Calendar/CalendarHeader';
@@ -6,16 +6,62 @@ import { MobileCalendarHeader } from '@/components/Calendar/MobileCalendarHeader
 import { CalendarDay, DayStudySession } from '@/types/Subject';
 import { calendarRenderer } from '@/services/calendarRenderer';
 import { courseTimerLinkManager } from '@/services/courseTimerLinkManager';
-import { useReactiveTimers } from '@/hooks/useReactiveTimers';
 import { useTimerContext } from '@/contexts/TimerContext';
 import { ActiveTimer } from '@/types/ActiveTimer';
-import { Clock, BookOpen, CheckCircle2, TrendingUp, Calendar, RefreshCw, Target, Play, Timer } from 'lucide-react';
+import { Clock, BookOpen, CheckCircle2, TrendingUp, Calendar, RefreshCw, Target, Play, Timer, Pause, RotateCcw } from 'lucide-react';
 import { formatMinutesToHours } from '@/utils/timeFormat';
 
+// Fonction pour charger l'état initial depuis localStorage
+const loadInitialState = () => {
+  const savedState = localStorage.getItem('calendarViewState');
+  
+  if (savedState) {
+    try {
+      const parsed = JSON.parse(savedState);
+      
+      const state = {
+        viewMode: parsed.viewMode || 'week',
+        currentDate: parsed.currentDate ? new Date(parsed.currentDate) : new Date(),
+        savedDayViewDate: parsed.savedDayViewDate ? new Date(parsed.savedDayViewDate) : new Date(),
+        savedWeekViewDate: parsed.savedWeekViewDate ? new Date(parsed.savedWeekViewDate) : new Date()
+      };
+      
+      console.log('📅 État calendrier restauré:', state.viewMode, state.currentDate.toLocaleDateString());
+      
+      return state;
+    } catch (error) {
+      console.error('❌ Erreur chargement état calendrier:', error);
+    }
+  }
+  
+  return {
+    viewMode: 'week' as const,
+    currentDate: new Date(),
+    savedDayViewDate: new Date(),
+    savedWeekViewDate: new Date()
+  };
+};
+
 export const CalendarPage: React.FC = () => {
+  const initialState = loadInitialState();
+  
   const [calendarDays, setCalendarDays] = useState<CalendarDay[]>([]);
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<'week' | 'day'>('week');
+  const [currentDate, setCurrentDate] = useState(initialState.currentDate);
+  const [viewMode, setViewMode] = useState<'week' | 'day'>(initialState.viewMode);
+  // Sauvegarder les dates pour chaque vue
+  const [savedDayViewDate, setSavedDayViewDate] = useState(initialState.savedDayViewDate);
+  const [savedWeekViewDate, setSavedWeekViewDate] = useState(initialState.savedWeekViewDate);
+  const [persistentState, setPersistentState] = useState({
+    selectedSessions: new Set<string>(),
+    hoveredSession: null as string | null,
+    expandedSessions: new Set<string>()
+  });
+  // État persistant pour la vue jour
+  const [dayViewState, setDayViewState] = useState({
+    scrollPosition: 0,
+    expandedSessions: new Set<string>(),
+    selectedSession: null as string | null
+  });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [weeklyStats, setWeeklyStats] = useState({
@@ -25,13 +71,100 @@ export const CalendarPage: React.FC = () => {
     averageSessionDuration: 0
   });
   
-  const { ensureDataConsistency } = useReactiveTimers();
-  const { startTimer, addTimer } = useTimerContext();
+  const { timers, startTimer, addTimer, pauseTimer, resetTimer, getTimerState } = useTimerContext();
   const navigate = useNavigate();
+
+  // Charger les états persistants supplémentaires
+  useEffect(() => {
+    const savedState = localStorage.getItem('calendarViewState');
+    if (savedState) {
+      try {
+        const parsed = JSON.parse(savedState);
+        
+        // Restaurer l'état persistant si disponible
+        if (parsed.persistentState) {
+          setPersistentState({
+            selectedSessions: new Set(parsed.persistentState.selectedSessions || []),
+            hoveredSession: parsed.persistentState.hoveredSession,
+            expandedSessions: new Set(parsed.persistentState.expandedSessions || [])
+          });
+        }
+        
+        // Restaurer l'état de la vue jour si disponible
+        if (parsed.dayViewState) {
+          setDayViewState({
+            scrollPosition: parsed.dayViewState.scrollPosition || 0,
+            expandedSessions: new Set(parsed.dayViewState.expandedSessions || []),
+            selectedSession: parsed.dayViewState.selectedSession
+          });
+        }
+      } catch (error) {
+        console.error('❌ Erreur lors du chargement de l\'état persistant:', error);
+      }
+    }
+    
+  }, []);
+
+  // Fonction de sauvegarde centralisée
+  const saveState = useCallback(() => {
+    const stateToSave = {
+      savedDayViewDate: savedDayViewDate.toISOString(),
+      savedWeekViewDate: savedWeekViewDate.toISOString(),
+      viewMode,
+      currentDate: currentDate.toISOString(),
+      persistentState: {
+        selectedSessions: Array.from(persistentState.selectedSessions),
+        hoveredSession: persistentState.hoveredSession,
+        expandedSessions: Array.from(persistentState.expandedSessions)
+      },
+      dayViewState: {
+        scrollPosition: dayViewState.scrollPosition,
+        expandedSessions: Array.from(dayViewState.expandedSessions),
+        selectedSession: dayViewState.selectedSession
+      },
+      timestamp: new Date().toISOString()
+    };
+    localStorage.setItem('calendarViewState', JSON.stringify(stateToSave));
+  }, [savedDayViewDate, savedWeekViewDate, viewMode, currentDate, persistentState, dayViewState]);
+
+  // Sauvegarder l'état à chaque changement (avec debounce)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      saveState();
+    }, 500); // Débounce de 500ms
+    
+    return () => clearTimeout(timeoutId);
+  }, [saveState]);
 
   useEffect(() => {
     loadCalendarData();
   }, [currentDate, viewMode]);
+  
+  // Sauvegarder l'état quand on quitte la page
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      saveState();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        saveState();
+      }
+    };
+
+    // Écouteurs pour sauvegarder avant de quitter
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      // Sauvegarde finale quand le composant est démonté
+      saveState();
+      
+      // Nettoyer les écouteurs
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [saveState]);
 
   // S'abonner aux changements de liaisons
   useEffect(() => {
@@ -54,7 +187,7 @@ export const CalendarPage: React.FC = () => {
       }
       
       // Vérifier la cohérence des données
-      await ensureDataConsistency();
+      // Cohérence des données assurée par TimerContext
       
       // Calculer la période à charger selon le mode de vue
       const { startDate, endDate } = getCalendarPeriod(currentDate, viewMode);
@@ -97,25 +230,66 @@ export const CalendarPage: React.FC = () => {
    */
   const getSessionButtonInfo = (session: DayStudySession) => {
     const isLinkedTimer = session.timerType === 'linked';
-    let timerInfo = null;
+    
+    // Vérifier s'il y a un timer éphémère en cours pour cette session
+    const ephemeralTimer = timers.find(t => 
+      t.isEphemeral && 
+      t.linkedSubject?.id === session.subject.id
+    );
+    
+    const timerState = ephemeralTimer ? getTimerState(ephemeralTimer.id) : null;
+    
+    let timerInfo = ephemeralTimer;
     let buttonIcon = <Play size={14} />;
     let buttonText = 'Démarrer';
     let buttonColor = 'bg-blue-600 hover:bg-blue-700 border-blue-700';
     let isTimerRunning = false;
+    let action: 'start' | 'pause' | 'reset' | null = null;
     
-    if (isLinkedTimer && session.timerConfig && typeof session.timerConfig === 'object' && 'timerId' in session.timerConfig) {
-      // Note: This section needs proper timer integration
+    if (ephemeralTimer) {
+      // Timer éphémère existe
+      if (timerState) {
+        // Timer éphémère actif (en cours d'exécution)
+        isTimerRunning = timerState.state === 'running' || timerState.state === 'paused';
+        
+        if (timerState.state === 'running') {
+          buttonIcon = <Pause size={14} />;
+          buttonText = 'Pause';
+          buttonColor = 'bg-orange-600 hover:bg-orange-700 border-orange-700';
+          action = 'pause';
+        } else if (timerState.state === 'paused') {
+          buttonIcon = <Play size={14} />;
+          buttonText = 'Reprendre';
+          buttonColor = 'bg-green-600 hover:bg-green-700 border-green-700';
+          action = 'start';
+        } else if (timerState.state === 'idle') {
+          buttonIcon = <RotateCcw size={14} />;
+          buttonText = 'Reset';
+          buttonColor = 'bg-gray-600 hover:bg-gray-700 border-gray-700';
+          action = 'reset';
+        }
+      } else {
+        // Timer éphémère existe mais n'est pas en cours (arrêté)
+        buttonIcon = <Play size={14} />;
+        buttonText = 'Reprendre';
+        buttonColor = 'bg-green-600 hover:bg-green-700 border-green-700';
+        action = 'start';
+      }
+    } else if (isLinkedTimer && session.timerConfig && typeof session.timerConfig === 'object' && 'timerId' in session.timerConfig) {
+      // Timer lié
       buttonIcon = <Timer size={14} />;
       buttonText = 'Timer lié';
       buttonColor = 'bg-green-600 hover:bg-green-700 border-green-700';
+      action = 'start';
     } else {
-      // Default quick session button
+      // Session rapide - pas de timer en cours
       buttonIcon = <Clock size={14} />;
       buttonText = 'Session rapide';
       buttonColor = 'bg-purple-600 hover:bg-purple-700 border-purple-700';
+      action = 'start';
     }
     
-    return { buttonIcon, buttonText, buttonColor, isTimerRunning, timerInfo };
+    return { buttonIcon, buttonText, buttonColor, isTimerRunning, timerInfo, action, ephemeralTimer };
   };
 
   /**
@@ -149,7 +323,8 @@ export const CalendarPage: React.FC = () => {
           isPomodoroMode: launchResult.timerConfig.shortBreakDuration > 0,
           createdAt: new Date(),
           lastUsed: new Date(),
-          linkedSubject: session.subject
+          linkedSubject: session.subject,
+          isEphemeral: true // Marquer comme éphémère
         };
 
         // Ajouter et lancer le timer temporaire - VISIBLE UNIQUEMENT dans le widget
@@ -165,6 +340,39 @@ export const CalendarPage: React.FC = () => {
       console.error('❌ Erreur lancement session:', error);
       // TODO: Remplacer alert par une notification toast plus élégante
       alert(`❌ Erreur lors du lancement de la session: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+    }
+  };
+
+  /**
+   * ⏸️ GESTION DES ACTIONS TIMER ÉPHÉMÈRE
+   * Gère les actions pause, reset et start pour les timers éphémères
+   */
+  const handleEphemeralTimerAction = async (_session: DayStudySession, action: 'start' | 'pause' | 'reset', ephemeralTimer?: ActiveTimer) => {
+    try {
+      if (!ephemeralTimer) {
+        console.error('❌ Timer éphémère introuvable');
+        return;
+      }
+
+      switch (action) {
+        case 'pause':
+          pauseTimer(ephemeralTimer.id);
+          break;
+          
+        case 'reset':
+          resetTimer(ephemeralTimer.id);
+          break;
+          
+        case 'start':
+          startTimer(ephemeralTimer.id, ephemeralTimer);
+          break;
+          
+        default:
+          console.warn(`⚠️ Action inconnue: ${action}`);
+      }
+      
+    } catch (error) {
+      console.error('❌ Erreur action timer éphémère:', error);
     }
   };
 
@@ -196,8 +404,48 @@ export const CalendarPage: React.FC = () => {
    * Basculer vers la vue jour et changer la date
    */
   const handleDateClick = (date: Date) => {
+    // Sauvegarder la date actuelle de la vue semaine avant de changer
+    setSavedWeekViewDate(currentDate);
     setCurrentDate(date);
+    setSavedDayViewDate(date);
     setViewMode('day');
+    // Sauvegarde immédiate
+    setTimeout(saveState, 100);
+  };
+
+  /**
+   * 🔄 GESTION DU CHANGEMENT DE VUE
+   * Sauvegarde et restaure les dates selon la vue
+   */
+  const handleViewModeChange = (mode: 'week' | 'day') => {
+    if (mode === 'day') {
+      // Sauvegarder la date de la vue semaine et restaurer la date de la vue jour
+      setSavedWeekViewDate(currentDate);
+      setCurrentDate(savedDayViewDate);
+    } else if (mode === 'week') {
+      // Sauvegarder la date de la vue jour et restaurer la date de la vue semaine
+      setSavedDayViewDate(currentDate);
+      setCurrentDate(savedWeekViewDate);
+    }
+    setViewMode(mode);
+    // Sauvegarde immédiate
+    setTimeout(saveState, 100);
+  };
+
+  /**
+   * 📅 GESTION DU CHANGEMENT DE DATE
+   * Met à jour la date sauvegardée pour la vue actuelle
+   */
+  const handleDateChange = (date: Date) => {
+    setCurrentDate(date);
+    // Sauvegarder la nouvelle date pour la vue actuelle
+    if (viewMode === 'day') {
+      setSavedDayViewDate(date);
+    } else {
+      setSavedWeekViewDate(date);
+    }
+    // Sauvegarde immédiate
+    setTimeout(saveState, 100);
   };
 
   /**
@@ -266,9 +514,9 @@ export const CalendarPage: React.FC = () => {
         {/* Header desktop */}
         <CalendarHeader
           currentDate={currentDate}
-          onDateChange={setCurrentDate}
+          onDateChange={handleDateChange}
           viewMode={viewMode}
-          onViewModeChange={setViewMode}
+          onViewModeChange={handleViewModeChange}
           onRefresh={handleRefresh}
           isLoading={loading || refreshing}
         />
@@ -276,9 +524,9 @@ export const CalendarPage: React.FC = () => {
         {/* Header mobile */}
         <MobileCalendarHeader
           currentDate={currentDate}
-          onDateChange={setCurrentDate}
+          onDateChange={handleDateChange}
           viewMode={viewMode}
-          onViewModeChange={setViewMode}
+          onViewModeChange={handleViewModeChange}
           onRefresh={handleRefresh}
           isLoading={loading || refreshing}
         />
@@ -286,7 +534,12 @@ export const CalendarPage: React.FC = () => {
 
       {viewMode === 'day' ? (
         // Vue jour complète avec toutes les fonctionnalités
-        <>
+        <div 
+          onScroll={(e) => {
+            const scrollPos = (e.target as HTMLDivElement).scrollTop;
+            setDayViewState(prev => ({ ...prev, scrollPosition: scrollPos }));
+          }}
+        >
 
           {/* 📊 Résumé de la journée uniforme */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -328,7 +581,7 @@ export const CalendarPage: React.FC = () => {
           </div>
 
           {/* 📈 Barre de progression du jour uniforme */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm mt-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <div className="p-1.5 bg-blue-50 rounded-lg shadow-sm">
@@ -389,7 +642,7 @@ export const CalendarPage: React.FC = () => {
           </div>
 
           {/* 📚 Liste des sessions du jour uniforme */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm mt-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <div className="p-1.5 bg-blue-50 rounded-lg shadow-sm">
                 <BookOpen size={16} className="text-blue-600" />
@@ -417,7 +670,7 @@ export const CalendarPage: React.FC = () => {
                   }
                   
                   // Obtenir les infos du bouton selon l'état du timer
-                  const { buttonIcon, buttonText, buttonColor, isTimerRunning, timerInfo } = getSessionButtonInfo(session);
+                  const { buttonIcon, buttonText, buttonColor, isTimerRunning, timerInfo, action, ephemeralTimer } = getSessionButtonInfo(session);
                   
                   return (
                     <div key={session.id} className="border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md hover:border-gray-300 transition-all duration-200">
@@ -444,16 +697,23 @@ export const CalendarPage: React.FC = () => {
                         </div>
                         <button 
                           onClick={() => {
-                            if (isTimerRunning) {
+                            if (ephemeralTimer && (action === 'start' || action === 'pause' || action === 'reset')) {
+                              // Si un timer éphémère existe, toujours utiliser handleEphemeralTimerAction
+                              handleEphemeralTimerAction(session, action, ephemeralTimer);
+                            } else if (action === 'start') {
+                              // Nouveau timer à créer
+                              handleLaunchSession(session);
+                            } else if (isTimerRunning) {
                               // Si le timer est en cours, rediriger vers la page des timers
                               navigate('/timers');
-                            } else {
-                              // Sinon, lancer la session
-                              handleLaunchSession(session);
                             }
                           }}
                           className={`px-4 py-2 ${buttonColor} text-white text-sm font-medium rounded-lg border shadow-sm transition-all duration-200 flex items-center gap-2`}
-                          title={isTimerRunning ? 'Voir le timer en cours' : 'Démarrer la session'}
+                          title={
+                            action === 'pause' ? 'Mettre en pause' :
+                            action === 'reset' ? 'Réinitialiser' :
+                            isTimerRunning ? 'Voir le timer en cours' : 'Démarrer la session'
+                          }
                         >
                           {buttonIcon}
                           {buttonText}
@@ -491,7 +751,7 @@ export const CalendarPage: React.FC = () => {
           </div>
 
           {/* 📌 Résumé uniforme */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm mt-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div>
                 <div className="text-xl font-bold text-gray-900">{todayStats.totalSessions}</div>
@@ -511,7 +771,7 @@ export const CalendarPage: React.FC = () => {
               </div>
             </div>
           </div>
-        </>
+        </div>
       ) : (
         // Vue semaine existante
         <>
@@ -574,6 +834,8 @@ export const CalendarPage: React.FC = () => {
             onDateClick={handleDateClick}
             getSessionButtonInfo={getSessionButtonInfo}
             navigate={navigate}
+            persistentState={persistentState}
+            onPersistentStateChange={setPersistentState}
           />
         </>
       )}

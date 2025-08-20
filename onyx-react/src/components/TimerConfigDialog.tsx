@@ -405,6 +405,7 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
                   {[5, 15, 25, 45, 60].map((preset) => (
                     <button
                       key={preset}
+                      type="button"
                       onClick={() => handlePresetTime(preset)}
                       className={`px-3 py-2 text-sm rounded-lg border-2 transition-all duration-200 ${
                         minutes === preset && hours === 0 && seconds === 0

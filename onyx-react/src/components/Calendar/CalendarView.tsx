@@ -13,6 +13,12 @@ interface CalendarViewProps {
   onDateClick?: (date: Date) => void;
   getSessionButtonInfo?: (session: DayStudySession) => any;
   navigate?: (path: string) => void;
+  persistentState?: {
+    selectedSessions: Set<string>;
+    hoveredSession: string | null;
+    expandedSessions: Set<string>;
+  };
+  onPersistentStateChange?: (state: any) => void;
 }
 
 export const CalendarView: React.FC<CalendarViewProps> = ({
@@ -24,19 +30,18 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   onUnlinkCourse,
   onDateClick,
   getSessionButtonInfo,
-  navigate
+  navigate,
+  persistentState,
+  onPersistentStateChange
 }) => {
+  // Variables utilisées seulement par DayView - éviter warning unused
+  void { getSessionButtonInfo, navigate, persistentState, onPersistentStateChange };
   if (viewMode === 'week') {
     return (
       <WeekView
         calendarDays={calendarDays}
         currentDate={currentDate}
-        onLaunchSession={onLaunchSession}
-        onLinkCourse={onLinkCourse}
-        onUnlinkCourse={onUnlinkCourse}
         onDateClick={onDateClick}
-        getSessionButtonInfo={getSessionButtonInfo}
-        navigate={navigate}
       />
     );
   } else {

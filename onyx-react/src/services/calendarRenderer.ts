@@ -287,16 +287,22 @@ class CalendarRenderer {
   }
 
   private createDefaultQuickConfig(subject: Subject): QuickTimerConfig {
+    const durationInMinutes = subject.defaultTimerDuration 
+      ? Math.floor(subject.defaultTimerDuration / 60) 
+      : 25; // 25 minutes par défaut
     return {
       type: 'simple',
-      workDuration: Math.floor(subject.defaultTimerDuration / 60) || 25
+      workDuration: Math.max(durationInMinutes, 1) // Minimum 1 minute
     };
   }
 
   private createFallbackQuickConfig(subject: Subject): QuickTimerConfig {
+    const durationInMinutes = subject.defaultTimerDuration 
+      ? Math.floor(subject.defaultTimerDuration / 60) 
+      : 25; // 25 minutes par défaut
     return {
       type: 'simple',
-      workDuration: Math.floor(subject.defaultTimerDuration / 60) || 25
+      workDuration: Math.max(durationInMinutes, 1) // Minimum 1 minute
     };
   }
 

@@ -79,8 +79,8 @@ export function calculateProgress(timeSpent: number, targetTime: number): number
 
 export function isValidTimeInput(hours: number, minutes: number, seconds: number): boolean {
   return hours >= 0 && hours <= 99 && 
-         minutes >= 0 && minutes <= 59 && 
-         seconds >= 0 && seconds <= 59 &&
+         minutes >= 0 && 
+         seconds >= 0 &&
          (hours + minutes + seconds) > 0;
 }
 

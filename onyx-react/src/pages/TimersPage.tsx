@@ -307,9 +307,9 @@ export const TimersPage: React.FC = () => {
       )}
 
       {/* Timers Grid - Utilisation des nouvelles cartes modernes */}
-      {timers.length > 0 ? (
+      {timers.filter(t => !t.isEphemeral).length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
-          {timers.map((timer) => {
+          {timers.filter(t => !t.isEphemeral).map((timer) => {
             const timerState = getTimerState(timer.id);
             return (
               <ModernTimerCard
@@ -435,7 +435,7 @@ export const TimersPage: React.FC = () => {
             cycles: editingTimer.maxCycles || 4
           } : undefined
         } : undefined}
-        existingTimers={timers.map(t => ({
+        existingTimers={timers.filter(t => !t.isEphemeral).map(t => ({
           id: t.id,
           title: t.title,
           linkedSubject: t.linkedSubject

@@ -12,7 +12,7 @@ export { ErgonomicTimeInput } from './ErgonomicTimeInput';
 export { SubjectConfigCard } from './SubjectConfigCard';
 
 // Active Timer Widget components
-export { ActiveTimerWidget } from './ActiveTimerWidget';
+// export { ActiveTimerWidget } from './ActiveTimerWidget'; // Obsolète
 export { SimpleActiveTimerWidget } from './SimpleActiveTimerWidget';
 export { TopTimerIndicator } from './TopTimerIndicator';
 

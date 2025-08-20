@@ -25,6 +25,7 @@ interface SubjectFormData {
     pomodoroConfig?: {
       workTime: number;
       breakTime: number;
+      longBreakTime: number;
       cycles: number;
     };
     linkedTimerId?: string;
@@ -58,8 +59,19 @@ export const SubjectConfigCard: React.FC<SubjectConfigCardProps> = ({
   const [weeklyTimeMinutes, setWeeklyTimeMinutes] = useState(subject?.weeklyTimeGoal || 240);
   const [selectedDays, setSelectedDays] = useState<number[]>(() => {
     if (subject?.studyDays?.length) {
+      // Mapping des jours de DayOfWeek vers les IDs WEEKDAYS
+      const dayMapping: Record<string, number> = {
+        'MONDAY': 1,
+        'TUESDAY': 2,
+        'WEDNESDAY': 3,
+        'THURSDAY': 4,
+        'FRIDAY': 5,
+        'SATURDAY': 6,
+        'SUNDAY': 0
+      };
+      
       return subject.studyDays
-        .map(day => WEEKDAYS.find(w => w.full.toUpperCase() === day)?.id)
+        .map(day => dayMapping[day])
         .filter((id): id is number => id !== undefined);
     }
     return [1, 2, 3, 4, 5]; // Lun-Ven par défaut
@@ -74,6 +86,7 @@ export const SubjectConfigCard: React.FC<SubjectConfigCardProps> = ({
   const [simpleTimerDuration, setSimpleTimerDuration] = useState(25);
   const [pomodoroWorkTime, setPomodoroWorkTime] = useState(25);
   const [pomodoroBreakTime, setPomodoroBreakTime] = useState(5);
+  const [pomodoroLongBreakTime, setPomodoroLongBreakTime] = useState(15);
   const [pomodoroCycles, setPomodoroCycles] = useState(4);
 
   // Validation
@@ -86,6 +99,27 @@ export const SubjectConfigCard: React.FC<SubjectConfigCardProps> = ({
       setSubjectName(subject.name);
       setWeeklyTimeMinutes(subject.weeklyTimeGoal || 240);
       
+      // Réinitialiser les jours d'étude
+      if (subject.studyDays?.length) {
+        const dayMapping: Record<string, number> = {
+          'MONDAY': 1,
+          'TUESDAY': 2,
+          'WEDNESDAY': 3,
+          'THURSDAY': 4,
+          'FRIDAY': 5,
+          'SATURDAY': 6,
+          'SUNDAY': 0
+        };
+        
+        const mappedDays = subject.studyDays
+          .map(day => dayMapping[day])
+          .filter((id): id is number => id !== undefined);
+        
+        setSelectedDays(mappedDays);
+      } else {
+        setSelectedDays([1, 2, 3, 4, 5]); // Lun-Ven par défaut
+      }
+      
       // Configuration timer depuis le sujet
       if (subject.quickTimerConfig) {
         setTimerMode('quick-create');
@@ -93,6 +127,7 @@ export const SubjectConfigCard: React.FC<SubjectConfigCardProps> = ({
           setQuickTimerType('pomodoro');
           setPomodoroWorkTime(subject.quickTimerConfig.workDuration || 25);
           setPomodoroBreakTime(subject.quickTimerConfig.shortBreakDuration || 5);
+          setPomodoroLongBreakTime(subject.quickTimerConfig.longBreakDuration || 15);
           setPomodoroCycles(subject.quickTimerConfig.cycles || 4);
         } else {
           setQuickTimerType('simple');
@@ -161,6 +196,7 @@ export const SubjectConfigCard: React.FC<SubjectConfigCardProps> = ({
                     pomodoroConfig: {
                       workTime: pomodoroWorkTime,
                       breakTime: pomodoroBreakTime,
+                      longBreakTime: pomodoroLongBreakTime,
                       cycles: pomodoroCycles
                     }
                   }
@@ -402,57 +438,123 @@ export const SubjectConfigCard: React.FC<SubjectConfigCardProps> = ({
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    <p className="text-sm text-gray-600 text-center mb-3">Configuration Pomodoro</p>
+                  <div className="space-y-6">
+                    <div className="text-center">
+                      <p className="text-sm text-gray-600 mb-3">Configuration Pomodoro</p>
+                      
+                      {/* Presets rapides */}
+                      <div className="flex justify-center gap-2 mb-4">
+                        {[
+                          { name: '25/5', work: 25, break: 5, longBreak: 15, cycles: 4 },
+                          { name: '50/10', work: 50, break: 10, longBreak: 30, cycles: 3 },
+                          { name: '45/15', work: 45, break: 15, longBreak: 30, cycles: 3 }
+                        ].map((preset) => (
+                          <button
+                            key={preset.name}
+                            onClick={() => {
+                              setPomodoroWorkTime(preset.work);
+                              setPomodoroBreakTime(preset.break);
+                              setPomodoroLongBreakTime(preset.longBreak);
+                              setPomodoroCycles(preset.cycles);
+                            }}
+                            className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${
+                              pomodoroWorkTime === preset.work && pomodoroBreakTime === preset.break
+                                ? 'bg-red-500 text-white border-red-500'
+                                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                            }`}
+                          >
+                            {preset.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                     
-                    <div>
-                      <p className="text-xs text-gray-600 mb-2 text-center">Temps de travail</p>
-                      <div className="flex items-center justify-center gap-1">
-                        <input
-                          type="number"
-                          value={pomodoroWorkTime}
-                          onChange={(e) => setPomodoroWorkTime(Math.max(15, Math.min(60, parseInt(e.target.value) || 25)))}
-                          className="w-16 text-center text-lg font-semibold bg-white rounded border border-gray-300 focus:border-blue-500 focus:outline-none"
-                          min="15"
-                          max="60"
-                        />
-                        <span className="text-lg text-gray-700">min</span>
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      {/* Temps de travail */}
+                      <div className="text-center">
+                        <p className="text-xs text-gray-600 mb-2 font-medium">Temps de travail</p>
+                        <div className="flex items-center justify-center gap-1">
+                          <input
+                            type="number"
+                            value={pomodoroWorkTime}
+                            onChange={(e) => setPomodoroWorkTime(Math.max(15, Math.min(60, parseInt(e.target.value) || 25)))}
+                            className="w-16 text-center text-lg font-semibold bg-white rounded-lg border border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 py-2 px-2"
+                            min="15"
+                            max="60"
+                          />
+                          <span className="text-lg text-gray-700 font-medium">min</span>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1">(15-60)</p>
+                      </div>
+
+                      {/* Temps de pause courte */}
+                      <div className="text-center">
+                        <p className="text-xs text-gray-600 mb-2 font-medium">Pause courte</p>
+                        <div className="flex items-center justify-center gap-1">
+                          <input
+                            type="number"
+                            value={pomodoroBreakTime}
+                            onChange={(e) => setPomodoroBreakTime(Math.max(3, Math.min(15, parseInt(e.target.value) || 5)))}
+                            className="w-16 text-center text-lg font-semibold bg-white rounded-lg border border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 py-2 px-2"
+                            min="3"
+                            max="15"
+                          />
+                          <span className="text-lg text-gray-700 font-medium">min</span>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1">(3-15)</p>
                       </div>
                     </div>
 
-                    <div>
-                      <p className="text-xs text-gray-600 mb-2 text-center">Temps de pause</p>
-                      <div className="flex items-center justify-center gap-1">
-                        <input
-                          type="number"
-                          value={pomodoroBreakTime}
-                          onChange={(e) => setPomodoroBreakTime(Math.max(3, Math.min(15, parseInt(e.target.value) || 5)))}
-                          className="w-16 text-center text-lg font-semibold bg-white rounded border border-gray-300 focus:border-blue-500 focus:outline-none"
-                          min="3"
-                          max="15"
-                        />
-                        <span className="text-lg text-gray-700">min</span>
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Pause longue */}
+                      <div className="text-center">
+                        <p className="text-xs text-gray-600 mb-2 font-medium">Pause longue</p>
+                        <div className="flex items-center justify-center gap-1">
+                          <input
+                            type="number"
+                            value={pomodoroLongBreakTime}
+                            onChange={(e) => setPomodoroLongBreakTime(Math.max(10, Math.min(60, parseInt(e.target.value) || 15)))}
+                            className="w-16 text-center text-lg font-semibold bg-white rounded-lg border border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 py-2 px-2"
+                            min="10"
+                            max="60"
+                          />
+                          <span className="text-lg text-gray-700 font-medium">min</span>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1">(10-60)</p>
+                      </div>
+
+                      {/* Nombre de cycles */}
+                      <div className="text-center">
+                        <p className="text-xs text-gray-600 mb-2 font-medium">Nombre de cycles</p>
+                        <div className="flex items-center justify-center gap-1">
+                          <input
+                            type="number"
+                            value={pomodoroCycles}
+                            onChange={(e) => setPomodoroCycles(Math.max(2, Math.min(8, parseInt(e.target.value) || 4)))}
+                            className="w-16 text-center text-lg font-semibold bg-white rounded-lg border border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 py-2 px-2"
+                            min="2"
+                            max="8"
+                          />
+                          <span className="text-lg text-gray-700 font-medium">cycles</span>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1">(2-8)</p>
                       </div>
                     </div>
 
-                    <div>
-                      <p className="text-xs text-gray-600 mb-2 text-center">Nombre de cycles</p>
-                      <div className="flex items-center justify-center gap-1">
-                        <input
-                          type="number"
-                          value={pomodoroCycles}
-                          onChange={(e) => setPomodoroCycles(Math.max(2, Math.min(8, parseInt(e.target.value) || 4)))}
-                          className="w-16 text-center text-lg font-semibold bg-white rounded border border-gray-300 focus:border-blue-500 focus:outline-none"
-                          min="2"
-                          max="8"
-                        />
-                        <span className="text-lg text-gray-700">cycles</span>
+                    {/* Descriptif du fonctionnement Pomodoro */}
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="text-center">
+                        <p className="text-xs font-medium text-blue-800 mb-2">🍅 Aperçu de la session</p>
+                        <div className="text-xs text-blue-700 space-y-1">
+                          <p><span className="font-medium">{pomodoroCycles - 1} cycles</span> : {pomodoroWorkTime}min travail → {pomodoroBreakTime}min pause</p>
+                          <p><span className="font-medium">Dernier cycle</span> : {pomodoroWorkTime}min travail → {pomodoroLongBreakTime}min pause longue</p>
+                          <p className="pt-1 border-t border-blue-300 text-blue-600">
+                            <span className="font-medium">Total session</span> : {Math.floor((pomodoroWorkTime * pomodoroCycles + pomodoroBreakTime * (pomodoroCycles - 1) + pomodoroLongBreakTime) / 60)}h{((pomodoroWorkTime * pomodoroCycles + pomodoroBreakTime * (pomodoroCycles - 1) + pomodoroLongBreakTime) % 60).toString().padStart(2, '0')}
+                          </p>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="pt-3 border-t border-gray-200 text-center text-sm text-gray-600">
-                      Total : {pomodoroWorkTime * pomodoroCycles + pomodoroBreakTime * (pomodoroCycles - 1)} minutes
-                    </div>
                   </div>
                 )}
               </div>

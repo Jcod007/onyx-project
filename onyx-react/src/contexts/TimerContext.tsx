@@ -94,6 +94,12 @@ export const TimerProvider: React.FC<TimerProviderProps> = ({ children }) => {
   } = useTimerExecution(
     // onTimerFinish callback
     useCallback(async (_timerId: string, timer: ActiveTimer, totalTime: number) => {
+      // Si c'est un timer éphémère, le supprimer automatiquement à la fin
+      if (timer.isEphemeral) {
+        console.log('⏱️ Suppression automatique du timer éphémère terminé:', timer.title);
+        await removeTimer(timer.id);
+      }
+      
       if (timer.linkedSubject) {
         try {
           await subjectService.addStudyTime(timer.linkedSubject.id, totalTime);
@@ -101,7 +107,7 @@ export const TimerProvider: React.FC<TimerProviderProps> = ({ children }) => {
           console.error('Erreur lors de l\'ajout du temps d\'étude:', error);
         }
       }
-    }, []),
+    }, [removeTimer]),
     // onSessionComplete callback
     useCallback(async (_timerId: string, timer: ActiveTimer) => {
       if (timer.linkedSubject) {

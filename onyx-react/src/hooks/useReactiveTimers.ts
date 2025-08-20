@@ -4,14 +4,21 @@ import { centralizedTimerService } from '@/services/centralizedTimerService';
 
 /**
  * Hook React réactif utilisant le service centralisé
- * Interface compatible avec usePersistedTimers pour une migration transparente
+ * Hook principal pour la gestion des timers dans l'application
  */
+// Variable statique pour éviter les initialisations multiples
+let isInitializing = false;
+
 export const useReactiveTimers = () => {
   const [timers, setTimers] = useState<ActiveTimer[]>([]);
   const [timerCounter, setTimerCounter] = useState(1);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  console.log('🔄 Initialisation useReactiveTimers');
+  // Éviter les logs multiples dans le dev mode
+  if (!isInitializing) {
+    console.log('🔄 Initialisation useReactiveTimers');
+    isInitializing = true;
+  }
 
   // Charger l'état initial depuis le service centralisé
   useEffect(() => {
@@ -72,7 +79,6 @@ export const useReactiveTimers = () => {
 
   /**
    * Ajouter un nouveau timer
-   * Interface compatible avec usePersistedTimers
    */
   const addTimer = useCallback(async (timer: Omit<ActiveTimer, 'id' | 'createdAt' | 'lastUsed'>) => {
     try {
@@ -83,7 +89,16 @@ export const useReactiveTimers = () => {
         lastUsed: new Date()
       };
 
-      await centralizedTimerService.addTimer(newTimer);
+      // Si le timer est éphémère, ne pas le persister dans le service centralisé
+      if (newTimer.isEphemeral) {
+        console.log('⏱️ Timer éphémère créé (non persisté):', newTimer.title);
+        // Ajouter uniquement à l'état local pour l'affichage dans le widget
+        setTimers(prev => [...prev, newTimer]);
+      } else {
+        // Timer normal - persister via le service centralisé
+        await centralizedTimerService.addTimer(newTimer);
+      }
+      
       return newTimer;
     } catch (error) {
       console.error('Erreur ajout timer:', error);
@@ -93,34 +108,46 @@ export const useReactiveTimers = () => {
 
   /**
    * Mettre à jour un timer existant
-   * Interface compatible avec usePersistedTimers
    */
   const updateTimer = useCallback(async (id: string, updates: Partial<Omit<ActiveTimer, 'id' | 'createdAt'>>) => {
     try {
       console.log(`🔄 Mise à jour timer ${id}`);
-      await centralizedTimerService.updateTimer(id, updates);
+      
+      // Vérifier si c'est un timer éphémère
+      const timer = timers.find(t => t.id === id);
+      if (timer?.isEphemeral) {
+        console.log('⏱️ Mise à jour timer éphémère (local uniquement)');
+        setTimers(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+      } else {
+        await centralizedTimerService.updateTimer(id, updates);
+      }
     } catch (error) {
       console.error('Erreur mise à jour timer:', error);
       throw error;
     }
-  }, []);
+  }, [timers]);
 
   /**
    * Supprimer un timer
-   * Interface compatible avec usePersistedTimers
    */
   const removeTimer = useCallback(async (id: string) => {
     try {
-      await centralizedTimerService.removeTimer(id);
+      // Vérifier si c'est un timer éphémère
+      const timer = timers.find(t => t.id === id);
+      if (timer?.isEphemeral) {
+        console.log('⏱️ Suppression timer éphémère (local uniquement)');
+        setTimers(prev => prev.filter(t => t.id !== id));
+      } else {
+        await centralizedTimerService.removeTimer(id);
+      }
     } catch (error) {
       console.error('Erreur suppression timer:', error);
       throw error;
     }
-  }, []);
+  }, [timers]);
 
   /**
    * Mettre à jour la date de dernière utilisation
-   * Interface compatible avec usePersistedTimers
    */
   const updateTimerLastUsed = useCallback(async (id: string) => {
     try {
@@ -132,7 +159,6 @@ export const useReactiveTimers = () => {
 
   /**
    * Vider tous les timers
-   * Interface compatible avec usePersistedTimers
    */
   const clearAllTimers = useCallback(async () => {
     try {
@@ -147,7 +173,6 @@ export const useReactiveTimers = () => {
 
   /**
    * Nettoyer les anciens timers
-   * Interface compatible avec usePersistedTimers
    */
   const cleanupOldTimers = useCallback(async () => {
     try {
@@ -219,7 +244,7 @@ export const useReactiveTimers = () => {
   }, []);
 
   return {
-    // Interface compatible avec usePersistedTimers
+    // Interface principale de gestion des timers
     timers,
     timerCounter,
     setTimerCounter,

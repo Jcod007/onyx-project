@@ -14,6 +14,7 @@ export interface ActiveTimer {
   maxCycles?: number;
   createdAt: Date;
   lastUsed: Date;
+  isEphemeral?: boolean; // Timer temporaire qui ne sera pas sauvegardé
 }
 
 /**

@@ -5,7 +5,6 @@ import { Modal } from '@/components/Modal';
 import { SubjectConfigCard } from '@/components/SubjectConfigCard';
 import { Subject, CreateSubjectDto, UpdateSubjectDto } from '@/types/Subject';
 import { subjectService } from '@/services/subjectService';
-import { useReactiveTimers } from '@/hooks/useReactiveTimers';
 import { useTimerContext } from '@/contexts/TimerContext';
 import { courseTimerLinkManager } from '@/services/courseTimerLinkManager';
 import { Plus, Search, Filter, BookOpen, X } from 'lucide-react';
@@ -16,7 +15,6 @@ interface StudyTimer {
 }
 
 export const StudyPage: React.FC = () => {
-  const { ensureDataConsistency } = useReactiveTimers();
   const { timers } = useTimerContext();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [filteredSubjects, setFilteredSubjects] = useState<Subject[]>([]);
@@ -46,7 +44,7 @@ export const StudyPage: React.FC = () => {
       setSubjects(loadedSubjects);
       
       // Vérifier la cohérence des données timer-cours après chaque chargement
-      await ensureDataConsistency();
+      // Cohérence des données assurée par TimerContext
     } catch (error) {
       console.error('Erreur lors du chargement des matières:', error);
     } finally {
