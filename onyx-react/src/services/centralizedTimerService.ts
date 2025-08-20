@@ -322,13 +322,24 @@ class CentralizedTimerService {
 
   /**
    * Obtenir les timers disponibles pour liaison à un cours
+   * Exclut les timers éphémères qui ne peuvent pas être liés de manière permanente
    */
   getAvailableTimersForSubject(subjectId?: string): ActiveTimer[] {
     const timers = this.getTimers();
     return timers.filter(timer => 
-      !timer.linkedSubject || 
-      (subjectId && timer.linkedSubject.id === subjectId)
+      !timer.isEphemeral && // Exclure les timers éphémères
+      (!timer.linkedSubject || 
+      (subjectId && timer.linkedSubject.id === subjectId))
     );
+  }
+
+  /**
+   * Obtenir uniquement les timers non-éphémères (persistants)
+   * Utile pour éviter les conflits avec les timers éphémères
+   */
+  getPersistentTimers(): ActiveTimer[] {
+    const timers = this.getTimers();
+    return timers.filter(timer => !timer.isEphemeral);
   }
 
   /**
@@ -389,9 +400,10 @@ class CentralizedTimerService {
 
 export const centralizedTimerService = CentralizedTimerService.getInstance();
 
-// Démarrer la vérification de cohérence périodique en développement
-if (process.env.NODE_ENV === 'development') {
-  setInterval(() => {
-    centralizedTimerService.ensureDataConsistency();
-  }, 30000); // Toutes les 30 secondes en dev
-}
+// DÉSACTIVÉ: Vérification de cohérence périodique car elle interfère avec les timers éphémères
+// La vérification supprime incorrectement les linkedTimerId quand des timers éphémères existent
+// if (process.env.NODE_ENV === 'development') {
+//   setInterval(() => {
+//     centralizedTimerService.ensureDataConsistency();
+//   }, 30000); // Toutes les 30 secondes en dev
+// }

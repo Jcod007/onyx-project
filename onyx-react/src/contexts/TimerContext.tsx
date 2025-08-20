@@ -58,6 +58,7 @@ export const TimerProvider: React.FC<TimerProviderProps> = ({ children }) => {
     setTimerCounter 
   } = useReactiveTimers();
   const [timers, setTimers] = useState<ActiveTimer[]>([]);
+  const [isComponentMounted, setIsComponentMounted] = useState(true);
 
   // Synchroniser avec les timers persistés au chargement - éviter les re-rendus inutiles
   useEffect(() => {
@@ -84,6 +85,15 @@ export const TimerProvider: React.FC<TimerProviderProps> = ({ children }) => {
     });
   }, []);
 
+  // Nettoyage lors du démontage du TimerProvider
+  useEffect(() => {
+    return () => {
+      console.log('🧹 TimerProvider - Nettoyage lors du démontage');
+      setIsComponentMounted(false);
+      console.log('✅ TimerProvider - Nettoyage terminé');
+    };
+  }, []);
+
   const {
     startTimer,
     pauseTimer,
@@ -94,10 +104,26 @@ export const TimerProvider: React.FC<TimerProviderProps> = ({ children }) => {
   } = useTimerExecution(
     // onTimerFinish callback
     useCallback(async (_timerId: string, timer: ActiveTimer, totalTime: number) => {
+      // Vérifier que le composant est encore monté
+      if (!isComponentMounted) {
+        console.log('⚠️ onTimerFinish ignoré - composant démonté');
+        return;
+      }
+      
       // Si c'est un timer éphémère, le supprimer automatiquement à la fin
       if (timer.isEphemeral) {
         console.log('⏱️ Suppression automatique du timer éphémère terminé:', timer.title);
-        await removeTimer(timer.id);
+        try {
+          // Délai de 2 secondes pour laisser les notifications/sons se terminer
+          setTimeout(async () => {
+            if (isComponentMounted) {
+              await removeTimer(timer.id);
+              console.log('✅ Timer éphémère terminé et supprimé avec succès');
+            }
+          }, 2000);
+        } catch (error) {
+          console.error('Erreur suppression timer éphémère:', error);
+        }
       }
       
       if (timer.linkedSubject) {
@@ -107,9 +133,15 @@ export const TimerProvider: React.FC<TimerProviderProps> = ({ children }) => {
           console.error('Erreur lors de l\'ajout du temps d\'étude:', error);
         }
       }
-    }, [removeTimer]),
+    }, [removeTimer, isComponentMounted]),
     // onSessionComplete callback
     useCallback(async (_timerId: string, timer: ActiveTimer) => {
+      // Vérifier que le composant est encore monté
+      if (!isComponentMounted) {
+        console.log('⚠️ onSessionComplete ignoré - composant démonté');
+        return;
+      }
+      
       if (timer.linkedSubject) {
         try {
           await subjectService.addStudyTime(
@@ -120,7 +152,7 @@ export const TimerProvider: React.FC<TimerProviderProps> = ({ children }) => {
           console.error('Erreur lors de l\'ajout du temps d\'étude:', error);
         }
       }
-    }, [])
+    }, [isComponentMounted])
   );
 
   const handleTimerAction = useCallback((action: 'start' | 'pause' | 'reset', timer: ActiveTimer) => {
