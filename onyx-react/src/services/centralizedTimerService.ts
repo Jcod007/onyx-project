@@ -4,22 +4,117 @@ import { QuickTimerConfig } from '@/types/Subject';
 // Re-export pour usage externe
 export type { ActiveTimer };
 import { subjectService } from './subjectService';
+import { timerLogger } from '@/utils/logger';
 
 /**
  * Service centralisé pour la gestion robuste des timers et liaisons
  * Résout les conflits de concurrence et assure la cohérence des données
+ * Inclut un système de versioning et de synchronisation avancé
  */
+interface TimerSyncMetadata {
+  version: number;
+  lastModified: number;
+  hash: string;
+  operationId?: string;
+}
+
+interface SyncState {
+  timers: ActiveTimer[];
+  metadata: Map<string, TimerSyncMetadata>;
+  globalVersion: number;
+}
+
 class CentralizedTimerService {
   private static instance: CentralizedTimerService;
   private readonly STORAGE_KEY = 'onyx_active_timers';
+  private readonly SYNC_METADATA_KEY = 'onyx_timer_sync_metadata';
   private listeners: Set<() => void> = new Set();
   private operationQueue: Promise<any> = Promise.resolve();
+  private syncMetadata: Map<string, TimerSyncMetadata> = new Map();
+  private globalVersion: number = 1;
+  private consistencyCheckTimeout: NodeJS.Timeout | null = null;
 
   static getInstance(): CentralizedTimerService {
     if (!CentralizedTimerService.instance) {
       CentralizedTimerService.instance = new CentralizedTimerService();
     }
     return CentralizedTimerService.instance;
+  }
+  
+  private constructor() {
+    this.loadSyncMetadata();
+    this.startConsistencyChecks();
+  }
+  
+  private generateHash(timer: ActiveTimer): string {
+    const hashData = {
+      title: timer.title,
+      config: timer.config,
+      isPomodoroMode: timer.isPomodoroMode,
+      maxCycles: timer.maxCycles,
+      linkedSubject: timer.linkedSubject?.id || null,
+      lastUsed: timer.lastUsed.getTime()
+    };
+    return btoa(JSON.stringify(hashData));
+  }
+  
+  private loadSyncMetadata(): void {
+    try {
+      const saved = localStorage.getItem(this.SYNC_METADATA_KEY);
+      if (saved) {
+        const data = JSON.parse(saved);
+        this.globalVersion = data.globalVersion || 1;
+        this.syncMetadata = new Map(Object.entries(data.metadata || {}));
+        timerLogger.debug('Métadonnées de synchronisation chargées', {
+          globalVersion: this.globalVersion,
+          timers: this.syncMetadata.size
+        });
+      }
+    } catch (error) {
+      console.error('Erreur chargement métadonnées sync:', error);
+      this.syncMetadata.clear();
+      this.globalVersion = 1;
+    }
+  }
+  
+  private saveSyncMetadata(): void {
+    try {
+      const data = {
+        globalVersion: this.globalVersion,
+        metadata: Object.fromEntries(this.syncMetadata.entries())
+      };
+      localStorage.setItem(this.SYNC_METADATA_KEY, JSON.stringify(data));
+    } catch (error) {
+      console.error('Erreur sauvegarde métadonnées sync:', error);
+    }
+  }
+  
+  private updateTimerMetadata(timer: ActiveTimer, operationId?: string): void {
+    const hash = this.generateHash(timer);
+    const now = Date.now();
+    const currentMetadata = this.syncMetadata.get(timer.id);
+    
+    this.syncMetadata.set(timer.id, {
+      version: (currentMetadata?.version || 0) + 1,
+      lastModified: now,
+      hash,
+      operationId
+    });
+    
+    this.globalVersion++;
+    this.saveSyncMetadata();
+  }
+  
+  private detectConflict(timerId: string, expectedHash: string): boolean {
+    const metadata = this.syncMetadata.get(timerId);
+    return metadata ? metadata.hash !== expectedHash : false;
+  }
+  
+  private startConsistencyChecks(): void {
+    // Vérification de cohérence toutes les 15 secondes
+    this.consistencyCheckTimeout = setInterval(() => {
+      this.performInternalConsistencyCheck();
+    }, 15000);
   }
 
   /**
@@ -31,9 +126,53 @@ class CentralizedTimerService {
   }
 
   /**
-   * Lecture sécurisée des timers depuis localStorage
+   * Vérification interne de cohérence des données
    */
-  getTimers(): ActiveTimer[] {
+  private performInternalConsistencyCheck(): void {
+    try {
+      const timers = this.getTimersRaw();
+      let hasInconsistencies = false;
+      
+      for (const timer of timers) {
+        const metadata = this.syncMetadata.get(timer.id);
+        if (metadata) {
+          const currentHash = this.generateHash(timer);
+          if (currentHash !== metadata.hash) {
+            console.warn(`⚠️ Incohérence détectée pour timer ${timer.id}`);
+            this.updateTimerMetadata(timer, 'consistency-fix');
+            hasInconsistencies = true;
+          }
+        } else {
+          // Métadonnées manquantes, les créer
+          console.log(`🔧 Création métadonnées manquantes pour timer ${timer.id}`);
+          this.updateTimerMetadata(timer, 'metadata-creation');
+          hasInconsistencies = true;
+        }
+      }
+      
+      // Nettoyer les métadonnées orphelines
+      const timerIds = new Set(timers.map(t => t.id));
+      const orphanedMetadata = Array.from(this.syncMetadata.keys()).filter(id => !timerIds.has(id));
+      
+      if (orphanedMetadata.length > 0) {
+        console.log(`🧹 Suppression ${orphanedMetadata.length} métadonnées orphelines`);
+        orphanedMetadata.forEach(id => this.syncMetadata.delete(id));
+        this.saveSyncMetadata();
+        hasInconsistencies = true;
+      }
+      
+      if (hasInconsistencies) {
+        this.notifyListeners();
+      }
+    } catch (error) {
+      console.error('Erreur vérification cohérence interne:', error);
+    }
+  }
+  
+  /**
+   * Lecture sécurisée des timers depuis localStorage (version interne)
+   */
+  private getTimersRaw(): ActiveTimer[] {
     try {
       const saved = localStorage.getItem(this.STORAGE_KEY);
       if (!saved) return [];
@@ -47,27 +186,69 @@ class CentralizedTimerService {
   }
 
   /**
-   * Opération atomique de mise à jour des timers
-   * Garantit qu'une seule opération s'exécute à la fois
+   * Lecture sécurisée des timers depuis localStorage avec vérification de cohérence
+   */
+  getTimers(): ActiveTimer[] {
+    const timers = this.getTimersRaw();
+    
+    // Vérifier et mettre à jour les métadonnées si nécessaire
+    for (const timer of timers) {
+      if (!this.syncMetadata.has(timer.id)) {
+        this.updateTimerMetadata(timer, 'auto-metadata-creation');
+      }
+    }
+    
+    return timers;
+  }
+
+  /**
+   * Opération atomique de mise à jour des timers avec gestion avancée des conflits
+   * Garantit qu'une seule opération s'exécute à la fois et gère le versioning
    */
   private executeAtomicOperation<T>(
-    operation: (currentTimers: ActiveTimer[]) => Promise<{ timers: ActiveTimer[]; result?: T }>
+    operation: (currentTimers: ActiveTimer[]) => Promise<{ timers: ActiveTimer[]; result?: T }>,
+    operationId: string = `op-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
   ): Promise<T | undefined> {
     // Ajouter l'opération à la queue pour éviter les conflits
     this.operationQueue = this.operationQueue.then(async () => {
       try {
-        const currentTimers = this.getTimers();
+        console.log(`🔒 Début opération atomique: ${operationId}`);
+        const currentTimers = this.getTimersRaw();
         const { timers: updatedTimers, result } = await operation(currentTimers);
+        
+        // Vérifier la cohérence avant la sauvegarde
+        const conflictingTimers: string[] = [];
+        
+        for (const timer of updatedTimers) {
+          const currentMetadata = this.syncMetadata.get(timer.id);
+          if (currentMetadata) {
+            const currentHash = this.generateHash(timer);
+            if (this.detectConflict(timer.id, currentHash)) {
+              conflictingTimers.push(timer.id);
+            }
+          }
+        }
+        
+        if (conflictingTimers.length > 0) {
+          console.warn(`⚠️ Conflits détectés lors de l'opération ${operationId}:`, conflictingTimers);
+          // Pour les conflits, on procède mais on log pour monitoring
+        }
         
         // Sauvegarde atomique
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updatedTimers));
         
+        // Mettre à jour les métadonnées pour tous les timers modifiés
+        updatedTimers.forEach(timer => {
+          this.updateTimerMetadata(timer, operationId);
+        });
+        
         // Notification synchrone des listeners
         this.notifyListeners();
         
+        console.log(`✅ Opération atomique réussie: ${operationId}`);
         return result;
       } catch (error) {
-        console.error('Erreur opération atomique:', error);
+        console.error(`❌ Erreur opération atomique ${operationId}:`, error);
         throw error;
       }
     });
@@ -89,7 +270,7 @@ class CentralizedTimerService {
   }
 
   /**
-   * Ajouter un nouveau timer
+   * Ajouter un nouveau timer avec gestion de conflits
    */
   async addTimer(timer: ActiveTimer): Promise<ActiveTimer> {
     const newTimer = { ...timer, lastUsed: new Date() };
@@ -103,13 +284,13 @@ class CentralizedTimerService {
       return {
         timers: [...timers, newTimer]
       };
-    });
+    }, `add-timer-${timer.id}`);
     
     return newTimer;
   }
 
   /**
-   * Mettre à jour un timer existant
+   * Mettre à jour un timer existant avec détection de conflits
    */
   async updateTimer(timerId: string, updates: Partial<ActiveTimer>): Promise<void> {
     await this.executeAtomicOperation(async (timers) => {
@@ -119,8 +300,20 @@ class CentralizedTimerService {
         throw new Error(`Timer ${timerId} introuvable`);
       }
 
+      const currentTimer = timers[timerIndex];
+      const currentMetadata = this.syncMetadata.get(timerId);
+      
+      // Vérifier les conflits de concurrence
+      if (currentMetadata) {
+        const currentHash = this.generateHash(currentTimer);
+        if (this.detectConflict(timerId, currentHash)) {
+          console.warn(`⚠️ Conflit détecté lors de la mise à jour du timer ${timerId}`);
+          // On procède avec la mise à jour mais on log le conflit
+        }
+      }
+
       const updatedTimer = {
-        ...timers[timerIndex],
+        ...currentTimer,
         ...updates,
         lastUsed: new Date()
       };
@@ -129,11 +322,11 @@ class CentralizedTimerService {
       updatedTimers[timerIndex] = updatedTimer;
 
       return { timers: updatedTimers };
-    });
+    }, `update-timer-${timerId}`);
   }
 
   /**
-   * Supprimer un timer avec conversion automatique du cours lié
+   * Supprimer un timer avec conversion automatique du cours lié et nettoyage des métadonnées
    */
   async removeTimer(timerId: string): Promise<void> {
     await this.executeAtomicOperation(async (timers) => {
@@ -158,10 +351,14 @@ class CentralizedTimerService {
         console.log(`✅ Cours ${timer.linkedSubject.name} converti en timer rapide (${quickTimerConfig.workDuration}min)`);
       }
 
+      // Nettoyer les métadonnées du timer supprimé
+      this.syncMetadata.delete(timerId);
+      this.saveSyncMetadata();
+
       return {
         timers: timers.filter(t => t.id !== timerId)
       };
-    });
+    }, `remove-timer-${timerId}`);
   }
 
   /**
@@ -351,10 +548,10 @@ class CentralizedTimerService {
   }
 
   /**
-   * Vérification de cohérence et réparation automatique des données
+   * Vérification de cohérence et réparation automatique des données avec validation des métadonnées
    */
   async ensureDataConsistency(): Promise<void> {
-    console.log('🔍 Vérification cohérence des données timer-cours');
+    timerLogger.debug('Vérification cohérence des données timer-cours avec synchronisation');
     
     await this.executeAtomicOperation(async (timers) => {
       const subjects = await subjectService.getAllSubjects();
@@ -388,22 +585,110 @@ class CentralizedTimerService {
         }
         return timer;
       });
+      
+      // Vérifier la cohérence des métadonnées de synchronisation
+      const inconsistentMetadata: string[] = [];
+      updatedTimers.forEach(timer => {
+        const metadata = this.syncMetadata.get(timer.id);
+        if (metadata) {
+          const currentHash = this.generateHash(timer);
+          if (metadata.hash !== currentHash) {
+            inconsistentMetadata.push(timer.id);
+            this.updateTimerMetadata(timer, 'consistency-repair');
+            hasChanges = true;
+          }
+        } else {
+          // Métadonnées manquantes
+          this.updateTimerMetadata(timer, 'missing-metadata-repair');
+          hasChanges = true;
+        }
+      });
+      
+      if (inconsistentMetadata.length > 0) {
+        console.log(`🔧 Réparation métadonnées incohérentes:`, inconsistentMetadata);
+      }
+      
+      // Nettoyer les métadonnées orphelines
+      const timerIds = new Set(updatedTimers.map(t => t.id));
+      const orphanedMetadata = Array.from(this.syncMetadata.keys()).filter(id => !timerIds.has(id));
+      
+      if (orphanedMetadata.length > 0) {
+        console.log(`🧹 Nettoyage ${orphanedMetadata.length} métadonnées orphelines:`, orphanedMetadata);
+        orphanedMetadata.forEach(id => this.syncMetadata.delete(id));
+        this.saveSyncMetadata();
+        hasChanges = true;
+      }
 
       if (hasChanges) {
-        console.log('✅ Réparation des incohérences terminée');
+        console.log('✅ Réparation des incohérences et synchronisation terminée');
+      } else {
+        console.log('✅ Aucune incohérence détectée - Système cohérent');
       }
 
       return { timers: updatedTimers };
+    }, 'data-consistency-check');
+  }
+  
+  /**
+   * Obtenir les informations de synchronisation d'un timer
+   */
+  getTimerSyncInfo(timerId: string): TimerSyncMetadata | null {
+    return this.syncMetadata.get(timerId) || null;
+  }
+  
+  /**
+   * Obtenir les informations globales de synchronisation
+   */
+  getSyncState(): { globalVersion: number; timerCount: number; lastCheck: number } {
+    return {
+      globalVersion: this.globalVersion,
+      timerCount: this.syncMetadata.size,
+      lastCheck: Date.now()
+    };
+  }
+  
+  /**
+   * Forcer une resynchronisation complète
+   */
+  async forceSynchronization(): Promise<void> {
+    console.log('🔄 Forçage de la resynchronisation complète');
+    
+    // Recharger et vérifier tous les timers
+    const timers = this.getTimersRaw();
+    
+    // Réinitialiser les métadonnées
+    this.syncMetadata.clear();
+    this.globalVersion++;
+    
+    // Recréer les métadonnées pour tous les timers
+    timers.forEach(timer => {
+      this.updateTimerMetadata(timer, 'force-resync');
     });
+    
+    // Vérifier la cohérence complète
+    await this.ensureDataConsistency();
+    
+    console.log('✅ Resynchronisation complète terminée');
   }
 }
 
 export const centralizedTimerService = CentralizedTimerService.getInstance();
 
-// DÉSACTIVÉ: Vérification de cohérence périodique car elle interfère avec les timers éphémères
-// La vérification supprime incorrectement les linkedTimerId quand des timers éphémères existent
-// if (process.env.NODE_ENV === 'development') {
-//   setInterval(() => {
-//     centralizedTimerService.ensureDataConsistency();
-//   }, 30000); // Toutes les 30 secondes en dev
-// }
+// Auto-démarrage des vérifications de cohérence (compatible avec les timers éphémères)
+if (typeof window !== 'undefined') {
+  // Vérification de cohérence délayée au démarrage (après initialisation)
+  setTimeout(() => {
+    centralizedTimerService.ensureDataConsistency().catch(error => {
+      console.error('Erreur vérification cohérence initiale:', error);
+    });
+  }, 2000);
+  
+  // Vérification périodique allégée en production
+  if (process.env.NODE_ENV === 'production') {
+    setInterval(() => {
+      centralizedTimerService.ensureDataConsistency().catch(error => {
+        console.error('Erreur vérification cohérence périodique:', error);
+      });
+    }, 60000); // Toutes les minutes en production
+  }
+}

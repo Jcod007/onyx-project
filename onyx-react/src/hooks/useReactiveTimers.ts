@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ActiveTimer } from '@/types/ActiveTimer';
 import { centralizedTimerService } from '@/services/centralizedTimerService';
+import { timerLogger } from '@/utils/logger';
 
 /**
  * Hook React réactif utilisant le service centralisé
@@ -30,7 +31,7 @@ export const useReactiveTimers = () => {
 
   // Éviter les logs multiples dans le dev mode
   if (!isInitializing) {
-    console.log('🔄 Initialisation useReactiveTimers');
+    timerLogger.debug('Initialisation useReactiveTimers');
     isInitializing = true;
   }
 

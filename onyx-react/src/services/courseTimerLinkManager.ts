@@ -2,6 +2,7 @@ import { Subject, QuickTimerConfig } from '@/types/Subject';
 import { ActiveTimer } from '@/types/ActiveTimer';
 import { subjectService } from './subjectService';
 import { centralizedTimerService } from './centralizedTimerService';
+import { linkLogger } from '@/utils/logger';
 
 /**
  * 🔗 CourseTimerLinkManager
@@ -33,26 +34,38 @@ class CourseTimerLinkManager {
       try {
         listener();
       } catch (error) {
-        console.error('Erreur dans listener CourseTimerLinkManager:', error);
+        linkLogger.error('Erreur dans listener CourseTimerLinkManager:', error);
       }
     });
   }
 
   /**
    * 🔗 LIAISON COURS → TIMER
-   * Lier un cours à un timer existant (relation exclusive 1↔1)
+   * Lier un cours à un timer existant (relation exclusive 1↔1) avec rollback transactionnel
    */
   async linkCourseToTimer(courseId: string, timerId: string): Promise<void> {
-    console.log(`🔗 Liaison cours ${courseId} → timer ${timerId}`);
+    linkLogger.link(`Liaison cours ${courseId} → timer ${timerId}`);
+
+    // État initial pour rollback
+    const initialState = {
+      course: null as Subject | null,
+      timer: null as ActiveTimer | null,
+      previousCourseLinkedTimer: null as string | null,
+      previousTimerLinkedCourse: null as { id: string; name: string } | null
+    };
 
     try {
-      // 1. Vérifier que le cours et le timer existent
-      const course = await subjectService.getSubject(courseId);
+      // 1. Vérifier et sauvegarder l'état initial
+      initialState.course = await subjectService.getSubject(courseId);
       const timers = centralizedTimerService.getTimers();
-      const timer = timers.find(t => t.id === timerId);
+      initialState.timer = timers.find(t => t.id === timerId) || null;
 
-      if (!course) throw new Error(`Cours ${courseId} introuvable`);
-      if (!timer) throw new Error(`Timer ${timerId} introuvable`);
+      if (!initialState.course) throw new Error(`Cours ${courseId} introuvable`);
+      if (!initialState.timer) throw new Error(`Timer ${timerId} introuvable`);
+
+      // Sauvegarder les liaisons actuelles pour rollback
+      initialState.previousCourseLinkedTimer = initialState.course.linkedTimerId || null;
+      initialState.previousTimerLinkedCourse = initialState.timer.linkedSubject || null;
 
       // 2. Délier les anciennes liaisons si nécessaire
       await this.unlinkCourseFromAnyTimer(courseId);
@@ -69,13 +82,84 @@ class CourseTimerLinkManager {
         timerConversionNote: undefined // Nettoyer les notes de conversion
       });
 
-      console.log(`✅ Liaison réussie : cours "${course.name}" ↔ timer "${timer.title}"`);
+      linkLogger.success(`Liaison réussie : cours "${initialState.course.name}" ↔ timer "${initialState.timer.title}"`);
       this.notifyListeners();
 
     } catch (error) {
-      console.error('❌ Erreur liaison cours-timer:', error);
+      linkLogger.error('Erreur liaison cours-timer, tentative de rollback:', error);
+      
+      // Rollback transactionnel
+      try {
+        await this.rollbackLinkage(courseId, timerId, initialState);
+        linkLogger.info('Rollback effectué avec succès');
+      } catch (rollbackError) {
+        linkLogger.error('Erreur critique lors du rollback:', rollbackError);
+        // En cas d'échec du rollback, forcer une notification pour que les composants se rafraîchissent
+        this.notifyListeners();
+      }
+      
       throw error;
     }
+  }
+
+  /**
+   * 🔄 ROLLBACK TRANSACTIONNEL
+   * Restaure l'état précédent en cas d'erreur de liaison
+   */
+  private async rollbackLinkage(
+    courseId: string, 
+    timerId: string, 
+    initialState: {
+      course: Subject | null;
+      timer: ActiveTimer | null;
+      previousCourseLinkedTimer: string | null;
+      previousTimerLinkedCourse: { id: string; name: string } | null;
+    }
+  ): Promise<void> {
+    linkLogger.debug('Début du rollback transactionnel');
+
+    // Restaurer l'état du cours
+    if (initialState.course) {
+      const courseRestoreData: Partial<Subject> = {
+        linkedTimerId: initialState.previousCourseLinkedTimer
+      };
+
+      // Si le cours avait un timer lié précédemment, restaurer le mode simple
+      if (initialState.previousCourseLinkedTimer) {
+        courseRestoreData.defaultTimerMode = 'simple';
+      } else {
+        // Si le cours n'avait pas de timer lié, restaurer le mode quick_timer
+        courseRestoreData.defaultTimerMode = 'quick_timer';
+        // Recréer une config rapide basique si elle n'existe pas
+        if (!initialState.course.quickTimerConfig) {
+          courseRestoreData.quickTimerConfig = {
+            type: 'simple',
+            workDuration: Math.floor(initialState.course.defaultTimerDuration / 60) || 25
+          };
+        }
+      }
+
+      await subjectService.updateSubject(courseId, courseRestoreData);
+    }
+
+    // Restaurer l'état du timer dans le service centralisé
+    if (initialState.previousTimerLinkedCourse) {
+      // Re-lier le timer à son cours précédent
+      await centralizedTimerService.linkTimerToSubject(
+        initialState.previousTimerLinkedCourse.id, 
+        timerId
+      );
+    } else {
+      // Délier le timer s'il n'était pas lié avant
+      await centralizedTimerService.unlinkTimerFromSubject(courseId);
+    }
+
+    // Restaurer la liaison précédente du cours si elle existait
+    if (initialState.previousCourseLinkedTimer && initialState.previousCourseLinkedTimer !== timerId) {
+      await centralizedTimerService.linkTimerToSubject(courseId, initialState.previousCourseLinkedTimer);
+    }
+
+    linkLogger.debug('Rollback transactionnel terminé');
   }
 
   /**
@@ -83,14 +167,14 @@ class CourseTimerLinkManager {
    * Délier un cours de son timer (passer en mode timer rapide)
    */
   async unlinkCourse(courseId: string): Promise<void> {
-    console.log(`🔓 Déliaison cours ${courseId}`);
+    linkLogger.debug(`Déliaison cours ${courseId}`);
 
     try {
       const course = await subjectService.getSubject(courseId);
       if (!course) throw new Error(`Cours ${courseId} introuvable`);
 
       if (!course.linkedTimerId) {
-        console.log(`Cours ${course.name} n'a pas de timer lié`);
+        linkLogger.info(`Cours ${course.name} n'a pas de timer lié`);
         return;
       }
 
@@ -120,11 +204,11 @@ class CourseTimerLinkManager {
         timerConversionNote: `Timer "${linkedTimer?.title || 'inconnu'}" délié le ${new Date().toLocaleString('fr-FR')} et converti en timer rapide`
       });
 
-      console.log(`✅ Cours "${course.name}" délié et converti en timer rapide`);
+      linkLogger.success(`Cours "${course.name}" délié et converti en timer rapide`);
       this.notifyListeners();
 
     } catch (error) {
-      console.error('❌ Erreur déliaison cours:', error);
+      linkLogger.error('Erreur déliaison cours:', error);
       throw error;
     }
   }
@@ -134,7 +218,7 @@ class CourseTimerLinkManager {
    * Quand un timer est supprimé, convertir automatiquement les cours liés
    */
   async handleTimerDeletion(timerId: string): Promise<void> {
-    console.log(`🗑️ Gestion suppression timer ${timerId}`);
+    linkLogger.debug(`Gestion suppression timer ${timerId}`);
 
     try {
       // Récupérer le timer avant suppression pour conversion
@@ -142,7 +226,7 @@ class CourseTimerLinkManager {
       const timerToDelete = timers.find(t => t.id === timerId);
 
       if (!timerToDelete) {
-        console.log(`Timer ${timerId} introuvable`);
+        linkLogger.info(`Timer ${timerId} introuvable`);
         return;
       }
 
@@ -152,7 +236,7 @@ class CourseTimerLinkManager {
 
       // Convertir les cours liés en timers rapides
       for (const course of linkedCourses) {
-        console.log(`🔄 Conversion cours "${course.name}" vers timer rapide`);
+        linkLogger.loading(`Conversion cours "${course.name}" vers timer rapide`);
         
         const quickConfig = this.convertTimerToQuickConfig(timerToDelete);
 
@@ -167,11 +251,11 @@ class CourseTimerLinkManager {
       // Supprimer le timer (qu'il soit lié ou non)
       await centralizedTimerService.removeTimer(timerId);
 
-      console.log(`✅ Timer "${timerToDelete.title}" supprimé${linkedCourses.length > 0 ? ` et ${linkedCourses.length} cours converti(s)` : ''}`);
+      linkLogger.success(`Timer "${timerToDelete.title}" supprimé${linkedCourses.length > 0 ? ` et ${linkedCourses.length} cours converti(s)` : ''}`);
       this.notifyListeners();
 
     } catch (error) {
-      console.error('❌ Erreur suppression timer:', error);
+      linkLogger.error('Erreur suppression timer:', error);
       throw error;
     }
   }
@@ -181,29 +265,38 @@ class CourseTimerLinkManager {
    * Quand un cours est supprimé, délier le timer associé
    */
   async handleCourseDeletion(courseId: string): Promise<void> {
-    console.log(`🗑️ Gestion suppression cours ${courseId}`);
+    linkLogger.debug(`Gestion suppression cours ${courseId}`);
 
     try {
       const course = await subjectService.getSubject(courseId);
       if (!course) {
-        console.log(`Cours ${courseId} déjà supprimé`);
+        linkLogger.info(`Cours ${courseId} déjà supprimé`);
         return;
       }
 
-      // Délier le timer si lié
+      // Délier le timer si lié AVANT de supprimer le cours
       if (course.linkedTimerId) {
+        // Forcer la mise à jour immédiate du timer
         await centralizedTimerService.unlinkTimersFromDeletedSubject(courseId);
-        console.log(`🔓 Timer ${course.linkedTimerId} délié du cours supprimé`);
+        linkLogger.debug(`Timer ${course.linkedTimerId} délié du cours supprimé`);
+        
+        // Notifier immédiatement pour que les composants se mettent à jour
+        this.notifyListeners();
+        
+        // Attendre un peu pour s'assurer que la mise à jour est propagée
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
 
       // Supprimer le cours
       await subjectService.deleteSubject(courseId);
 
-      console.log(`✅ Cours "${course.name}" supprimé`);
+      linkLogger.success(`Cours "${course.name}" supprimé`);
+      
+      // Notifier à nouveau après la suppression complète
       this.notifyListeners();
 
     } catch (error) {
-      console.error('❌ Erreur suppression cours:', error);
+      linkLogger.error('Erreur suppression cours:', error);
       throw error;
     }
   }

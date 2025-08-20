@@ -6,8 +6,10 @@ import { SubjectConfigCard } from '@/components/SubjectConfigCard';
 import { Subject, CreateSubjectDto, UpdateSubjectDto } from '@/types/Subject';
 import { subjectService } from '@/services/subjectService';
 import { useTimerContext } from '@/contexts/TimerContext';
+import { useReactiveTimers } from '@/hooks/useReactiveTimers';
 import { courseTimerLinkManager } from '@/services/courseTimerLinkManager';
 import { Plus, Search, Filter, BookOpen, X } from 'lucide-react';
+import { logger } from '@/utils/logger';
 
 interface StudyTimer {
   subject: Subject;
@@ -16,6 +18,7 @@ interface StudyTimer {
 
 export const StudyPage: React.FC = () => {
   const { timers } = useTimerContext();
+  const { getAvailableTimersForSubject } = useReactiveTimers();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [filteredSubjects, setFilteredSubjects] = useState<Subject[]>([]);
   const [activeTimer, setActiveTimer] = useState<StudyTimer | null>(null);
@@ -34,6 +37,17 @@ export const StudyPage: React.FC = () => {
     loadSubjects();
   }, []);
 
+  // S'abonner aux changements de liaisons timer-cours
+  useEffect(() => {
+    const unsubscribe = courseTimerLinkManager.subscribe(() => {
+      logger.loading('Changement de liaison détecté, rechargement des matières');
+      loadSubjects().catch(error => {
+        logger.error('Erreur lors du rechargement des matières:', error);
+      });
+    });
+    return unsubscribe;
+  }, []);
+
   useEffect(() => {
     filterSubjects();
   }, [subjects, searchQuery, statusFilter]);
@@ -46,7 +60,7 @@ export const StudyPage: React.FC = () => {
       // Vérifier la cohérence des données timer-cours après chaque chargement
       // Cohérence des données assurée par TimerContext
     } catch (error) {
-      console.error('Erreur lors du chargement des matières:', error);
+      logger.error('Erreur lors du chargement des matières:', error);
     } finally {
       setLoading(false);
     }
@@ -126,9 +140,13 @@ export const StudyPage: React.FC = () => {
       }
       
       setShowCreateForm(false);
-      await loadSubjects();
+      try {
+        await loadSubjects();
+      } catch (loadError) {
+        logger.error('Erreur lors du rechargement après création:', loadError);
+      }
     } catch (error) {
-      console.error('Erreur lors de la création:', error);
+      logger.error('Erreur lors de la création:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
       setFormErrors([errorMessage]);
     }
@@ -204,9 +222,13 @@ export const StudyPage: React.FC = () => {
       
       setShowEditForm(false);
       setEditingSubject(null);
-      await loadSubjects();
+      try {
+        await loadSubjects();
+      } catch (loadError) {
+        logger.error('Erreur lors du rechargement après mise à jour:', loadError);
+      }
     } catch (error) {
-      console.error('Erreur lors de la mise à jour:', error);
+      logger.error('Erreur lors de la mise à jour:', error);
     }
   };
 
@@ -228,9 +250,13 @@ export const StudyPage: React.FC = () => {
       );
       
       // Recharger les matières pour mettre à jour les progrès
-      await loadSubjects();
+      try {
+        await loadSubjects();
+      } catch (loadError) {
+        logger.error('Erreur lors du rechargement après ajout de temps:', loadError);
+      }
     } catch (error) {
-      console.error('Erreur lors de l\'ajout du temps d\'étude:', error);
+      logger.error('Erreur lors de l\'ajout du temps d\'étude:', error);
     }
   };
 
@@ -250,9 +276,13 @@ export const StudyPage: React.FC = () => {
         // Utiliser courseTimerLinkManager pour gérer la suppression
         // Cela déliera automatiquement le timer associé
         await courseTimerLinkManager.handleCourseDeletion(subject.id);
-        await loadSubjects();
+        try {
+          await loadSubjects();
+        } catch (loadError) {
+          logger.error('Erreur lors du rechargement après suppression:', loadError);
+        }
       } catch (error) {
-        console.error('Erreur lors de la suppression:', error);
+        logger.error('Erreur lors de la suppression:', error);
       }
     }
   };
@@ -407,7 +437,7 @@ export const StudyPage: React.FC = () => {
         maxWidth="max-w-lg"
       >
         <SubjectConfigCard
-          availableTimers={timers.filter(t => !t.linkedSubject)}
+          availableTimers={getAvailableTimersForSubject()}
           linkedTimer={null}
           isCreating={true}
           onSave={handleSubjectConfigSave}
@@ -428,8 +458,8 @@ export const StudyPage: React.FC = () => {
       >
         <SubjectConfigCard
           subject={editingSubject || undefined}
-          availableTimers={timers.filter(t => !t.linkedSubject || t.linkedSubject.id === editingSubject?.id)}
-          linkedTimer={editingSubject ? timers.find(t => t.linkedSubject?.id === editingSubject.id) : null}
+          availableTimers={getAvailableTimersForSubject(editingSubject?.id)}
+          linkedTimer={editingSubject ? timers.find(t => t.linkedSubject?.id === editingSubject.id && !t.isEphemeral) : null}
           isCreating={false}
           onSave={handleSubjectConfigUpdate}
           onCancel={() => {

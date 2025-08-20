@@ -10,6 +10,7 @@ import { useTimerContext } from '@/contexts/TimerContext';
 import { ActiveTimer } from '@/types/ActiveTimer';
 import { Clock, BookOpen, CheckCircle2, TrendingUp, Calendar, RefreshCw, Target, Play, Timer, Pause, RotateCcw } from 'lucide-react';
 import { formatMinutesToHours } from '@/utils/timeFormat';
+import { calendarLogger } from '@/utils/logger';
 
 // Fonction pour charger l'état initial depuis localStorage
 const loadInitialState = () => {
@@ -26,11 +27,11 @@ const loadInitialState = () => {
         savedWeekViewDate: parsed.savedWeekViewDate ? new Date(parsed.savedWeekViewDate) : new Date()
       };
       
-      console.log('📅 État calendrier restauré:', state.viewMode, state.currentDate.toLocaleDateString());
+      calendarLogger.calendar('État calendrier restauré:', { viewMode: state.viewMode, date: state.currentDate.toLocaleDateString() });
       
       return state;
     } catch (error) {
-      console.error('❌ Erreur chargement état calendrier:', error);
+      calendarLogger.error('Erreur chargement état calendrier:', error);
     }
   }
   
@@ -71,7 +72,7 @@ export const CalendarPage: React.FC = () => {
     averageSessionDuration: 0
   });
   
-  const { timers, startTimer, addTimer, pauseTimer, resetTimer, getTimerState } = useTimerContext();
+  const { timers, startTimer, addTimer, pauseTimer, resetTimer, getTimerState, removeTimer } = useTimerContext();
   const navigate = useNavigate();
 
   // Charger les états persistants supplémentaires
@@ -99,7 +100,7 @@ export const CalendarPage: React.FC = () => {
           });
         }
       } catch (error) {
-        console.error('❌ Erreur lors du chargement de l\'état persistant:', error);
+        calendarLogger.error('Erreur lors du chargement de l\'état persistant:', error);
       }
     }
     
@@ -107,25 +108,36 @@ export const CalendarPage: React.FC = () => {
 
   // Fonction de sauvegarde centralisée
   const saveState = useCallback(() => {
-    const stateToSave = {
-      savedDayViewDate: savedDayViewDate.toISOString(),
-      savedWeekViewDate: savedWeekViewDate.toISOString(),
-      viewMode,
-      currentDate: currentDate.toISOString(),
-      persistentState: {
-        selectedSessions: Array.from(persistentState.selectedSessions),
-        hoveredSession: persistentState.hoveredSession,
-        expandedSessions: Array.from(persistentState.expandedSessions)
-      },
-      dayViewState: {
-        scrollPosition: dayViewState.scrollPosition,
-        expandedSessions: Array.from(dayViewState.expandedSessions),
-        selectedSession: dayViewState.selectedSession
-      },
-      timestamp: new Date().toISOString()
-    };
-    localStorage.setItem('calendarViewState', JSON.stringify(stateToSave));
+    try {
+      const stateToSave = {
+        savedDayViewDate: savedDayViewDate.toISOString(),
+        savedWeekViewDate: savedWeekViewDate.toISOString(),
+        viewMode,
+        currentDate: currentDate.toISOString(),
+        persistentState: {
+          selectedSessions: Array.from(persistentState.selectedSessions),
+          hoveredSession: persistentState.hoveredSession,
+          expandedSessions: Array.from(persistentState.expandedSessions)
+        },
+        dayViewState: {
+          scrollPosition: dayViewState.scrollPosition,
+          expandedSessions: Array.from(dayViewState.expandedSessions),
+          selectedSession: dayViewState.selectedSession
+        },
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem('calendarViewState', JSON.stringify(stateToSave));
+      calendarLogger.debug('État calendrier sauvegardé');
+    } catch (error) {
+      calendarLogger.error('Erreur lors de la sauvegarde:', error);
+    }
   }, [savedDayViewDate, savedWeekViewDate, viewMode, currentDate, persistentState, dayViewState]);
+
+  // Sauvegarde immédiate pour les événements critiques
+  const saveStateImmediate = useCallback(() => {
+    calendarLogger.debug('Sauvegarde immédiate déclenchée');
+    saveState();
+  }, [saveState]);
 
   // Sauvegarder l'état à chaque changement (avec debounce)
   useEffect(() => {
@@ -140,43 +152,82 @@ export const CalendarPage: React.FC = () => {
     loadCalendarData();
   }, [currentDate, viewMode]);
   
-  // Sauvegarder l'état quand on quitte la page
+  // Sauvegarder l'état quand on quitte la page avec guards de nettoyage
   useEffect(() => {
+    let isComponentMounted = true;
+    
     const handleBeforeUnload = () => {
-      saveState();
+      if (isComponentMounted) {
+        saveStateImmediate(); // Sauvegarde immédiate pour événements critiques
+      }
     };
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        saveState();
+      if (isComponentMounted && document.visibilityState === 'hidden') {
+        saveStateImmediate(); // Sauvegarde immédiate pour événements critiques
+      }
+    };
+
+    const handlePageHide = () => {
+      if (isComponentMounted) {
+        saveStateImmediate(); // Sauvegarde immédiate pour événements critiques
       }
     };
 
     // Écouteurs pour sauvegarder avant de quitter
     window.addEventListener('beforeunload', handleBeforeUnload);
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', handlePageHide);
 
     return () => {
-      // Sauvegarde finale quand le composant est démonté
-      saveState();
+      // Marquer le composant comme non monté
+      isComponentMounted = false;
       
-      // Nettoyer les écouteurs
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      // Sauvegarde finale quand le composant est démonté
+      try {
+        saveStateImmediate();
+      } catch (error) {
+        calendarLogger.error('Erreur lors de la sauvegarde finale:', error);
+      }
+      
+      // Nettoyer les écouteurs de manière sécurisée
+      try {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        window.removeEventListener('pagehide', handlePageHide);
+      } catch (error) {
+        calendarLogger.error('Erreur lors du nettoyage des listeners:', error);
+      }
     };
-  }, [saveState]);
+  }, [saveStateImmediate]);
 
-  // S'abonner aux changements de liaisons
+  // S'abonner aux changements de liaisons avec guard de nettoyage
   useEffect(() => {
+    let isSubscribed = true;
+    
     const unsubscribe = courseTimerLinkManager.subscribe(() => {
-      console.log('🔄 Changement de liaison détecté, rechargement calendrier');
-      // Forcer un rechargement complet avec un léger délai pour s'assurer que les données sont sauvegardées
-      setTimeout(() => {
-        loadCalendarData(true);
-      }, 100);
+      if (isSubscribed) {
+        calendarLogger.loading('Changement de liaison détecté, rechargement calendrier');
+        // Sauvegarde immédiate avant rechargement
+        saveStateImmediate();
+        // Forcer un rechargement complet avec un léger délai pour s'assurer que les données sont sauvegardées
+        setTimeout(() => {
+          if (isSubscribed) {
+            loadCalendarData(true);
+          }
+        }, 100);
+      }
     });
-    return unsubscribe;
-  }, []);
+    
+    return () => {
+      isSubscribed = false;
+      try {
+        unsubscribe();
+      } catch (error) {
+        calendarLogger.error('Erreur lors du désabonnement des liaisons:', error);
+      }
+    };
+  }, [saveStateImmediate]);
 
   const loadCalendarData = async (isRefresh = false) => {
     try {
@@ -210,7 +261,7 @@ export const CalendarPage: React.FC = () => {
       });
       
     } catch (error) {
-      console.error('❌ Erreur chargement calendrier:', error);
+      calendarLogger.error('Erreur chargement calendrier:', error);
       // Afficher un état d'erreur à l'utilisateur
       setCalendarDays([]);
     } finally {
@@ -231,25 +282,25 @@ export const CalendarPage: React.FC = () => {
   const getSessionButtonInfo = (session: DayStudySession) => {
     const isLinkedTimer = session.timerType === 'linked';
     
-    // Vérifier s'il y a un timer éphémère en cours pour cette session
     const ephemeralTimer = timers.find(t => 
       t.isEphemeral && 
       t.linkedSubject?.id === session.subject.id
     );
     
-    const timerState = ephemeralTimer ? getTimerState(ephemeralTimer.id) : null;
-    
-    let timerInfo = ephemeralTimer;
+    let timerInfo = null;
     let buttonIcon = <Play size={14} />;
     let buttonText = 'Démarrer';
     let buttonColor = 'bg-blue-600 hover:bg-blue-700 border-blue-700';
     let isTimerRunning = false;
     let action: 'start' | 'pause' | 'reset' | null = null;
     
+    // PRIORITÉ 1: Vérifier d'abord s'il y a un timer éphémère actif
     if (ephemeralTimer) {
-      // Timer éphémère existe
+      const timerState = getTimerState(ephemeralTimer.id);
+      timerInfo = ephemeralTimer;
+      
       if (timerState) {
-        // Timer éphémère actif (en cours d'exécution)
+        // Timer éphémère avec état disponible
         isTimerRunning = timerState.state === 'running' || timerState.state === 'paused';
         
         if (timerState.state === 'running') {
@@ -263,33 +314,50 @@ export const CalendarPage: React.FC = () => {
           buttonColor = 'bg-green-600 hover:bg-green-700 border-green-700';
           action = 'start';
         } else if (timerState.state === 'idle') {
-          buttonIcon = <RotateCcw size={14} />;
-          buttonText = 'Reset';
-          buttonColor = 'bg-gray-600 hover:bg-gray-700 border-gray-700';
-          action = 'reset';
+          // Timer en état idle après reset - permettre de redémarrer
+          buttonIcon = <Play size={14} />;
+          buttonText = 'Démarrer';
+          buttonColor = 'bg-blue-600 hover:bg-blue-700 border-blue-700';
+          action = 'start';
+        } else {
+          // État inconnu, permettre de redémarrer
+          buttonIcon = <Play size={14} />;
+          buttonText = 'Reprendre';
+          buttonColor = 'bg-green-600 hover:bg-green-700 border-green-700';
+          action = 'start';
         }
       } else {
-        // Timer éphémère existe mais n'est pas en cours (arrêté)
+        // Timer éphémère existe mais pas d'état (pas encore démarré ou arrêté)
         buttonIcon = <Play size={14} />;
         buttonText = 'Reprendre';
         buttonColor = 'bg-green-600 hover:bg-green-700 border-green-700';
         action = 'start';
       }
-    } else if (isLinkedTimer && session.timerConfig && typeof session.timerConfig === 'object' && 'timerId' in session.timerConfig) {
-      // Timer lié
+    }
+    // PRIORITÉ 2: Timer lié persistant (seulement si pas de timer éphémère ACTIF)
+    else if (isLinkedTimer && session.timerConfig && typeof session.timerConfig === 'object' && 'timerId' in session.timerConfig) {
+      // Timer lié - cette session utilise un timer persistant existant
       buttonIcon = <Timer size={14} />;
       buttonText = 'Timer lié';
       buttonColor = 'bg-green-600 hover:bg-green-700 border-green-700';
       action = 'start';
-    } else {
-      // Session rapide - pas de timer en cours
+    } 
+    // PRIORITÉ 3: Démarrer - pas de timer en cours
+    else {
       buttonIcon = <Clock size={14} />;
-      buttonText = 'Session rapide';
+      buttonText = 'Démarrer';
       buttonColor = 'bg-purple-600 hover:bg-purple-700 border-purple-700';
       action = 'start';
     }
     
-    return { buttonIcon, buttonText, buttonColor, isTimerRunning, timerInfo, action, ephemeralTimer };
+    // Déterminer si on doit afficher le bouton Reset secondaire
+    let showResetButton = false;
+    if (ephemeralTimer) {
+      const currentTimerState = getTimerState(ephemeralTimer.id);
+      showResetButton = !!(currentTimerState && (currentTimerState.state === 'running' || currentTimerState.state === 'paused'));
+    }
+    
+    return { buttonIcon, buttonText, buttonColor, isTimerRunning, timerInfo, action, showResetButton };
   };
 
   /**
@@ -299,6 +367,18 @@ export const CalendarPage: React.FC = () => {
   const handleLaunchSession = async (session: DayStudySession) => {
     try {
       console.log(`▶️ Lancement session ${session.subject.name}`);
+      
+      // Vérifier s'il existe un timer éphémère pour ce cours
+      const existingEphemeralTimer = timers.find(t => 
+        t.isEphemeral && 
+        t.linkedSubject?.id === session.subject.id
+      );
+      
+      // Si un timer éphémère existe déjà, le supprimer d'abord
+      if (existingEphemeralTimer) {
+        console.log(`🗑️ Suppression de l'ancien timer éphémère: ${existingEphemeralTimer.title}`);
+        await removeTimer(existingEphemeralTimer.id);
+      }
       
       const launchResult = await calendarRenderer.launchStudySession(session);
       
@@ -318,7 +398,7 @@ export const CalendarPage: React.FC = () => {
         
         const quickTimer: ActiveTimer = {
           id: `quick_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          title: `${session.subject.name} - Session`,
+          title: `${session.subject.name}`,
           config: launchResult.timerConfig,
           isPomodoroMode: launchResult.timerConfig.shortBreakDuration > 0,
           createdAt: new Date(),
@@ -360,6 +440,7 @@ export const CalendarPage: React.FC = () => {
           break;
           
         case 'reset':
+          console.log(`🔄 Reset timer éphémère: ${ephemeralTimer.id}`);
           resetTimer(ephemeralTimer.id);
           break;
           
@@ -670,7 +751,13 @@ export const CalendarPage: React.FC = () => {
                   }
                   
                   // Obtenir les infos du bouton selon l'état du timer
-                  const { buttonIcon, buttonText, buttonColor, isTimerRunning, timerInfo, action, ephemeralTimer } = getSessionButtonInfo(session);
+                  const { buttonIcon, buttonText, buttonColor, isTimerRunning, timerInfo, action, showResetButton } = getSessionButtonInfo(session);
+                  
+                  // Récupérer le timer éphémère séparément pour les actions
+                  const ephemeralTimer = timers.find(t => 
+                    t.isEphemeral && 
+                    t.linkedSubject?.id === session.subject.id
+                  );
                   
                   return (
                     <div key={session.id} className="border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md hover:border-gray-300 transition-all duration-200">
@@ -695,29 +782,54 @@ export const CalendarPage: React.FC = () => {
                             )}
                           </div>
                         </div>
-                        <button 
-                          onClick={() => {
-                            if (ephemeralTimer && (action === 'start' || action === 'pause' || action === 'reset')) {
-                              // Si un timer éphémère existe, toujours utiliser handleEphemeralTimerAction
-                              handleEphemeralTimerAction(session, action, ephemeralTimer);
-                            } else if (action === 'start') {
-                              // Nouveau timer à créer
-                              handleLaunchSession(session);
-                            } else if (isTimerRunning) {
-                              // Si le timer est en cours, rediriger vers la page des timers
-                              navigate('/timers');
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => {
+                              if (ephemeralTimer) {
+                                const timerState = getTimerState(ephemeralTimer.id);
+                                
+                                // Si le timer est en état idle, créer un nouveau timer avec les nouvelles configs
+                                if (timerState?.state === 'idle' && action === 'start') {
+                                  handleLaunchSession(session); // Cela supprimera l'ancien et en créera un nouveau
+                                } 
+                                // Sinon, gérer normalement les actions pause/resume
+                                else if (action === 'start' || action === 'pause' || action === 'reset') {
+                                  handleEphemeralTimerAction(session, action, ephemeralTimer);
+                                }
+                              } else if (action === 'start') {
+                                // Nouveau timer à créer
+                                handleLaunchSession(session);
+                              } else if (isTimerRunning) {
+                                // Si le timer est en cours, rediriger vers la page des timers
+                                navigate('/timers');
+                              }
+                            }}
+                            className={`px-4 py-2 ${buttonColor} text-white text-sm font-medium rounded-lg border shadow-sm transition-all duration-200 flex items-center gap-2`}
+                            title={
+                              action === 'pause' ? 'Mettre en pause' :
+                              action === 'start' && isTimerRunning ? 'Reprendre' :
+                              isTimerRunning ? 'Voir le timer en cours' : 'Démarrer la session'
                             }
-                          }}
-                          className={`px-4 py-2 ${buttonColor} text-white text-sm font-medium rounded-lg border shadow-sm transition-all duration-200 flex items-center gap-2`}
-                          title={
-                            action === 'pause' ? 'Mettre en pause' :
-                            action === 'reset' ? 'Réinitialiser' :
-                            isTimerRunning ? 'Voir le timer en cours' : 'Démarrer la session'
-                          }
-                        >
-                          {buttonIcon}
-                          {buttonText}
-                        </button>
+                          >
+                            {buttonIcon}
+                            {buttonText}
+                          </button>
+                          
+                          {/* Bouton Reset secondaire - visible quand le timer est actif */}
+                          {showResetButton && (
+                            <button
+                              onClick={() => {
+                                if (ephemeralTimer) {
+                                  handleEphemeralTimerAction(session, 'reset', ephemeralTimer);
+                                }
+                              }}
+                              className="px-3 py-2 bg-gray-600 hover:bg-gray-700 border-gray-700 text-white text-sm font-medium rounded-lg border shadow-sm transition-all duration-200 flex items-center gap-1"
+                              title="Réinitialiser le timer"
+                            >
+                              <RotateCcw size={14} />
+                            </button>
+                          )}
+                        </div>
                       </div>
                       
                       {/* Barre de progression de la session */}
