@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Subject, DayLabels, DayOfWeek } from '@/types/Subject';
-import { formatDuration } from '@/utils/timeFormat';
-import { Clock, Calendar, Target, Edit, Trash2, Link, Unlink } from 'lucide-react';
+import { Calendar, Target, Edit, Trash2, Link, Unlink } from 'lucide-react';
 
 interface SubjectCardProps {
   subject: Subject;
@@ -44,9 +43,9 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
     if (hours > 0) {
-      return remainingMinutes > 0 ? `${hours}h${remainingMinutes}min/semaine` : `${hours}h/semaine`;
+      return remainingMinutes > 0 ? `${hours.toString().padStart(2, '0')}:${remainingMinutes.toString().padStart(2, '0')}/semaine` : `${hours.toString().padStart(2, '0')}:00/semaine`;
     }
-    return `${remainingMinutes}min/semaine`;
+    return `00:${remainingMinutes.toString().padStart(2, '0')}/semaine`;
   };
 
   return (
@@ -85,7 +84,7 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
         )}
       </div>
 
-      {/* Les 4 informations principales */}
+      {/* Les 3 informations principales */}
       <div className="space-y-4">
         {/* 1. Objectif par semaine */}
         <div className="flex items-center space-x-3">
@@ -113,20 +112,7 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
           </div>
         </div>
 
-        {/* 3. Temps déjà étudié */}
-        <div className="flex items-center space-x-3">
-          <div className="p-2 bg-orange-100 rounded-lg">
-            <Clock size={18} className="text-orange-600" />
-          </div>
-          <div>
-            <p className="text-sm text-gray-500">Temps déjà étudié</p>
-            <p className="text-base font-medium text-gray-900">
-              {formatDuration(subject.timeSpent || 0)}
-            </p>
-          </div>
-        </div>
-
-        {/* 4. Liaison avec timer */}
+        {/* 3. Liaison avec timer */}
         <div className="flex items-center space-x-3">
           <div className={`p-2 rounded-lg ${
             linkedTimerName

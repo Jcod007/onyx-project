@@ -2,15 +2,30 @@
  * Utilitaires de formatage du temps - Migration de TimeFormatService.java
  */
 
-export function formatDuration(seconds: number): string {
+export function formatDuration(seconds: number, context?: 'timer' | 'planning' | 'stats'): string {
   if (seconds < 0) return '00:00';
   
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
   
+  // Contexte spécifique
+  if (context === 'timer') {
+    // Timers: MM:SS si < 1h, HH:MM:SS si >= 1h
+    if (hours > 0) {
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+  
+  if (context === 'planning' || context === 'stats') {
+    // Planification/Stats: toujours HH:MM
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  }
+  
+  // Auto: >= 1h → HH:MM, < 1h → MM:SS
   if (hours > 0) {
-    return `${hours}h${minutes.toString().padStart(2, '0')}`;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   }
   
   return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
@@ -26,15 +41,15 @@ export function formatHoursMinutes(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   
-  return `${hours.toString().padStart(2, '0')}h${minutes.toString().padStart(2, '0')}`;
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 }
 
-// Formater les minutes en format 00h00
+// Formater les minutes en format 00:00
 export function formatMinutesToHours(totalMinutes: number): string {
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
   
-  return `${hours.toString().padStart(2, '0')}h${minutes.toString().padStart(2, '0')}`;
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 }
 
 export function parseTimeInput(timeStr: string): { hours: number; minutes: number; seconds: number } {

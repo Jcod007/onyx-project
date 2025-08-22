@@ -69,7 +69,7 @@ const CompactTimerCard: React.FC<{
       `}>
         {getTimerIcon()}
         <span className={`text-xs font-mono ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
-          {formatDuration(timeRemaining)}
+          {formatDuration(timeRemaining, 'timer')}
         </span>
         <div className={`w-2 h-2 rounded-full ${state === 'running' ? 'bg-green-500 animate-pulse' : 
           state === 'paused' ? 'bg-orange-500' : 'bg-gray-400'}`} />
@@ -112,7 +112,7 @@ const CompactTimerCard: React.FC<{
             ${state === 'finished' ? 'text-purple-600 dark:text-purple-400' : ''}
             ${state === 'idle' ? (isDark ? 'text-gray-300' : 'text-gray-600') : ''}
           `}>
-            {formatDuration(timeRemaining)}
+            {formatDuration(timeRemaining, 'timer')}
           </div>
           
           {/* Info Pomodoro */}

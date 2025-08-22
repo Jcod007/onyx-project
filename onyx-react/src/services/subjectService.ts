@@ -209,9 +209,9 @@ class SubjectService {
     progressPercentage: string;
   } {
     return {
-      timeSpent: formatDuration(subject.timeSpent),
-      targetTime: formatDuration(subject.targetTime),
-      remainingTime: formatDuration(Math.max(0, subject.targetTime - subject.timeSpent)),
+      timeSpent: formatDuration(subject.timeSpent, 'stats'),
+      targetTime: formatDuration(subject.targetTime, 'planning'),
+      remainingTime: formatDuration(Math.max(0, subject.targetTime - subject.timeSpent), 'planning'),
       progressPercentage: `${Math.round(calculateProgress(subject.timeSpent, subject.targetTime))}%`
     };
   }

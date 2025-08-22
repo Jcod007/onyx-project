@@ -104,7 +104,7 @@ export const TopTimerIndicator: React.FC<TopTimerIndicatorProps> = ({
           text-sm font-mono font-medium
           ${getStateColor(urgentState.state)}
         `}>
-          {formatDuration(urgentState.timeRemaining)}
+          {formatDuration(urgentState.timeRemaining, 'timer')}
         </span>
         
         {/* Nom du timer (tronqué) */}

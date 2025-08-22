@@ -117,7 +117,7 @@ export const HomePage: React.FC = () => {
             <div>
               <p className="text-sm text-gray-600">Temps total d'étude</p>
               <p className="text-2xl font-bold text-purple-600">
-                {formatDuration(stats.totalTimeSpent)}
+                {formatDuration(stats.totalTimeSpent, 'stats')}
               </p>
             </div>
             <div className="p-3 bg-purple-100 rounded-lg">
@@ -166,10 +166,10 @@ export const HomePage: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium text-gray-900">
-                      {formatDuration(subject.timeSpent)}
+                      {formatDuration(subject.timeSpent, 'stats')}
                     </p>
                     <p className="text-xs text-gray-500">
-                      / {formatDuration(subject.targetTime)}
+                      / {formatDuration(subject.targetTime, 'planning')}
                     </p>
                   </div>
                 </div>
@@ -271,8 +271,8 @@ export const HomePage: React.FC = () => {
             </div>
             
             <div className="flex justify-between text-sm text-gray-500">
-              <span>{formatDuration(stats.totalTimeSpent)} étudiés</span>
-              <span>{formatDuration(stats.totalTargetTime)} objectif</span>
+              <span>{formatDuration(stats.totalTimeSpent, 'stats')} étudiés</span>
+              <span>{formatDuration(stats.totalTargetTime, 'planning')} objectif</span>
             </div>
           </div>
         </div>
