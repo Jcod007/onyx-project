@@ -112,65 +112,77 @@ class CalendarRenderer {
         defaultTimerMode: subject.defaultTimerMode
       });
       
-      // Vérification spéciale pour Histoire
-      if (subject.name.toLowerCase().includes('histoire')) {
-        console.log(`🔍 HISTOIRE DÉTECTION - linkedTimerId:`, subject.linkedTimerId);
-        console.log(`🔍 HISTOIRE DÉTECTION - hasLinkedTimer:`, !!subject.linkedTimerId);
+      // Détection et réparation des incohérences de liaison (pour tous les cours)
+      const possibleTimer = allTimers.find(t => 
+        t.linkedSubject && t.linkedSubject.id === subject.id
+      );
+      
+      if (possibleTimer && !subject.linkedTimerId) {
+        // INCOHÉRENCE DÉTECTÉE: Le timer pointe vers le cours mais le cours n'a pas le linkedTimerId
+        console.warn(`🔧 INCOHÉRENCE DÉTECTÉE: Timer ${possibleTimer.title} lié au cours ${subject.name} mais linkedTimerId manquant`);
+        console.log(`🔧 RÉPARATION: Ajout linkedTimerId=${possibleTimer.id} au cours ${subject.name}`);
         
-        // Vérifier s'il y a une incohérence dans les timers
-        const possibleTimer = allTimers.find(t => t.linkedSubject && t.linkedSubject.name.toLowerCase().includes('histoire'));
-        if (possibleTimer) {
-          console.log(`🔍 HISTOIRE - Timer trouvé dans les timers actifs:`, {
-            timerId: possibleTimer.id,
-            timerTitle: possibleTimer.title,
-            linkedSubjectId: possibleTimer.linkedSubject?.id,
-            courseId: subject.id,
-            courseName: subject.name,
-            MISMATCH: possibleTimer.linkedSubject?.id !== subject.id || possibleTimer.id !== subject.linkedTimerId
+        try {
+          await subjectService.updateSubject(subject.id, {
+            linkedTimerId: possibleTimer.id,
+            defaultTimerMode: 'simple'
           });
           
-          // RÉPARATION AUTOMATIQUE: Si le timer est lié au cours mais le cours n'a pas le linkedTimerId
-          if (possibleTimer.linkedSubject?.id === subject.id && !subject.linkedTimerId) {
-            console.log(`🔧 RÉPARATION AUTOMATIQUE: Ajout linkedTimerId au cours Histoire`);
-            try {
-              await subjectService.updateSubject(subject.id, {
-                linkedTimerId: possibleTimer.id,
-                defaultTimerMode: 'simple'
-              });
-              // Mettre à jour l'objet local
-              subject.linkedTimerId = possibleTimer.id;
-              subject.defaultTimerMode = 'simple';
-              console.log(`✅ RÉPARATION TERMINÉE: linkedTimerId ajouté`);
-            } catch (error) {
-              console.error(`❌ ÉCHEC RÉPARATION:`, error);
-            }
-          }
+          // Mettre à jour l'objet local pour cette session
+          subject.linkedTimerId = possibleTimer.id;
+          subject.defaultTimerMode = 'simple';
+          console.log(`✅ RÉPARATION TERMINÉE: Cours ${subject.name} maintenant lié au timer ${possibleTimer.title}`);
+        } catch (error) {
+          console.error(`❌ ÉCHEC RÉPARATION pour ${subject.name}:`, error);
+        }
+      } else if (subject.linkedTimerId && !possibleTimer) {
+        // INCOHÉRENCE INVERSE: Le cours a un linkedTimerId mais le timer n'existe pas ou n'est pas lié
+        const referencedTimer = allTimers.find(t => t.id === subject.linkedTimerId);
+        if (!referencedTimer) {
+          console.warn(`🔧 TIMER MANQUANT: Cours ${subject.name} référence timer ${subject.linkedTimerId} qui n'existe pas`);
+        } else if (!referencedTimer.linkedSubject || referencedTimer.linkedSubject.id !== subject.id) {
+          console.warn(`🔧 LIAISON CASSÉE: Timer ${referencedTimer.title} n'est pas lié au cours ${subject.name}`);
         }
       }
 
+      // LOGIQUE ROBUSTE DE DÉTERMINATION DU TYPE DE TIMER
       if (subject.linkedTimerId) {
-        // Timer lié
+        // Cours configuré pour utiliser un timer lié
         const linkedTimer = allTimers.find(t => t.id === subject.linkedTimerId);
-        if (linkedTimer) {
-          console.log(`✅ Timer lié trouvé pour ${subject.name}: ${linkedTimer.title}`);
+        
+        if (linkedTimer && linkedTimer.linkedSubject?.id === subject.id) {
+          // Timer lié valide et cohérent
+          console.log(`✅ Timer lié valide pour ${subject.name}: ${linkedTimer.title}`);
           timerType = 'linked';
           timerConfig = { timerId: subject.linkedTimerId };
         } else {
-          // Timer lié introuvable → fallback vers timer rapide
-          console.warn(`⚠️ Timer lié ${subject.linkedTimerId} introuvable pour ${subject.name}, fallback timer rapide`);
+          // Timer lié invalide ou incohérent → fallback intelligent
+          if (linkedTimer) {
+            console.warn(`⚠️ Timer ${linkedTimer.title} trouvé mais liaison incohérente pour ${subject.name}`);
+          } else {
+            console.warn(`⚠️ Timer lié ${subject.linkedTimerId} introuvable pour ${subject.name}`);
+          }
+          
+          // Fallback vers timer rapide basé sur les dernières données connues
           timerType = 'quick';
-          timerConfig = this.createFallbackQuickConfig(subject);
+          if (subject.quickTimerConfig && Object.keys(subject.quickTimerConfig).length > 0) {
+            timerConfig = subject.quickTimerConfig;
+            console.log(`🔄 Fallback: Utilisation quickTimerConfig existante pour ${subject.name}`);
+          } else {
+            timerConfig = this.createFallbackQuickConfig(subject);
+            console.log(`🔄 Fallback: Génération config par défaut pour ${subject.name}`);
+          }
         }
-      } else {
-        // Timer rapide
-        console.log(`⚡ Pas de timer lié pour ${subject.name}, utilisation timer rapide`);
+      } else if (subject.defaultTimerMode === 'quick_timer' && subject.quickTimerConfig) {
+        // Cours configuré explicitement pour timer rapide
+        console.log(`⚡ Timer rapide configuré pour ${subject.name}`);
         timerType = 'quick';
-        if (subject.quickTimerConfig) {
-          timerConfig = subject.quickTimerConfig;
-        } else {
-          // Générer config par défaut
-          timerConfig = this.createDefaultQuickConfig(subject);
-        }
+        timerConfig = subject.quickTimerConfig;
+      } else {
+        // Cours sans configuration spécifique → timer rapide par défaut
+        console.log(`⚡ Pas de configuration timer pour ${subject.name}, génération par défaut`);
+        timerType = 'quick';
+        timerConfig = this.createDefaultQuickConfig(subject);
       }
 
       return {

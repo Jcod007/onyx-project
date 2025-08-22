@@ -231,6 +231,12 @@ export const CalendarPage: React.FC = () => {
     };
   }, [saveStateImmediate]);
 
+  // Forcer rafraîchissement quand l'état des timers change
+  useEffect(() => {
+    // Surveiller les changements d'état des timers pour mettre à jour l'affichage des boutons
+    // Le re-render sera déclenché automatiquement par le changement de timers et getTimerState
+  }, [timers, getTimerState]);
+
   const loadCalendarData = async (isRefresh = false) => {
     try {
       if (isRefresh) {
@@ -338,11 +344,43 @@ export const CalendarPage: React.FC = () => {
     }
     // PRIORITÉ 2: Timer lié persistant (seulement si pas de timer éphémère ACTIF)
     else if (isLinkedTimer && session.timerConfig && typeof session.timerConfig === 'object' && 'timerId' in session.timerConfig) {
-      // Timer lié - cette session utilise un timer persistant existant
-      buttonIcon = <Timer size={14} />;
-      buttonText = 'Timer lié';
-      buttonColor = 'bg-green-600 hover:bg-green-700 border-green-700';
-      action = 'start';
+      // Timer lié - vérifier l'état d'exécution du timer persistant
+      const linkedTimerId = session.timerConfig.timerId;
+      const linkedTimerState = getTimerState(linkedTimerId);
+      const linkedTimer = timers.find(t => t.id === linkedTimerId);
+      
+      if (linkedTimer) {
+        timerInfo = linkedTimer;
+      }
+      
+      if (linkedTimerState) {
+        // Timer lié avec état disponible - adapter le bouton selon l'état
+        isTimerRunning = linkedTimerState.state === 'running' || linkedTimerState.state === 'paused';
+        
+        if (linkedTimerState.state === 'running') {
+          buttonIcon = <Pause size={14} />;
+          buttonText = 'Pause Timer';
+          buttonColor = 'bg-orange-600 hover:bg-orange-700 border-orange-700';
+          action = 'pause';
+        } else if (linkedTimerState.state === 'paused') {
+          buttonIcon = <Play size={14} />;
+          buttonText = 'Reprendre Timer';
+          buttonColor = 'bg-green-600 hover:bg-green-700 border-green-700';
+          action = 'start';
+        } else {
+          // Timer lié en état idle ou finished
+          buttonIcon = <Timer size={14} />;
+          buttonText = 'Démarrer Timer';
+          buttonColor = 'bg-green-600 hover:bg-green-700 border-green-700';
+          action = 'start';
+        }
+      } else {
+        // Timer lié sans état d'exécution
+        buttonIcon = <Timer size={14} />;
+        buttonText = 'Démarrer Timer';
+        buttonColor = 'bg-green-600 hover:bg-green-700 border-green-700';
+        action = 'start';
+      }
     } 
     // PRIORITÉ 3: Démarrer - pas de timer en cours
     else {
@@ -357,6 +395,10 @@ export const CalendarPage: React.FC = () => {
     if (ephemeralTimer) {
       const currentTimerState = getTimerState(ephemeralTimer.id);
       showResetButton = !!(currentTimerState && (currentTimerState.state === 'running' || currentTimerState.state === 'paused'));
+    } else if (isLinkedTimer && session.timerConfig && typeof session.timerConfig === 'object' && 'timerId' in session.timerConfig) {
+      // Bouton reset pour timer lié aussi
+      const linkedTimerState = getTimerState(session.timerConfig.timerId);
+      showResetButton = !!(linkedTimerState && (linkedTimerState.state === 'running' || linkedTimerState.state === 'paused'));
     }
     
     return { buttonIcon, buttonText, buttonColor, isTimerRunning, timerInfo, action, showResetButton };
@@ -385,18 +427,27 @@ export const CalendarPage: React.FC = () => {
       const launchResult = await calendarRenderer.launchStudySession(session);
       
       if (launchResult.mode === 'linked' && launchResult.timer) {
-        // Timer lié - lancer le timer existant ET rediriger vers la page des timers
+        // Timer lié - vérifier qu'il n'y a pas de conflit avec un timer éphémère
         console.log(`🔗 Lancement timer lié: ${launchResult.timer.title}`);
-        startTimer(launchResult.timer.id, launchResult.timer);
         
+        // S'assurer qu'aucun timer éphémère n'interfère
+        const conflictingEphemeral = timers.find(t => 
+          t.isEphemeral && t.linkedSubject?.id === session.subject.id
+        );
+        if (conflictingEphemeral) {
+          console.log(`🗑️ Suppression timer éphémère en conflit: ${conflictingEphemeral.title}`);
+          await removeTimer(conflictingEphemeral.id);
+        }
+        
+        startTimer(launchResult.timer.id, launchResult.timer);
         console.log('🚀 Session timer lié lancée avec succès');
         
         // Rediriger vers la page des timers pour les timers liés
         navigate('/timers');
         
       } else {
-        // Timer rapide/simple - créer et lancer UNIQUEMENT dans le widget (pas de redirection)
-        console.log(`⚡ Lancement timer rapide pour ${session.subject.name}`);
+        // Timer rapide/simple - créer un timer éphémère UNIQUEMENT dans le calendrier
+        console.log(`⚡ Lancement timer rapide éphémère pour ${session.subject.name}`);
         
         const quickTimer: ActiveTimer = {
           id: `quick_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -787,22 +838,37 @@ export const CalendarPage: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <button 
                             onClick={() => {
+                              // GESTION DES ACTIONS selon le type de timer
                               if (ephemeralTimer) {
+                                // Timer éphémère - gestion locale dans le calendrier
                                 const timerState = getTimerState(ephemeralTimer.id);
                                 
-                                // Si le timer est en état idle, créer un nouveau timer avec les nouvelles configs
                                 if (timerState?.state === 'idle' && action === 'start') {
-                                  handleLaunchSession(session); // Cela supprimera l'ancien et en créera un nouveau
-                                } 
-                                // Sinon, gérer normalement les actions pause/resume
-                                else if (action === 'start' || action === 'pause' || action === 'reset') {
+                                  handleLaunchSession(session); // Recréer un nouveau timer
+                                } else if (action === 'start' || action === 'pause' || action === 'reset') {
                                   handleEphemeralTimerAction(session, action, ephemeralTimer);
                                 }
+                              } else if (session.timerType === 'linked' && session.timerConfig && typeof session.timerConfig === 'object' && 'timerId' in session.timerConfig) {
+                                // Timer lié - gestion des actions pause/resume ou redirection
+                                const linkedTimerId = session.timerConfig.timerId;
+                                const linkedTimer = timers.find(t => t.id === linkedTimerId);
+                                
+                                if (linkedTimer && (action === 'pause' || action === 'start')) {
+                                  // Actions pause/resume sur timer lié
+                                  if (action === 'pause') {
+                                    pauseTimer(linkedTimerId);
+                                  } else if (action === 'start') {
+                                    startTimer(linkedTimerId, linkedTimer);
+                                  }
+                                } else {
+                                  // Démarrer nouveau timer lié ou rediriger vers page timers
+                                  handleLaunchSession(session);
+                                }
                               } else if (action === 'start') {
-                                // Nouveau timer à créer
+                                // Nouveau timer à créer (timer rapide)
                                 handleLaunchSession(session);
                               } else if (isTimerRunning) {
-                                // Si le timer est en cours, rediriger vers la page des timers
+                                // Fallback: rediriger vers la page des timers
                                 navigate('/timers');
                               }
                             }}
@@ -823,6 +889,10 @@ export const CalendarPage: React.FC = () => {
                               onClick={() => {
                                 if (ephemeralTimer) {
                                   handleEphemeralTimerAction(session, 'reset', ephemeralTimer);
+                                } else if (session.timerType === 'linked' && session.timerConfig && typeof session.timerConfig === 'object' && 'timerId' in session.timerConfig) {
+                                  // Reset pour timer lié
+                                  const linkedTimerId = session.timerConfig.timerId;
+                                  resetTimer(linkedTimerId);
                                 }
                               }}
                               className="px-3 py-2 bg-gray-600 hover:bg-gray-700 border-gray-700 text-white text-sm font-medium rounded-lg border shadow-sm transition-all duration-200 flex items-center gap-1"
