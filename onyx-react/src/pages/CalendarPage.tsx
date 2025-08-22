@@ -8,7 +8,7 @@ import { calendarRenderer } from '@/services/calendarRenderer';
 import { timerSubjectLinkService } from '@/services/timerSubjectLinkService';
 import { useTimerContext } from '@/contexts/TimerContext';
 import { ActiveTimer } from '@/types/ActiveTimer';
-import { Clock, BookOpen, CheckCircle2, TrendingUp, Calendar, RefreshCw, Target, Play, Timer, Pause, RotateCcw } from 'lucide-react';
+import { Clock, BookOpen, CheckCircle2, TrendingUp, Calendar, RefreshCw, Target, Play, Timer, Pause, RotateCcw, Coffee } from 'lucide-react';
 import { formatMinutesToHours } from '@/utils/timeFormat';
 import { calendarLogger } from '@/utils/logger';
 import { storageService, STORAGE_KEYS } from '@/services/storageService';
@@ -311,34 +311,47 @@ export const CalendarPage: React.FC = () => {
         // Timer éphémère avec état disponible
         isTimerRunning = timerState.state === 'running' || timerState.state === 'paused';
         
+        // Déterminer l'icône selon le type de timer éphémère
+        const isPomodoro = session.timerType === 'quick' && 
+                          session.timerConfig && 
+                          typeof session.timerConfig === 'object' && 
+                          'type' in session.timerConfig && 
+                          session.timerConfig.type === 'pomodoro';
+        const defaultIcon = isPomodoro ? <Coffee size={14} /> : <Clock size={14} />;
+        
         if (timerState.state === 'running') {
           buttonIcon = <Pause size={14} />;
-          buttonText = 'Pause';
-          buttonColor = 'bg-orange-600 hover:bg-orange-700 border-orange-700';
+          buttonText = 'Pause Timer';
+          buttonColor = 'bg-red-600 hover:bg-red-700 border-red-700';
           action = 'pause';
         } else if (timerState.state === 'paused') {
-          buttonIcon = <Play size={14} />;
-          buttonText = 'Reprendre';
-          buttonColor = 'bg-green-600 hover:bg-green-700 border-green-700';
+          buttonIcon = defaultIcon;
+          buttonText = 'Reprendre Timer';
+          buttonColor = 'bg-blue-600 hover:bg-blue-700 border-blue-700';
           action = 'start';
         } else if (timerState.state === 'idle') {
           // Timer en état idle après reset - permettre de redémarrer
-          buttonIcon = <Play size={14} />;
-          buttonText = 'Démarrer';
+          buttonIcon = defaultIcon;
+          buttonText = 'Démarrer Timer';
           buttonColor = 'bg-blue-600 hover:bg-blue-700 border-blue-700';
           action = 'start';
         } else {
           // État inconnu, permettre de redémarrer
-          buttonIcon = <Play size={14} />;
-          buttonText = 'Reprendre';
-          buttonColor = 'bg-green-600 hover:bg-green-700 border-green-700';
+          buttonIcon = defaultIcon;
+          buttonText = 'Reprendre Timer';
+          buttonColor = 'bg-blue-600 hover:bg-blue-700 border-blue-700';
           action = 'start';
         }
       } else {
         // Timer éphémère existe mais pas d'état (pas encore démarré ou arrêté)
-        buttonIcon = <Play size={14} />;
-        buttonText = 'Reprendre';
-        buttonColor = 'bg-green-600 hover:bg-green-700 border-green-700';
+        const isPomodoro = session.timerType === 'quick' && 
+                          session.timerConfig && 
+                          typeof session.timerConfig === 'object' && 
+                          'type' in session.timerConfig && 
+                          session.timerConfig.type === 'pomodoro';
+        buttonIcon = isPomodoro ? <Coffee size={14} /> : <Clock size={14} />;
+        buttonText = 'Reprendre Timer';
+        buttonColor = 'bg-blue-600 hover:bg-blue-700 border-blue-700';
         action = 'start';
       }
     }
@@ -385,7 +398,7 @@ export const CalendarPage: React.FC = () => {
     // PRIORITÉ 3: Démarrer - pas de timer en cours
     else {
       buttonIcon = <Clock size={14} />;
-      buttonText = 'Démarrer';
+      buttonText = 'Démarrer Timer';
       buttonColor = 'bg-purple-600 hover:bg-purple-700 border-purple-700';
       action = 'start';
     }
@@ -804,7 +817,7 @@ export const CalendarPage: React.FC = () => {
                   }
                   
                   // Obtenir les infos du bouton selon l'état du timer
-                  const { buttonIcon, buttonText, buttonColor, isTimerRunning, timerInfo, action, showResetButton } = getSessionButtonInfo(session);
+                  const { buttonIcon, buttonText, buttonColor, isTimerRunning, action, showResetButton } = getSessionButtonInfo(session);
                   
                   // Récupérer le timer éphémère séparément pour les actions
                   const ephemeralTimer = timers.find(t => 
@@ -828,9 +841,9 @@ export const CalendarPage: React.FC = () => {
                             <span className="text-sm text-gray-600">{formatMinutesToHours(session.plannedDuration)} planifiées</span>
                             <span className="text-sm text-gray-600">{formatMinutesToHours(studiedMinutes)} étudiées</span>
                             <span className="text-sm text-gray-600">{formatMinutesToHours(remainingMinutes)} restantes</span>
-                            {timerInfo && 'title' in timerInfo && (
-                              <span className="text-sm text-gray-500 italic">
-                                ({(timerInfo as any).title})
+                            {ephemeralTimer && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                                ⚡ Timer éphémère
                               </span>
                             )}
                           </div>

@@ -49,7 +49,12 @@ const CompactTimerCard: React.FC<{
   };
 
   const getTimerIcon = () => {
-    if (timer.isPomodoroMode) {
+    // Détecter si c'est un timer Pomodoro selon plusieurs critères
+    const isPomodoro = timer.isPomodoroMode || 
+                      (timer.config?.longBreakInterval && timer.config.longBreakInterval > 1) ||
+                      (timer.config?.shortBreakDuration && timer.config.shortBreakDuration > 0);
+    
+    if (isPomodoro) {
       return <Coffee size={12} className="text-red-500" />;
     }
     return <Clock size={12} className="text-blue-500" />;
