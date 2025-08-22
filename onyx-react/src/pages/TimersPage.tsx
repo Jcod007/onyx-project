@@ -5,9 +5,10 @@ import { TimerConfig } from '@/services/timerService';
 import { Subject } from '@/types/Subject';
 import { useTimerContext } from '@/contexts/TimerContext';
 import { ActiveTimer } from '@/types/ActiveTimer';
-import { courseTimerLinkManager } from '@/services/courseTimerLinkManager';
+import { integratedTimerService } from '@/services/integratedTimerService';
 import { soundConfig } from '@/utils/soundConfig';
 import { Plus, Settings, Volume2, VolumeX } from 'lucide-react';
+import { storageService, STORAGE_KEYS, getSessionKey } from '@/services/storageService';
 
 export const TimersPage: React.FC = () => {
   // Utiliser uniquement le contexte global - source unique de vérité
@@ -27,15 +28,13 @@ export const TimersPage: React.FC = () => {
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [editingTimer, setEditingTimer] = useState<ActiveTimer | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(() => {
-    // Charger la préférence de son depuis localStorage
-    const saved = localStorage.getItem('onyx_sound_enabled');
-    return saved !== null ? saved === 'true' : true;
+    // Charger la préférence de son depuis storageService
+    return storageService.load(STORAGE_KEYS.SOUND_ENABLED, true);
   });
   const [completedSessions, setCompletedSessions] = useState(() => {
-    // Charger le compteur de sessions du jour depuis localStorage
-    const today = new Date().toDateString();
-    const saved = localStorage.getItem('onyx_sessions_' + today);
-    return saved ? parseInt(saved, 10) : 0;
+    // Charger le compteur de sessions du jour depuis storageService
+    const sessionKey = getSessionKey();
+    return storageService.load(sessionKey, 0);
   });
 
   // Note: La synchronisation est maintenant automatique via TimerProvider
@@ -48,8 +47,8 @@ export const TimersPage: React.FC = () => {
 
   // Effet pour sauvegarder le compteur de sessions
   useEffect(() => {
-    const today = new Date().toDateString();
-    localStorage.setItem('onyx_sessions_' + today, completedSessions.toString());
+    const sessionKey = getSessionKey();
+    storageService.save(sessionKey, completedSessions);
   }, [completedSessions]);
 
   // Effet pour écouter les fins de timer et incrémenter le compteur
@@ -76,10 +75,10 @@ export const TimersPage: React.FC = () => {
   // Fonction pour réinitialiser le compteur quotidien
   const resetDailyCounter = useCallback(() => {
     const today = new Date().toDateString();
-    const lastReset = localStorage.getItem('onyx_last_reset');
+    const lastReset = storageService.load(STORAGE_KEYS.LAST_RESET, '');
     if (lastReset !== today) {
       setCompletedSessions(0);
-      localStorage.setItem('onyx_last_reset', today);
+      storageService.save(STORAGE_KEYS.LAST_RESET, today);
     }
   }, []);
 
@@ -90,25 +89,22 @@ export const TimersPage: React.FC = () => {
     // Nettoyage du localStorage corrompu au premier chargement
     const cleanupCorruptedData = () => {
       try {
-        const saved = localStorage.getItem('onyx_active_timers');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
-            // Vérifier si les données sont corrompues
-            const hasCorruptedDates = parsed.some(timer => 
-              timer.lastUsed && typeof timer.lastUsed === 'string' && isNaN(new Date(timer.lastUsed).getTime())
-            );
-            if (hasCorruptedDates) {
-              console.log('🧹 Nettoyage des données corrompues...');
-              localStorage.removeItem('onyx_active_timers');
-              localStorage.removeItem('onyx_timer_sync_metadata');
-            }
+        const saved = storageService.load(STORAGE_KEYS.ACTIVE_TIMERS, null);
+        if (saved && Array.isArray(saved)) {
+          // Vérifier si les données sont corrompues
+          const hasCorruptedDates = (saved as any[]).some((timer: any) => 
+            timer.lastUsed && typeof timer.lastUsed === 'string' && isNaN(new Date(timer.lastUsed).getTime())
+          );
+          if (hasCorruptedDates) {
+            console.log('🧹 Nettoyage des données corrompues...');
+            storageService.remove(STORAGE_KEYS.ACTIVE_TIMERS);
+            storageService.remove(STORAGE_KEYS.TIMER_SYNC_METADATA);
           }
         }
       } catch (error) {
         console.error('Erreur lors du nettoyage:', error);
-        localStorage.removeItem('onyx_active_timers');
-        localStorage.removeItem('onyx_timer_sync_metadata');
+        storageService.remove(STORAGE_KEYS.ACTIVE_TIMERS);
+        storageService.remove(STORAGE_KEYS.TIMER_SYNC_METADATA);
       }
     };
     
@@ -227,8 +223,8 @@ export const TimersPage: React.FC = () => {
         const timer = timers.find(t => t.id === timerId);
         
         if (timer?.linkedSubject) {
-          // Utiliser courseTimerLinkManager pour gérer la conversion du cours en timer rapide
-          await courseTimerLinkManager.handleTimerDeletion(timerId);
+          // Utiliser integratedTimerService pour gérer la conversion du cours en timer rapide
+          await integratedTimerService.handleTimerDeletion(timerId);
         } else {
           // Supprimer directement le timer s'il n'est pas lié
           await removeTimer(timerId);

@@ -5,26 +5,32 @@ import { CalendarHeader } from '@/components/Calendar/CalendarHeader';
 import { MobileCalendarHeader } from '@/components/Calendar/MobileCalendarHeader';
 import { CalendarDay, DayStudySession } from '@/types/Subject';
 import { calendarRenderer } from '@/services/calendarRenderer';
-import { courseTimerLinkManager } from '@/services/courseTimerLinkManager';
+import { timerSubjectLinkService } from '@/services/timerSubjectLinkService';
 import { useTimerContext } from '@/contexts/TimerContext';
 import { ActiveTimer } from '@/types/ActiveTimer';
 import { Clock, BookOpen, CheckCircle2, TrendingUp, Calendar, RefreshCw, Target, Play, Timer, Pause, RotateCcw } from 'lucide-react';
 import { formatMinutesToHours } from '@/utils/timeFormat';
 import { calendarLogger } from '@/utils/logger';
+import { storageService, STORAGE_KEYS } from '@/services/storageService';
 
 // Fonction pour charger l'état initial depuis localStorage
 const loadInitialState = () => {
-  const savedState = localStorage.getItem('calendarViewState');
+  const defaultState = {
+    viewMode: 'week' as const,
+    currentDate: new Date(),
+    savedDayViewDate: new Date(),
+    savedWeekViewDate: new Date()
+  };
+  
+  const savedState = storageService.load(STORAGE_KEYS.CALENDAR_VIEW_STATE, null);
   
   if (savedState) {
     try {
-      const parsed = JSON.parse(savedState);
-      
       const state = {
-        viewMode: parsed.viewMode || 'week',
-        currentDate: parsed.currentDate ? new Date(parsed.currentDate) : new Date(),
-        savedDayViewDate: parsed.savedDayViewDate ? new Date(parsed.savedDayViewDate) : new Date(),
-        savedWeekViewDate: parsed.savedWeekViewDate ? new Date(parsed.savedWeekViewDate) : new Date()
+        viewMode: (savedState as any).viewMode || 'week',
+        currentDate: (savedState as any).currentDate ? new Date((savedState as any).currentDate) : new Date(),
+        savedDayViewDate: (savedState as any).savedDayViewDate ? new Date((savedState as any).savedDayViewDate) : new Date(),
+        savedWeekViewDate: (savedState as any).savedWeekViewDate ? new Date((savedState as any).savedWeekViewDate) : new Date()
       };
       
       calendarLogger.calendar('État calendrier restauré:', { viewMode: state.viewMode, date: state.currentDate.toLocaleDateString() });
@@ -32,15 +38,11 @@ const loadInitialState = () => {
       return state;
     } catch (error) {
       calendarLogger.error('Erreur chargement état calendrier:', error);
+      return defaultState;
     }
   }
   
-  return {
-    viewMode: 'week' as const,
-    currentDate: new Date(),
-    savedDayViewDate: new Date(),
-    savedWeekViewDate: new Date()
-  };
+  return defaultState;
 };
 
 export const CalendarPage: React.FC = () => {
@@ -77,26 +79,26 @@ export const CalendarPage: React.FC = () => {
 
   // Charger les états persistants supplémentaires
   useEffect(() => {
-    const savedState = localStorage.getItem('calendarViewState');
+    const savedState = storageService.load(STORAGE_KEYS.CALENDAR_VIEW_STATE, null);
     if (savedState) {
       try {
-        const parsed = JSON.parse(savedState);
+        const parsed = savedState;
         
         // Restaurer l'état persistant si disponible
-        if (parsed.persistentState) {
+        if ((parsed as any).persistentState) {
           setPersistentState({
-            selectedSessions: new Set(parsed.persistentState.selectedSessions || []),
-            hoveredSession: parsed.persistentState.hoveredSession,
-            expandedSessions: new Set(parsed.persistentState.expandedSessions || [])
+            selectedSessions: new Set((parsed as any).persistentState.selectedSessions || []),
+            hoveredSession: (parsed as any).persistentState.hoveredSession,
+            expandedSessions: new Set((parsed as any).persistentState.expandedSessions || [])
           });
         }
         
         // Restaurer l'état de la vue jour si disponible
-        if (parsed.dayViewState) {
+        if ((parsed as any).dayViewState) {
           setDayViewState({
-            scrollPosition: parsed.dayViewState.scrollPosition || 0,
-            expandedSessions: new Set(parsed.dayViewState.expandedSessions || []),
-            selectedSession: parsed.dayViewState.selectedSession
+            scrollPosition: (parsed as any).dayViewState.scrollPosition || 0,
+            expandedSessions: new Set((parsed as any).dayViewState.expandedSessions || []),
+            selectedSession: (parsed as any).dayViewState.selectedSession
           });
         }
       } catch (error) {
@@ -126,7 +128,7 @@ export const CalendarPage: React.FC = () => {
         },
         timestamp: new Date().toISOString()
       };
-      localStorage.setItem('calendarViewState', JSON.stringify(stateToSave));
+      storageService.save(STORAGE_KEYS.CALENDAR_VIEW_STATE, stateToSave);
       calendarLogger.debug('État calendrier sauvegardé');
     } catch (error) {
       calendarLogger.error('Erreur lors de la sauvegarde:', error);
@@ -205,7 +207,7 @@ export const CalendarPage: React.FC = () => {
   useEffect(() => {
     let isSubscribed = true;
     
-    const unsubscribe = courseTimerLinkManager.subscribe(() => {
+    const unsubscribe = timerSubjectLinkService.subscribe(() => {
       if (isSubscribed) {
         calendarLogger.loading('Changement de liaison détecté, rechargement calendrier');
         // Sauvegarde immédiate avant rechargement
@@ -462,7 +464,7 @@ export const CalendarPage: React.FC = () => {
    */
   const handleLinkCourse = async (courseId: string, timerId: string) => {
     try {
-      await courseTimerLinkManager.linkCourseToTimer(courseId, timerId);
+      await timerSubjectLinkService.linkCourseToTimer(courseId, timerId);
       // Le rechargement se fait automatiquement via l'abonnement
     } catch (error) {
       console.error('❌ Erreur liaison cours-timer:', error);
@@ -472,7 +474,7 @@ export const CalendarPage: React.FC = () => {
 
   const handleUnlinkCourse = async (courseId: string) => {
     try {
-      await courseTimerLinkManager.unlinkCourse(courseId);
+      await timerSubjectLinkService.unlinkCourse(courseId);
       // Le rechargement se fait automatiquement via l'abonnement
     } catch (error) {
       console.error('❌ Erreur déliaison cours:', error);

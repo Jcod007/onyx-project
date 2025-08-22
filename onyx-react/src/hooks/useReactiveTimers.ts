@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ActiveTimer } from '@/types/ActiveTimer';
-import { centralizedTimerService } from '@/services/centralizedTimerService';
+import { integratedTimerService } from '@/services/integratedTimerService';
 import { timerLogger } from '@/utils/logger';
+import { storageService, STORAGE_KEYS } from '@/services/storageService';
 
 /**
  * Hook React réactif utilisant le service centralisé
@@ -218,7 +219,7 @@ export const useReactiveTimers = () => {
       // Nettoyer d'abord les timers éphémères expirés
       const cleanupPerformed = cleanupExpiredEphemeralTimers();
       
-      const centralizedTimers = centralizedTimerService.getTimers();
+      const centralizedTimers = integratedTimerService.getTimers();
       const ephemeralTimers = loadEphemeralTimers();
       
       // Combiner les timers persistés et éphémères
@@ -246,12 +247,11 @@ export const useReactiveTimers = () => {
         // Nettoyer les timers éphémères expirés AVANT le chargement
         cleanupExpiredEphemeralTimers();
         
-        const savedCounter = localStorage.getItem('onyx_timer_counter');
+        const savedCounter = storageService.load(STORAGE_KEYS.TIMER_COUNTER, null);
         
         if (savedCounter) {
-          const counter = parseInt(savedCounter, 10);
-          console.log('🔢 Compteur chargé:', counter);
-          setTimerCounter(counter);
+          console.log('🔢 Compteur chargé:', savedCounter);
+          setTimerCounter(savedCounter);
         }
         
         // Vérification de cohérence des données localStorage sera effectuée via cleanupExpiredEphemeralTimers
@@ -300,7 +300,7 @@ export const useReactiveTimers = () => {
     let syncTimeout: NodeJS.Timeout | null = null;
     let isComponentMounted = true;
     
-    const unsubscribe = centralizedTimerService.subscribe(() => {
+    const unsubscribe = integratedTimerService.subscribe(() => {
       // Annuler la synchronisation précédente si elle n'a pas encore eu lieu
       if (syncTimeout) {
         clearTimeout(syncTimeout);
@@ -342,7 +342,7 @@ export const useReactiveTimers = () => {
     if (!isLoaded) return;
     
     try {
-      localStorage.setItem('onyx_timer_counter', timerCounter.toString());
+      storageService.save(STORAGE_KEYS.TIMER_COUNTER, timerCounter);
     } catch (error) {
       console.error('Erreur sauvegarde compteur:', error);
     }
@@ -373,7 +373,7 @@ export const useReactiveTimers = () => {
         });
       } else {
         // Timer normal - persister via le service centralisé
-        await centralizedTimerService.addTimer(newTimer);
+        await integratedTimerService.addTimer(newTimer);
       }
       
       return newTimer;
@@ -402,7 +402,7 @@ export const useReactiveTimers = () => {
           return updatedTimers;
         });
       } else {
-        await centralizedTimerService.updateTimer(id, updates);
+        await integratedTimerService.updateTimer(id, updates);
       }
     } catch (error) {
       console.error('Erreur mise à jour timer:', error);
@@ -439,7 +439,7 @@ export const useReactiveTimers = () => {
         
         console.log(`✅ Timer éphémère ${timer.title} supprimé et localStorage nettoyé`);
       } else {
-        await centralizedTimerService.removeTimer(id);
+        await integratedTimerService.removeTimer(id);
       }
     } catch (error) {
       console.error('Erreur suppression timer:', error);
@@ -452,7 +452,7 @@ export const useReactiveTimers = () => {
    */
   const updateTimerLastUsed = useCallback(async (id: string) => {
     try {
-      await centralizedTimerService.updateTimer(id, { lastUsed: new Date() });
+      await integratedTimerService.updateTimer(id, { lastUsed: new Date() });
     } catch (error) {
       console.error('Erreur mise à jour lastUsed:', error);
     }
@@ -463,9 +463,9 @@ export const useReactiveTimers = () => {
    */
   const clearAllTimers = useCallback(async () => {
     try {
-      const currentTimers = centralizedTimerService.getTimers();
+      const currentTimers = integratedTimerService.getTimers();
       for (const timer of currentTimers) {
-        await centralizedTimerService.removeTimer(timer.id);
+        await integratedTimerService.removeTimer(timer.id);
       }
     } catch (error) {
       console.error('Erreur suppression complète:', error);
@@ -480,11 +480,11 @@ export const useReactiveTimers = () => {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
-      const currentTimers = centralizedTimerService.getTimers();
+      const currentTimers = integratedTimerService.getTimers();
       const oldTimers = currentTimers.filter(timer => timer.lastUsed < thirtyDaysAgo);
       
       for (const timer of oldTimers) {
-        await centralizedTimerService.removeTimer(timer.id);
+        await integratedTimerService.removeTimer(timer.id);
       }
     } catch (error) {
       console.error('Erreur nettoyage timers:', error);
@@ -500,7 +500,7 @@ export const useReactiveTimers = () => {
    */
   const linkTimerToSubject = useCallback(async (subjectId: string, timerId: string) => {
     try {
-      await centralizedTimerService.linkTimerToSubject(subjectId, timerId);
+      await integratedTimerService.linkTimerToSubject(subjectId, timerId);
     } catch (error) {
       console.error('Erreur liaison timer-cours:', error);
       throw error;
@@ -512,7 +512,7 @@ export const useReactiveTimers = () => {
    */
   const unlinkTimerFromSubject = useCallback(async (subjectId: string) => {
     try {
-      await centralizedTimerService.unlinkTimerFromSubject(subjectId);
+      await integratedTimerService.unlinkTimerFromSubject(subjectId);
     } catch (error) {
       console.error('Erreur déliaison timer-cours:', error);
       throw error;
@@ -523,14 +523,14 @@ export const useReactiveTimers = () => {
    * Obtenir les timers disponibles pour liaison
    */
   const getAvailableTimersForSubject = useCallback((subjectId?: string) => {
-    return centralizedTimerService.getAvailableTimersForSubject(subjectId);
+    return integratedTimerService.getAvailableTimersForSubject(subjectId);
   }, []);
 
   /**
    * Obtenir les timers liés à un cours spécifique
    */
   const getLinkedTimersForSubject = useCallback((subjectId: string) => {
-    return centralizedTimerService.getLinkedTimersForSubject(subjectId);
+    return integratedTimerService.getLinkedTimersForSubject(subjectId);
   }, []);
 
   /**
@@ -538,7 +538,7 @@ export const useReactiveTimers = () => {
    */
   const ensureDataConsistency = useCallback(async () => {
     try {
-      await centralizedTimerService.ensureDataConsistency();
+      await integratedTimerService.ensureDataConsistency();
     } catch (error) {
       console.error('Erreur vérification cohérence:', error);
     }

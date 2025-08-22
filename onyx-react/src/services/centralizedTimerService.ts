@@ -1,10 +1,10 @@
 import { ActiveTimer } from '@/types/ActiveTimer';
-import { QuickTimerConfig } from '@/types/Subject';
 
 // Re-export pour usage externe
 export type { ActiveTimer };
-import { subjectService } from './subjectService';
 import { timerLogger } from '@/utils/logger';
+import { normalizeTimer, normalizeTimers } from '@/utils/timerNormalizer';
+import { storageService, STORAGE_KEYS } from '@/services/storageService';
 
 /**
  * Service centralisé pour la gestion robuste des timers et liaisons
@@ -21,8 +21,6 @@ interface TimerSyncMetadata {
 
 class CentralizedTimerService {
   private static instance: CentralizedTimerService;
-  private readonly STORAGE_KEY = 'onyx_active_timers';
-  private readonly SYNC_METADATA_KEY = 'onyx_timer_sync_metadata';
   private listeners: Set<() => void> = new Set();
   private operationQueue: Promise<any> = Promise.resolve();
   private syncMetadata: Map<string, TimerSyncMetadata> = new Map();
@@ -42,19 +40,10 @@ class CentralizedTimerService {
 
   /**
    * Normalise un timer en s'assurant que les dates sont des objets Date
+   * @deprecated Utilise maintenant l'utilitaire centralisé
    */
   private normalizeTimer(timer: ActiveTimer): ActiveTimer {
-    console.log('🔧 Normalisation timer:', timer.id, 'lastUsed type:', typeof timer.lastUsed, 'value:', timer.lastUsed);
-    
-    const normalized = {
-      ...timer,
-      createdAt: timer.createdAt instanceof Date ? timer.createdAt : new Date(timer.createdAt),
-      lastUsed: timer.lastUsed instanceof Date ? timer.lastUsed : new Date(timer.lastUsed)
-    };
-    
-    console.log('✅ Timer normalisé:', normalized.id, 'lastUsed type:', typeof normalized.lastUsed, 'isDate:', normalized.lastUsed instanceof Date);
-    
-    return normalized;
+    return normalizeTimer(timer);
   }
   
   private generateHash(timer: ActiveTimer): string {
@@ -78,11 +67,10 @@ class CentralizedTimerService {
   
   private loadSyncMetadata(): void {
     try {
-      const saved = localStorage.getItem(this.SYNC_METADATA_KEY);
-      if (saved) {
-        const data = JSON.parse(saved);
-        this.globalVersion = data.globalVersion || 1;
-        this.syncMetadata = new Map(Object.entries(data.metadata || {}));
+      const data = storageService.load(STORAGE_KEYS.TIMER_SYNC_METADATA, null);
+      if (data) {
+        this.globalVersion = (data as any).globalVersion || 1;
+        this.syncMetadata = new Map(Object.entries((data as any).metadata || {}));
         timerLogger.debug('Métadonnées de synchronisation chargées', {
           globalVersion: this.globalVersion,
           timers: this.syncMetadata.size
@@ -101,7 +89,7 @@ class CentralizedTimerService {
         globalVersion: this.globalVersion,
         metadata: Object.fromEntries(this.syncMetadata.entries())
       };
-      localStorage.setItem(this.SYNC_METADATA_KEY, JSON.stringify(data));
+      storageService.save(STORAGE_KEYS.TIMER_SYNC_METADATA, data);
     } catch (error) {
       console.error('Erreur sauvegarde métadonnées sync:', error);
     }
@@ -199,45 +187,11 @@ class CentralizedTimerService {
    */
   private getTimersRaw(): ActiveTimer[] {
     try {
-      const saved = localStorage.getItem(this.STORAGE_KEY);
-      if (!saved) return [];
-      
-      const parsed = JSON.parse(saved);
+      const parsed = storageService.load(STORAGE_KEYS.ACTIVE_TIMERS, []);
       if (!Array.isArray(parsed)) return [];
       
-      // Convertir les dates en objets Date avec vérification robuste
-      return parsed.map(timer => {
-        console.log('📖 Lecture timer depuis localStorage:', timer.id, 'lastUsed raw:', timer.lastUsed, 'type:', typeof timer.lastUsed);
-        
-        let normalizedCreatedAt, normalizedLastUsed;
-        
-        try {
-          normalizedCreatedAt = timer.createdAt instanceof Date ? timer.createdAt : new Date(timer.createdAt);
-          if (isNaN(normalizedCreatedAt.getTime())) {
-            normalizedCreatedAt = new Date();
-          }
-        } catch {
-          normalizedCreatedAt = new Date();
-        }
-        
-        try {
-          normalizedLastUsed = timer.lastUsed instanceof Date ? timer.lastUsed : new Date(timer.lastUsed);
-          if (isNaN(normalizedLastUsed.getTime())) {
-            normalizedLastUsed = new Date();
-          }
-        } catch {
-          normalizedLastUsed = new Date();
-        }
-        
-        const normalized = {
-          ...timer,
-          createdAt: normalizedCreatedAt,
-          lastUsed: normalizedLastUsed
-        };
-        
-        console.log('✅ Timer normalisé depuis localStorage:', normalized.id, 'lastUsed final:', normalized.lastUsed);
-        return normalized;
-      });
+      // Normaliser les timers avec l'utilitaire centralisé
+      return normalizeTimers(parsed);
     } catch (error) {
       console.error('Erreur lecture timers:', error);
       return [];
@@ -250,16 +204,15 @@ class CentralizedTimerService {
   getTimers(): ActiveTimer[] {
     const timers = this.getTimersRaw();
     
-    // Normaliser tous les timers et vérifier les métadonnées
-    const normalizedTimers = timers.map(timer => this.normalizeTimer(timer));
-    
-    for (const timer of normalizedTimers) {
+    // Les timers sont déjà normalisés par getTimersRaw via normalizeTimers()
+    // Vérifier les métadonnées
+    for (const timer of timers) {
       if (!this.syncMetadata.has(timer.id)) {
         this.updateTimerMetadata(timer, 'auto-metadata-creation');
       }
     }
     
-    return normalizedTimers;
+    return timers;
   }
 
   /**
@@ -296,7 +249,7 @@ class CentralizedTimerService {
         }
         
         // Sauvegarde atomique
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updatedTimers));
+        storageService.save(STORAGE_KEYS.ACTIVE_TIMERS, updatedTimers);
         
         // Mettre à jour les métadonnées pour tous les timers modifiés
         updatedTimers.forEach(timer => {
@@ -387,31 +340,11 @@ class CentralizedTimerService {
   }
 
   /**
-   * Supprimer un timer avec conversion automatique du cours lié et nettoyage des métadonnées
+   * Supprimer un timer avec nettoyage des métadonnées
+   * Note: La conversion des cours liés est gérée par timerSubjectLinkService
    */
   async removeTimer(timerId: string): Promise<void> {
     await this.executeAtomicOperation(async (timers) => {
-      const timer = timers.find(t => t.id === timerId);
-      
-      if (timer?.linkedSubject) {
-        console.log(`🔄 Conversion du cours ${timer.linkedSubject.name} vers timer rapide suite à suppression`);
-        
-        // Créer la configuration de timer rapide basée sur le timer supprimé
-        const quickTimerConfig = this.convertTimerToQuickConfig(timer);
-        
-        // Mettre à jour le cours : délier + convertir vers timer rapide
-        const conversionNote = `Timer "${timer.title}" supprimé le ${new Date().toLocaleString('fr-FR')} et converti en timer rapide`;
-        
-        await subjectService.updateSubject(timer.linkedSubject.id, {
-          linkedTimerId: undefined,
-          defaultTimerMode: 'quick_timer',
-          quickTimerConfig: quickTimerConfig,
-          timerConversionNote: conversionNote
-        });
-        
-        console.log(`✅ Cours ${timer.linkedSubject.name} converti en timer rapide (${quickTimerConfig.workDuration}min)`);
-      }
-
       // Nettoyer les métadonnées du timer supprimé
       this.syncMetadata.delete(timerId);
       this.saveSyncMetadata();
@@ -422,167 +355,75 @@ class CentralizedTimerService {
     }, `remove-timer-${timerId}`);
   }
 
+
   /**
-   * Conversion d'un timer vers configuration rapide
+   * Liaison d'un timer à un cours (délégué au service unifié)
+   * @deprecated Utiliser timerSubjectLinkService.linkTimerToSubject
    */
-  private convertTimerToQuickConfig(timer: ActiveTimer): QuickTimerConfig {
-    const workDurationMinutes = Math.floor(timer.config.workDuration / 60);
+  async linkTimerToSubject(_subjectId: string, timerId: string): Promise<void> {
+    console.warn('⚠️ Méthode dépréciée: utilisez timerSubjectLinkService.linkTimerToSubject');
     
-    if (timer.isPomodoroMode && timer.config.shortBreakDuration && timer.config.longBreakDuration) {
-      return {
-        type: 'pomodoro',
-        workDuration: workDurationMinutes,
-        shortBreakDuration: Math.floor(timer.config.shortBreakDuration / 60),
-        longBreakDuration: Math.floor(timer.config.longBreakDuration / 60),
-        cycles: timer.config.longBreakInterval || 4
-      };
-    } else {
-      return {
-        type: 'simple',
-        workDuration: workDurationMinutes
-      };
-    }
-  }
-
-  /**
-   * Liaison robuste d'un timer à un cours
-   * Gère automatiquement la déliaison des anciennes associations
-   */
-  async linkTimerToSubject(subjectId: string, timerId: string): Promise<void> {
     await this.executeAtomicOperation(async (timers) => {
-      console.log(`🔄 Liaison timer ${timerId} → cours ${subjectId}`);
-      
-      // Récupérer le cours
-      const subject = await subjectService.getSubject(subjectId);
-      if (!subject) {
-        throw new Error(`Cours ${subjectId} introuvable`);
-      }
-
-      // Vérifier l'existence du timer
       const targetTimer = timers.find(t => t.id === timerId);
       if (!targetTimer) {
         throw new Error(`Timer ${timerId} introuvable`);
       }
 
-      // Mettre à jour le cours AVANT de lier le timer
-      // Nettoyer les anciens paramètres de timer rapide et notes de conversion
-      const updatedSubject = await subjectService.updateSubject(subjectId, {
-        linkedTimerId: timerId,
-        defaultTimerMode: 'simple',
-        quickTimerConfig: undefined,
-        timerConversionNote: undefined
-      });
-
-      if (!updatedSubject) {
-        throw new Error(`Échec mise à jour cours ${subjectId}`);
-      }
-
-      // Préparer les nouvelles liaisons avec le cours MIS À JOUR
-      const updatedTimers = timers.map(timer => {
-        // Délier l'ancien timer du cours (si différent)
-        if (timer.linkedSubject?.id === subjectId && timer.id !== timerId) {
-          console.log(`🔓 Déliaison automatique timer ${timer.id} du cours ${updatedSubject.name}`);
-          return {
-            ...timer,
-            linkedSubject: undefined,
-            lastUsed: new Date()
-          };
-        }
-
-        // Lier le nouveau timer au cours AVEC L'ÉTAT MIS À JOUR
-        if (timer.id === timerId) {
-          // Vérifier si le timer était lié à un autre cours
-          if (timer.linkedSubject && timer.linkedSubject.id !== subjectId) {
-            console.log(`🔄 Timer ${timerId} était lié au cours ${timer.linkedSubject.name}, déliaison automatique`);
-            // Le cours sera délié via la mise à jour ci-dessous
-          }
-          
-          console.log(`✅ Liaison timer ${timer.title} → cours ${updatedSubject.name} (mode: ${updatedSubject.defaultTimerMode})`);
-          return {
-            ...timer,
-            linkedSubject: updatedSubject, // ← COURS MIS À JOUR !
-            lastUsed: new Date()
-          };
-        }
-
-        return timer;
-      });
-
-      // Si l'ancien timer était lié à un autre cours, délier ce cours
-      if (targetTimer.linkedSubject && targetTimer.linkedSubject.id !== subjectId) {
-        await subjectService.updateSubject(targetTimer.linkedSubject.id, {
-          linkedTimerId: undefined
-        });
-      }
+      // Mise à jour simple du timer
+      const updatedTimers = timers.map(timer => 
+        timer.id === timerId 
+          ? { ...timer, lastUsed: new Date() }
+          : timer
+      );
 
       return { timers: updatedTimers };
     });
   }
 
   /**
-   * Délier un timer d'un cours
+   * Délier un timer d'un cours (délégué au service unifié)
+   * @deprecated Utiliser timerSubjectLinkService.unlinkTimerFromSubject
    */
-  async unlinkTimerFromSubject(subjectId: string): Promise<void> {
+  async unlinkTimerFromSubject(_subjectId: string): Promise<void> {
+    console.warn('⚠️ Méthode dépréciée: utilisez timerSubjectLinkService.unlinkTimerFromSubject');
+    
     await this.executeAtomicOperation(async (timers) => {
-      console.log(`🔓 Déliaison cours ${subjectId}`);
-      
-      const subject = await subjectService.getSubject(subjectId);
-      if (!subject?.linkedTimerId) {
-        console.log(`Cours ${subjectId} n'a pas de timer lié`);
-        return { timers };
-      }
-
-      // Mettre à jour le cours et nettoyer les notes de conversion obsolètes
-      await subjectService.updateSubject(subjectId, {
-        linkedTimerId: undefined,
-        timerConversionNote: undefined
-      });
-
       // Délier le timer
       const updatedTimers = timers.map(timer => 
-        timer.linkedSubject?.id === subjectId
+        timer.linkedSubject?.id === _subjectId
           ? { ...timer, linkedSubject: undefined, lastUsed: new Date() }
           : timer
       );
 
-      console.log(`✅ Timer délié du cours ${subject.name}`);
       return { timers: updatedTimers };
     });
   }
 
   /**
-   * Déliaison forcée lors de suppression de cours
-   * Ne tente pas de mettre à jour le cours (qui va être supprimé)
+   * Déliaison forcée lors de suppression de cours (délégué au service unifié)
+   * @deprecated Utiliser timerSubjectLinkService.unlinkTimersFromDeletedSubject
    */
-  async unlinkTimersFromDeletedSubject(subjectId: string): Promise<void> {
+  async unlinkTimersFromDeletedSubject(_subjectId: string): Promise<void> {
+    console.warn('⚠️ Méthode dépréciée: utilisez timerSubjectLinkService.unlinkTimersFromDeletedSubject');
+    
     await this.executeAtomicOperation(async (timers) => {
-      console.log(`🗑️ Déliaison forcée pour suppression cours ${subjectId}`);
-      
-      // Trouver tous les timers liés à ce cours
-      const linkedTimers = timers.filter(timer => timer.linkedSubject?.id === subjectId);
-      
-      if (linkedTimers.length === 0) {
-        console.log(`Aucun timer lié au cours ${subjectId}`);
-        return { timers };
-      }
-
-      // Délier TOUS les timers de ce cours sans essayer de mettre à jour le cours
+      // Délier TOUS les timers de ce cours
       const updatedTimers = timers.map(timer => 
-        timer.linkedSubject?.id === subjectId
+        timer.linkedSubject?.id === _subjectId
           ? { ...timer, linkedSubject: undefined, lastUsed: new Date() }
           : timer
       );
 
-      console.log(`✅ ${linkedTimers.length} timer(s) délié(s) du cours supprimé ${subjectId}`);
       return { timers: updatedTimers };
     });
   }
 
   /**
-   * Obtenir les timers disponibles pour liaison à un cours
-   * Exclut les timers éphémères qui ne peuvent pas être liés de manière permanente
+   * Obtenir les timers disponibles pour liaison à un cours (délégué au service unifié)
+   * @deprecated Utiliser timerSubjectLinkService.getAvailableTimersForSubject
    */
   getAvailableTimersForSubject(subjectId?: string): ActiveTimer[] {
+    console.warn('⚠️ Méthode dépréciée: utilisez timerSubjectLinkService.getAvailableTimersForSubject');
     const timers = this.getTimers();
     return timers.filter(timer => 
       !timer.isEphemeral && // Exclure les timers éphémères
@@ -593,7 +434,6 @@ class CentralizedTimerService {
 
   /**
    * Obtenir uniquement les timers non-éphémères (persistants)
-   * Utile pour éviter les conflits avec les timers éphémères
    */
   getPersistentTimers(): ActiveTimer[] {
     const timers = this.getTimers();
@@ -601,55 +441,28 @@ class CentralizedTimerService {
   }
 
   /**
-   * Obtenir les timers liés à un cours spécifique
+   * Obtenir les timers liés à un cours spécifique (délégué au service unifié)
+   * @deprecated Utiliser timerSubjectLinkService.getLinkedTimersForSubject
    */
   getLinkedTimersForSubject(subjectId: string): ActiveTimer[] {
+    console.warn('⚠️ Méthode dépréciée: utilisez timerSubjectLinkService.getLinkedTimersForSubject');
     const timers = this.getTimers();
     return timers.filter(timer => timer.linkedSubject?.id === subjectId);
   }
 
   /**
-   * Vérification de cohérence et réparation automatique des données avec validation des métadonnées
+   * Vérification de cohérence interne des métadonnées
+   * Note: La cohérence timer-cours est gérée par timerSubjectLinkService
    */
   async ensureDataConsistency(): Promise<void> {
-    timerLogger.debug('Vérification cohérence des données timer-cours avec synchronisation');
+    timerLogger.debug('Vérification cohérence interne des métadonnées de synchronisation');
     
     await this.executeAtomicOperation(async (timers) => {
-      const subjects = await subjectService.getAllSubjects();
       let hasChanges = false;
-
-      // Vérifier et réparer les cours avec linkedTimerId invalide
-      for (const subject of subjects) {
-        if (subject.linkedTimerId) {
-          const linkedTimer = timers.find(t => t.id === subject.linkedTimerId);
-          if (!linkedTimer) {
-            console.warn(`⚠️ Cours ${subject.name} référence un timer inexistant ${subject.linkedTimerId}`);
-            
-            // Réparer en supprimant la référence orpheline
-            await subjectService.updateSubject(subject.id, {
-              linkedTimerId: undefined
-            });
-            hasChanges = true;
-          }
-        }
-      }
-
-      // Vérifier et réparer les timers avec linkedSubject invalide
-      const updatedTimers = timers.map(timer => {
-        if (timer.linkedSubject) {
-          const linkedSubject = subjects.find(s => s.id === timer.linkedSubject!.id);
-          if (!linkedSubject) {
-            console.warn(`⚠️ Timer ${timer.title} référence un cours inexistant ${timer.linkedSubject.id}`);
-            hasChanges = true;
-            return { ...timer, linkedSubject: undefined };
-          }
-        }
-        return timer;
-      });
       
       // Vérifier la cohérence des métadonnées de synchronisation
       const inconsistentMetadata: string[] = [];
-      updatedTimers.forEach(timer => {
+      timers.forEach(timer => {
         const metadata = this.syncMetadata.get(timer.id);
         if (metadata) {
           const currentHash = this.generateHash(timer);
@@ -670,7 +483,7 @@ class CentralizedTimerService {
       }
       
       // Nettoyer les métadonnées orphelines
-      const timerIds = new Set(updatedTimers.map(t => t.id));
+      const timerIds = new Set(timers.map(t => t.id));
       const orphanedMetadata = Array.from(this.syncMetadata.keys()).filter(id => !timerIds.has(id));
       
       if (orphanedMetadata.length > 0) {
@@ -681,13 +494,13 @@ class CentralizedTimerService {
       }
 
       if (hasChanges) {
-        console.log('✅ Réparation des incohérences et synchronisation terminée');
+        console.log('✅ Réparation des métadonnées de synchronisation terminée');
       } else {
-        console.log('✅ Aucune incohérence détectée - Système cohérent');
+        console.log('✅ Métadonnées de synchronisation cohérentes');
       }
 
-      return { timers: updatedTimers };
-    }, 'data-consistency-check');
+      return { timers };
+    }, 'metadata-consistency-check');
   }
   
   /**

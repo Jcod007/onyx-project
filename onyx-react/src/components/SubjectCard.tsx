@@ -129,12 +129,16 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
         {/* 4. Liaison avec timer */}
         <div className="flex items-center space-x-3">
           <div className={`p-2 rounded-lg ${
-            linkedTimerName || subject.linkedTimerId
+            linkedTimerName
               ? 'bg-purple-100' 
+              : subject.linkedTimerId
+              ? 'bg-orange-100' 
               : 'bg-gray-100'
           }`}>
-            {linkedTimerName || subject.linkedTimerId ? (
+            {linkedTimerName ? (
               <Link size={18} className="text-purple-600" />
+            ) : subject.linkedTimerId ? (
+              <Link size={18} className="text-orange-600" />
             ) : (
               <Unlink size={18} className="text-gray-500" />
             )}
@@ -142,13 +146,17 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
           <div>
             <p className="text-sm text-gray-500">Liaison timer</p>
             <p className={`text-base font-medium ${
-              linkedTimerName || subject.linkedTimerId
+              linkedTimerName
                 ? 'text-purple-900' 
+                : subject.linkedTimerId
+                ? 'text-orange-700'
                 : 'text-gray-600'
             }`}>
               {linkedTimerName 
                 ? `Lié à "${linkedTimerName}"` 
-                : (subject.linkedTimerId ? 'Lié à un timer' : 'Aucune liaison')}
+                : subject.linkedTimerId 
+                ? `Timer ID: ${subject.linkedTimerId.slice(0, 8)}...` 
+                : 'Aucune liaison'}
             </p>
           </div>
         </div>
