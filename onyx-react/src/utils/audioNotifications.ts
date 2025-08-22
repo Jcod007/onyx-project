@@ -1,8 +1,15 @@
 /**
  * Utilitaires pour les notifications audio
  */
+import { soundConfig } from './soundConfig';
 
 export const playTimerFinishedSound = (): void => {
+  // Vérifier si le son est activé
+  if (!soundConfig.enabled) {
+    console.log('🔇 Son désactivé, notification silencieuse');
+    return;
+  }
+  
   try {
     // Utiliser l'API Web Audio pour créer un son de notification
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -66,6 +73,12 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
 };
 
 export const playBreakFinishedSound = (): void => {
+  // Vérifier si le son est activé
+  if (!soundConfig.enabled) {
+    console.log('🔇 Son désactivé, notification silencieuse pour la pause');
+    return;
+  }
+  
   try {
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     

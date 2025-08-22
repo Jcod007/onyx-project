@@ -121,7 +121,7 @@ class CourseTimerLinkManager {
     // Restaurer l'état du cours
     if (initialState.course) {
       const courseRestoreData: Partial<Subject> = {
-        linkedTimerId: initialState.previousCourseLinkedTimer
+        linkedTimerId: initialState.previousCourseLinkedTimer || undefined
       };
 
       // Si le cours avait un timer lié précédemment, restaurer le mode simple

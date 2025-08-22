@@ -18,11 +18,6 @@ interface TimerSyncMetadata {
   operationId?: string;
 }
 
-interface SyncState {
-  timers: ActiveTimer[];
-  metadata: Map<string, TimerSyncMetadata>;
-  globalVersion: number;
-}
 
 class CentralizedTimerService {
   private static instance: CentralizedTimerService;
@@ -32,7 +27,6 @@ class CentralizedTimerService {
   private operationQueue: Promise<any> = Promise.resolve();
   private syncMetadata: Map<string, TimerSyncMetadata> = new Map();
   private globalVersion: number = 1;
-  private consistencyCheckTimeout: NodeJS.Timeout | null = null;
 
   static getInstance(): CentralizedTimerService {
     if (!CentralizedTimerService.instance) {
@@ -45,17 +39,41 @@ class CentralizedTimerService {
     this.loadSyncMetadata();
     this.startConsistencyChecks();
   }
+
+  /**
+   * Normalise un timer en s'assurant que les dates sont des objets Date
+   */
+  private normalizeTimer(timer: ActiveTimer): ActiveTimer {
+    console.log('🔧 Normalisation timer:', timer.id, 'lastUsed type:', typeof timer.lastUsed, 'value:', timer.lastUsed);
+    
+    const normalized = {
+      ...timer,
+      createdAt: timer.createdAt instanceof Date ? timer.createdAt : new Date(timer.createdAt),
+      lastUsed: timer.lastUsed instanceof Date ? timer.lastUsed : new Date(timer.lastUsed)
+    };
+    
+    console.log('✅ Timer normalisé:', normalized.id, 'lastUsed type:', typeof normalized.lastUsed, 'isDate:', normalized.lastUsed instanceof Date);
+    
+    return normalized;
+  }
   
   private generateHash(timer: ActiveTimer): string {
-    const hashData = {
-      title: timer.title,
-      config: timer.config,
-      isPomodoroMode: timer.isPomodoroMode,
-      maxCycles: timer.maxCycles,
-      linkedSubject: timer.linkedSubject?.id || null,
-      lastUsed: timer.lastUsed.getTime()
-    };
-    return btoa(JSON.stringify(hashData));
+    try {
+      const normalizedTimer = this.normalizeTimer(timer);
+      const hashData = {
+        title: normalizedTimer.title,
+        config: normalizedTimer.config,
+        isPomodoroMode: normalizedTimer.isPomodoroMode,
+        maxCycles: normalizedTimer.maxCycles,
+        linkedSubject: normalizedTimer.linkedSubject?.id || null,
+        lastUsed: normalizedTimer.lastUsed.getTime()
+      };
+      return btoa(JSON.stringify(hashData));
+    } catch (error) {
+      console.error('Erreur génération hash pour timer:', timer.id, error);
+      // Fallback hash simple
+      return btoa(JSON.stringify({ id: timer.id, timestamp: Date.now() }));
+    }
   }
   
   private loadSyncMetadata(): void {
@@ -90,19 +108,26 @@ class CentralizedTimerService {
   }
   
   private updateTimerMetadata(timer: ActiveTimer, operationId?: string): void {
-    const hash = this.generateHash(timer);
-    const now = Date.now();
-    const currentMetadata = this.syncMetadata.get(timer.id);
+    console.log('🔄 updateTimerMetadata appelé pour timer:', timer.id, 'lastUsed:', timer.lastUsed, 'type:', typeof timer.lastUsed);
     
-    this.syncMetadata.set(timer.id, {
-      version: (currentMetadata?.version || 0) + 1,
-      lastModified: now,
-      hash,
-      operationId
-    });
-    
-    this.globalVersion++;
-    this.saveSyncMetadata();
+    try {
+      const normalizedTimer = this.normalizeTimer(timer);
+      const hash = this.generateHash(normalizedTimer);
+      const now = Date.now();
+      const currentMetadata = this.syncMetadata.get(timer.id);
+      
+      this.syncMetadata.set(timer.id, {
+        version: (currentMetadata?.version || 0) + 1,
+        lastModified: now,
+        hash,
+        operationId
+      });
+      
+      this.globalVersion++;
+      this.saveSyncMetadata();
+    } catch (error) {
+      console.error('❌ Erreur dans updateTimerMetadata pour timer:', timer.id, error);
+    }
   }
   
   private detectConflict(timerId: string, expectedHash: string): boolean {
@@ -112,7 +137,7 @@ class CentralizedTimerService {
   
   private startConsistencyChecks(): void {
     // Vérification de cohérence toutes les 15 secondes
-    this.consistencyCheckTimeout = setInterval(() => {
+    setInterval(() => {
       this.performInternalConsistencyCheck();
     }, 15000);
   }
@@ -178,7 +203,41 @@ class CentralizedTimerService {
       if (!saved) return [];
       
       const parsed = JSON.parse(saved);
-      return Array.isArray(parsed) ? parsed : [];
+      if (!Array.isArray(parsed)) return [];
+      
+      // Convertir les dates en objets Date avec vérification robuste
+      return parsed.map(timer => {
+        console.log('📖 Lecture timer depuis localStorage:', timer.id, 'lastUsed raw:', timer.lastUsed, 'type:', typeof timer.lastUsed);
+        
+        let normalizedCreatedAt, normalizedLastUsed;
+        
+        try {
+          normalizedCreatedAt = timer.createdAt instanceof Date ? timer.createdAt : new Date(timer.createdAt);
+          if (isNaN(normalizedCreatedAt.getTime())) {
+            normalizedCreatedAt = new Date();
+          }
+        } catch {
+          normalizedCreatedAt = new Date();
+        }
+        
+        try {
+          normalizedLastUsed = timer.lastUsed instanceof Date ? timer.lastUsed : new Date(timer.lastUsed);
+          if (isNaN(normalizedLastUsed.getTime())) {
+            normalizedLastUsed = new Date();
+          }
+        } catch {
+          normalizedLastUsed = new Date();
+        }
+        
+        const normalized = {
+          ...timer,
+          createdAt: normalizedCreatedAt,
+          lastUsed: normalizedLastUsed
+        };
+        
+        console.log('✅ Timer normalisé depuis localStorage:', normalized.id, 'lastUsed final:', normalized.lastUsed);
+        return normalized;
+      });
     } catch (error) {
       console.error('Erreur lecture timers:', error);
       return [];
@@ -191,14 +250,16 @@ class CentralizedTimerService {
   getTimers(): ActiveTimer[] {
     const timers = this.getTimersRaw();
     
-    // Vérifier et mettre à jour les métadonnées si nécessaire
-    for (const timer of timers) {
+    // Normaliser tous les timers et vérifier les métadonnées
+    const normalizedTimers = timers.map(timer => this.normalizeTimer(timer));
+    
+    for (const timer of normalizedTimers) {
       if (!this.syncMetadata.has(timer.id)) {
         this.updateTimerMetadata(timer, 'auto-metadata-creation');
       }
     }
     
-    return timers;
+    return normalizedTimers;
   }
 
   /**

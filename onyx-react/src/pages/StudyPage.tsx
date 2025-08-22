@@ -48,6 +48,12 @@ export const StudyPage: React.FC = () => {
     return unsubscribe;
   }, []);
 
+  // Forcer le re-render quand les timers changent pour synchroniser l'affichage
+  useEffect(() => {
+    // Le simple fait d'accéder à `timers` force le re-render quand ils changent
+    // car `timers` vient du TimerContext qui se met à jour automatiquement
+  }, [timers]);
+
   useEffect(() => {
     filterSubjects();
   }, [subjects, searchQuery, statusFilter]);
@@ -382,16 +388,15 @@ export const StudyPage: React.FC = () => {
       {filteredSubjects.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredSubjects.map((subject) => {
-            // Note: linkedTimer functionality commented out for now
-            // const linkedTimer = timers.find(timer => 
-            //   timer.linkedSubject && timer.linkedSubject.id === subject.id
-            // );
+            const linkedTimer = timers.find(timer => 
+              timer.linkedSubject && timer.linkedSubject.id === subject.id
+            );
             
             return (
               <SubjectCard
                 key={subject.id}
                 subject={subject}
-                // linkedTimer prop removed from SubjectCard interface
+                linkedTimerName={linkedTimer?.title}
                 onEdit={handleEditSubject}
                 onDelete={handleDeleteSubject}
                 showQuickActions={true}

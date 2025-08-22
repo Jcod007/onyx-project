@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Subject, TimerType } from '@/types';
+import { TimerType } from '@/types/Timer';
+import { Subject } from '@/types/Subject';
 import { subjectService } from '@/services/subjectService';
 import { isValidTimeInput, normalizeTime } from '@/utils/timeFormat';
 import { Modal } from '@/components/Modal';

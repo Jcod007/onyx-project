@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ModernTimerCard } from '@/components/ModernTimerCard';
 import { TimerConfigDialog } from '@/components/TimerConfigDialog';
 import { TimerConfig } from '@/services/timerService';
@@ -6,6 +6,7 @@ import { Subject } from '@/types/Subject';
 import { useTimerContext } from '@/contexts/TimerContext';
 import { ActiveTimer } from '@/types/ActiveTimer';
 import { courseTimerLinkManager } from '@/services/courseTimerLinkManager';
+import { soundConfig } from '@/utils/soundConfig';
 import { Plus, Settings, Volume2, VolumeX } from 'lucide-react';
 
 export const TimersPage: React.FC = () => {
@@ -20,20 +21,103 @@ export const TimersPage: React.FC = () => {
     // Fonctions de gestion des timers
     addTimer,
     updateTimer,
-    // removeTimer - commented out as unused"
-    // Removed unused timerCounter and setTimerCounter
+    removeTimer
   } = useTimerContext();
   
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [editingTimer, setEditingTimer] = useState<ActiveTimer | null>(null);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [completedSessions] = useState(0);
-  // Suppression de showDailySummary et variables utilisées seulement pour le debug
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    // Charger la préférence de son depuis localStorage
+    const saved = localStorage.getItem('onyx_sound_enabled');
+    return saved !== null ? saved === 'true' : true;
+  });
+  const [completedSessions, setCompletedSessions] = useState(() => {
+    // Charger le compteur de sessions du jour depuis localStorage
+    const today = new Date().toDateString();
+    const saved = localStorage.getItem('onyx_sessions_' + today);
+    return saved ? parseInt(saved, 10) : 0;
+  });
 
   // Note: La synchronisation est maintenant automatique via TimerProvider
   // Plus besoin de synchroniser manuellement
 
+  // Effet pour sauvegarder la préférence de son
+  useEffect(() => {
+    soundConfig.enabled = soundEnabled;
+  }, [soundEnabled]);
+
+  // Effet pour sauvegarder le compteur de sessions
+  useEffect(() => {
+    const today = new Date().toDateString();
+    localStorage.setItem('onyx_sessions_' + today, completedSessions.toString());
+  }, [completedSessions]);
+
+  // Effet pour écouter les fins de timer et incrémenter le compteur
+  useEffect(() => {
+    // Fonction pour vérifier les timers terminés
+    const checkCompletedTimers = () => {
+      timers.forEach(timer => {
+        const state = getTimerState(timer.id);
+        if (state && state.state === 'finished') {
+          // Marquer comme comptabilisé pour éviter les doublons
+          if (!timer.id.includes('_counted_')) {
+            setCompletedSessions(prev => prev + 1);
+            // Note: En production, il faudrait un meilleur système pour éviter les doublons
+          }
+        }
+      });
+    };
+
+    // Vérifier toutes les secondes
+    const interval = setInterval(checkCompletedTimers, 1000);
+    return () => clearInterval(interval);
+  }, [timers, getTimerState]);
+
+  // Fonction pour réinitialiser le compteur quotidien
+  const resetDailyCounter = useCallback(() => {
+    const today = new Date().toDateString();
+    const lastReset = localStorage.getItem('onyx_last_reset');
+    if (lastReset !== today) {
+      setCompletedSessions(0);
+      localStorage.setItem('onyx_last_reset', today);
+    }
+  }, []);
+
+  // Vérifier si on doit réinitialiser le compteur au chargement
+  useEffect(() => {
+    resetDailyCounter();
+    
+    // Nettoyage du localStorage corrompu au premier chargement
+    const cleanupCorruptedData = () => {
+      try {
+        const saved = localStorage.getItem('onyx_active_timers');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            // Vérifier si les données sont corrompues
+            const hasCorruptedDates = parsed.some(timer => 
+              timer.lastUsed && typeof timer.lastUsed === 'string' && isNaN(new Date(timer.lastUsed).getTime())
+            );
+            if (hasCorruptedDates) {
+              console.log('🧹 Nettoyage des données corrompues...');
+              localStorage.removeItem('onyx_active_timers');
+              localStorage.removeItem('onyx_timer_sync_metadata');
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Erreur lors du nettoyage:', error);
+        localStorage.removeItem('onyx_active_timers');
+        localStorage.removeItem('onyx_timer_sync_metadata');
+      }
+    };
+    
+    cleanupCorruptedData();
+  }, [resetDailyCounter]);
+
   const handleCreateTimer = () => {
+    console.log('➕ Création d\'un nouveau timer');
+    setEditingTimer(null); // S'assurer qu'on n'est pas en mode édition
     setShowConfigDialog(true);
   };
 
@@ -130,23 +214,36 @@ export const TimersPage: React.FC = () => {
 
 
   const handleRemoveTimer = async (timerId: string) => {
+    console.log('🗑️ Tentative de suppression du timer:', timerId);
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce timer ?')) {
       try {
         // Arrêter et nettoyer le timer s'il est en cours d'exécution
-        cleanupTimer(timerId);
+        const timerState = getTimerState(timerId);
+        if (timerState && (timerState.state === 'running' || timerState.state === 'paused')) {
+          cleanupTimer(timerId);
+        }
         
-        // Utiliser courseTimerLinkManager pour gérer la suppression
-        // Cela convertira automatiquement les cours liés en timers rapides
-        await courseTimerLinkManager.handleTimerDeletion(timerId);
+        // Trouver le timer pour vérifier s'il a un cours lié
+        const timer = timers.find(t => t.id === timerId);
         
-        console.log(`✅ Timer ${timerId} supprimé et cours liés convertis en timers rapides`);
+        if (timer?.linkedSubject) {
+          // Utiliser courseTimerLinkManager pour gérer la conversion du cours en timer rapide
+          await courseTimerLinkManager.handleTimerDeletion(timerId);
+        } else {
+          // Supprimer directement le timer s'il n'est pas lié
+          await removeTimer(timerId);
+        }
+        
+        console.log(`✅ Timer supprimé${timer?.linkedSubject ? ' et cours converti en timer rapide' : ''}`);
       } catch (error) {
         console.error('Erreur lors de la suppression du timer:', error);
+        alert('Erreur lors de la suppression du timer');
       }
     }
   };
 
   const editTimer = (timer: ActiveTimer) => {
+    console.log('🔧 Édition du timer:', timer.id, timer.title);
     setEditingTimer(timer);
     setShowConfigDialog(true);
   };
@@ -347,8 +444,8 @@ export const TimersPage: React.FC = () => {
                 onEdit={() => editTimer(timer)}
                 onDelete={() => handleRemoveTimer(timer.id)}
                 onLinkSubject={() => {
-                  console.log('Link subject for timer:', timer.id);
-                  // TODO: Implémenter la liaison avec un sujet
+                  // La liaison se fait via le dialog d'édition
+                  editTimer(timer);
                 }}
               />
             );

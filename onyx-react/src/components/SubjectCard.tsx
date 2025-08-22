@@ -5,6 +5,7 @@ import { Clock, Calendar, Target, Edit, Trash2, Link, Unlink } from 'lucide-reac
 
 interface SubjectCardProps {
   subject: Subject;
+  linkedTimerName?: string;
   onEdit?: (subject: Subject) => void;
   onDelete?: (subject: Subject) => void;
   showQuickActions?: boolean;
@@ -13,6 +14,7 @@ interface SubjectCardProps {
 
 export const SubjectCard: React.FC<SubjectCardProps> = ({
   subject,
+  linkedTimerName,
   onEdit,
   onDelete,
   showQuickActions = true,
@@ -127,11 +129,11 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
         {/* 4. Liaison avec timer */}
         <div className="flex items-center space-x-3">
           <div className={`p-2 rounded-lg ${
-            subject.linkedTimerId 
+            linkedTimerName || subject.linkedTimerId
               ? 'bg-purple-100' 
               : 'bg-gray-100'
           }`}>
-            {subject.linkedTimerId ? (
+            {linkedTimerName || subject.linkedTimerId ? (
               <Link size={18} className="text-purple-600" />
             ) : (
               <Unlink size={18} className="text-gray-500" />
@@ -140,11 +142,13 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
           <div>
             <p className="text-sm text-gray-500">Liaison timer</p>
             <p className={`text-base font-medium ${
-              subject.linkedTimerId 
+              linkedTimerName || subject.linkedTimerId
                 ? 'text-purple-900' 
                 : 'text-gray-600'
             }`}>
-              {subject.linkedTimerId ? 'Lié à un timer' : 'Aucune liaison'}
+              {linkedTimerName 
+                ? `Lié à "${linkedTimerName}"` 
+                : (subject.linkedTimerId ? 'Lié à un timer' : 'Aucune liaison')}
             </p>
           </div>
         </div>

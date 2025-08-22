@@ -3,7 +3,6 @@ import { TimerService, TimerData } from '@/services/timerService';
 import { ActiveTimer } from '@/types/ActiveTimer';
 import { TimerState } from '@/types/Timer';
 import { playTimerFinishedSound, playBreakFinishedSound } from '@/utils/audioNotifications';
-import { timerLogger } from '@/utils/logger';
 
 interface TimerExecutionState {
   state: TimerState;
