@@ -6,6 +6,7 @@ import { MobileCalendarHeader } from '@/components/Calendar/MobileCalendarHeader
 import { CalendarDay, DayStudySession } from '@/types/Subject';
 import { calendarRenderer } from '@/services/calendarRenderer';
 import { timerSubjectLinkService } from '@/services/timerSubjectLinkService';
+import { subjectService } from '@/services/subjectService';
 import { useTimerContext } from '@/contexts/TimerContext';
 import { ActiveTimer } from '@/types/ActiveTimer';
 import { Clock, BookOpen, CheckCircle2, TrendingUp, Calendar, RefreshCw, Target, Play, Timer, Pause, RotateCcw, Coffee } from 'lucide-react';
@@ -153,6 +154,16 @@ export const CalendarPage: React.FC = () => {
   useEffect(() => {
     loadCalendarData();
   }, [currentDate, viewMode]);
+
+  // S'abonner aux changements du subjectService pour la réactivité
+  useEffect(() => {
+    const unsubscribe = subjectService.subscribe(() => {
+      console.log('🔄 SubjectService changé - rechargement calendrier');
+      loadCalendarData(true);
+    });
+
+    return unsubscribe;
+  }, []);
   
   // Sauvegarder l'état quand on quitte la page avec guards de nettoyage
   useEffect(() => {

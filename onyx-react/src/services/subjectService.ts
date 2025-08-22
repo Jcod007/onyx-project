@@ -8,6 +8,23 @@ import { dataService } from './dataService';
 import { formatDuration, calculateProgress } from '@/utils/timeFormat';
 
 class SubjectService {
+  private listeners: Set<() => void> = new Set();
+
+  // Système de notification pour les changements
+  subscribe(listener: () => void): () => void {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+
+  private notifyListeners(): void {
+    this.listeners.forEach(listener => {
+      try {
+        listener();
+      } catch (error) {
+        console.error('Erreur dans listener subjectService:', error);
+      }
+    });
+  }
   
   async getAllSubjects(): Promise<Subject[]> {
     return await dataService.getSubjects();
@@ -37,7 +54,9 @@ class SubjectService {
       throw new Error('Une matière avec ce nom existe déjà');
     }
 
-    return await dataService.saveSubject(subjectData);
+    const result = await dataService.saveSubject(subjectData);
+    this.notifyListeners();
+    return result;
   }
 
   async updateSubject(id: string, updates: UpdateSubjectDto): Promise<Subject | null> {
@@ -63,7 +82,9 @@ class SubjectService {
       }
     }
 
-    return await dataService.updateSubject(id, updates);
+    const result = await dataService.updateSubject(id, updates);
+    this.notifyListeners();
+    return result;
   }
 
   async deleteSubject(id: string): Promise<boolean> {
@@ -72,15 +93,25 @@ class SubjectService {
       throw new Error('Matière non trouvée');
     }
 
-    return await dataService.deleteSubject(id);
+    const result = await dataService.deleteSubject(id);
+    this.notifyListeners();
+    return result;
   }
 
   async addStudyTime(subjectId: string, duration: number): Promise<Subject | null> {
+    console.log(`🔄 SubjectService.addStudyTime: ${duration}s pour subject ${subjectId}`);
+    
     if (duration <= 0) {
       throw new Error('La durée doit être supérieure à 0');
     }
 
     const updatedSubject = await dataService.addTimeToSubject(subjectId, duration);
+    
+    if (updatedSubject) {
+      console.log(`✅ Temps ajouté: ${updatedSubject.name} - ${Math.floor(updatedSubject.timeSpent/60)}min total`);
+    } else {
+      console.error(`❌ Échec mise à jour subject ${subjectId}`);
+    }
     
     if (updatedSubject) {
       // Enregistrer la session d'étude
@@ -96,6 +127,9 @@ class SubjectService {
       await dataService.saveStudySession(session);
     }
 
+    if (updatedSubject) {
+      this.notifyListeners();
+    }
     return updatedSubject;
   }
 

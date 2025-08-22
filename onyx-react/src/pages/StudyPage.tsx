@@ -56,6 +56,16 @@ export const StudyPage: React.FC = () => {
     };
     loadData();
   }, []);
+
+  // S'abonner aux changements du subjectService pour la réactivité
+  useEffect(() => {
+    const unsubscribe = subjectService.subscribe(() => {
+      console.log('🔄 SubjectService changé - rechargement des données');
+      loadSubjects();
+    });
+
+    return unsubscribe;
+  }, []);
   
   const loadTimers = async () => {
     try {

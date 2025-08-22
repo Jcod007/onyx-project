@@ -128,10 +128,14 @@ export const TimerProvider: React.FC<TimerProviderProps> = ({ children }) => {
       
       if (timer.linkedSubject) {
         try {
+          console.log(`📊 Ajout temps d'étude: ${totalTime}s pour "${timer.linkedSubject.name}"`);
           await subjectService.addStudyTime(timer.linkedSubject.id, totalTime);
+          console.log(`✅ Temps d'étude ajouté avec succès`);
         } catch (error) {
-          console.error('Erreur lors de l\'ajout du temps d\'étude:', error);
+          console.error('❌ Erreur lors de l\'ajout du temps d\'étude:', error);
         }
+      } else {
+        console.warn(`⚠️ Timer "${timer.title}" n'a pas de linkedSubject - temps d'étude non comptabilisé`);
       }
     }, [removeTimer, isComponentMounted]),
     // onSessionComplete callback
@@ -144,13 +148,17 @@ export const TimerProvider: React.FC<TimerProviderProps> = ({ children }) => {
       
       if (timer.linkedSubject) {
         try {
+          console.log(`📊 Session complète: ${timer.config.workDuration}s pour "${timer.linkedSubject.name}"`);
           await subjectService.addStudyTime(
             timer.linkedSubject.id, 
             timer.config.workDuration
           );
+          console.log(`✅ Temps de session ajouté avec succès`);
         } catch (error) {
-          console.error('Erreur lors de l\'ajout du temps d\'étude:', error);
+          console.error('❌ Erreur lors de l\'ajout du temps d\'étude:', error);
         }
+      } else {
+        console.warn(`⚠️ Timer "${timer.title}" n'a pas de linkedSubject - session non comptabilisée`);
       }
     }, [isComponentMounted])
   );
