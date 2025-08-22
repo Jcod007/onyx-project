@@ -5,10 +5,7 @@ export { Timer } from './Timer';
 export { ModernTimerCard } from './ModernTimerCard';
 export { TimerConfigDialog } from './TimerConfigDialog';
 export { SmartTimeInput } from './SmartTimeInput';
-export { DailySummary } from './DailySummary';
 export { SubjectCard } from './SubjectCard';
-export { HorizontalSlider } from './HorizontalSlider';
-export { ErgonomicTimeInput } from './ErgonomicTimeInput';
 export { SubjectConfigCard } from './SubjectConfigCard';
 
 // Active Timer Widget components
