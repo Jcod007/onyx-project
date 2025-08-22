@@ -8,6 +8,8 @@ import { subjectService } from '@/services/subjectService';
 import { ActiveTimer } from '@/types/ActiveTimer';
 import { useReactiveTimers } from '@/hooks/useReactiveTimers';
 import { integratedTimerService } from '@/services/integratedTimerService';
+import { useBidirectionalBinding, type LinkedSubjectData } from '@/hooks/useBidirectionalBinding';
+import { syncEventBus } from '@/services/syncEventBus';
 import { Plus, Search, Filter, BookOpen, X } from 'lucide-react';
 import { logger } from '@/utils/logger';
 import { diagnoseLinkageIssues, repairLinkageIssues } from '@/utils/linkageDiagnostic';
@@ -23,7 +25,15 @@ export const StudyPage: React.FC = () => {
   const [timers, setTimers] = useState<ActiveTimer[]>([]);
   const { getAvailableTimersForSubject } = useReactiveTimers();
   const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [filteredSubjects, setFilteredSubjects] = useState<Subject[]>([]);
+  const [filteredSubjects, setFilteredSubjects] = useState<LinkedSubjectData[]>([]);
+  
+  // ✅ BINDING BIDIRECTIONNEL RÉACTIF (remplace les setTimeout)
+  const {
+    linkedSubjects,
+    linkCourseToTimer: bindingLinkCourseToTimer,
+    unlinkCourse: bindingUnlinkCourse,
+    refreshData
+  } = useBidirectionalBinding(subjects, timers);
   const [activeTimer, setActiveTimer] = useState<StudyTimer | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -79,23 +89,38 @@ export const StudyPage: React.FC = () => {
     }
   };
 
-  // S'abonner aux changements de liaisons timer-cours
+  // ✅ SYNCHRONISATION IMMÉDIATE (pas de setTimeout)
   useEffect(() => {
-    const unsubscribe = integratedTimerService.subscribe(() => {
-      logger.loading('Changement de liaison détecté, rechargement des données');
-      // Recharger dans l'ordre correct avec un délai pour s'assurer que les données sont persistées
-      setTimeout(async () => {
+    const unsubscribeLinkage = syncEventBus.on('linkage:changed', () => {
+      logger.info('🔄 Synchronisation immédiate des liaisons');
+      // ✅ Exécution asynchrone sans bloquer le bus synchrone
+      Promise.resolve().then(async () => {
         try {
-          await loadTimers(); // D'abord les timers
-          await loadSubjects(); // Puis les subjects
-          logger.success('Données rechargées avec succès');
+          await loadTimers();
+          await loadSubjects();
+          refreshData();
         } catch (error) {
-          logger.error('Erreur lors du rechargement:', error);
+          logger.error('Erreur synchronisation:', error);
         }
-      }, 100); // Petit délai pour s'assurer que les données sont persistées
+      });
     });
-    return unsubscribe;
-  }, []);
+    
+    const unsubscribeService = integratedTimerService.subscribe(async () => {
+      logger.loading('Changement de service détecté, rechargement immédiat');
+      try {
+        await loadTimers();
+        await loadSubjects();
+        logger.success('Données rechargées avec succès');
+      } catch (error) {
+        logger.error('Erreur lors du rechargement:', error);
+      }
+    });
+    
+    return () => {
+      unsubscribeLinkage();
+      unsubscribeService();
+    };
+  }, [refreshData]);
 
   // Forcer le re-render quand les timers changent pour synchroniser l'affichage
   useEffect(() => {
@@ -103,9 +128,15 @@ export const StudyPage: React.FC = () => {
     // car `timers` vient du TimerContext qui se met à jour automatiquement
   }, [timers]);
 
+  // ✅ S'assurer que les données sont synchronisées avec le hook de binding
+  useEffect(() => {
+    console.log('🔄 Données subjects mises à jour:', subjects.length);
+    console.log('🔄 Données timers mises à jour:', timers.length);
+  }, [subjects, timers]);
+
   useEffect(() => {
     filterSubjects();
-  }, [subjects, searchQuery, statusFilter]);
+  }, [linkedSubjects, searchQuery, statusFilter]); // ✅ Utiliser linkedSubjects au lieu de subjects
 
   const loadSubjects = async () => {
     try {
@@ -123,7 +154,7 @@ export const StudyPage: React.FC = () => {
   };
 
   const filterSubjects = () => {
-    let filtered = subjects;
+    let filtered = linkedSubjects; // ✅ Utiliser linkedSubjects pour les données enrichies
 
     // Filtrage par recherche
     if (searchQuery.trim()) {
@@ -169,6 +200,14 @@ export const StudyPage: React.FC = () => {
       
       // 2. Gérer la configuration du timer
       if (formData.timerConfig?.mode === 'link-existing' && formData.timerConfig?.linkedTimerId) {
+        // Vérifier si le timer cible a déjà un cours lié
+        const targetTimer = timers.find(t => t.id === formData.timerConfig.linkedTimerId);
+        if (targetTimer?.linkedSubject) {
+          console.log(`🔓 StudyPage: Déliaison du cours précédent ${targetTimer.linkedSubject.id} du timer ${targetTimer.id} pour nouveau cours ${createdSubject.id}`);
+          // Délier l'ancien cours du timer cible
+          await integratedTimerService.unlinkCourse(targetTimer.linkedSubject.id);
+        }
+        
         // Lier le timer existant au nouveau cours
         await integratedTimerService.linkCourseToTimer(
           createdSubject.id, 
@@ -245,7 +284,19 @@ export const StudyPage: React.FC = () => {
         
         // Si on change de timer lié
         if (currentLinkedTimer?.id !== formData.timerConfig.linkedTimerId) {
-          // Lier le nouveau timer au cours (cela gérera automatiquement la déliaison de l'ancien)
+          console.log(`🔄 StudyPage: Changement liaison ${editingSubject.id} : ${currentLinkedTimer?.id} → ${formData.timerConfig.linkedTimerId}`);
+          
+          // Vérifier si le nouveau timer cible a déjà un cours lié
+          const targetTimer = timers.find(t => t.id === formData.timerConfig.linkedTimerId);
+          if (targetTimer?.linkedSubject && targetTimer.linkedSubject.id !== editingSubject.id) {
+            console.log(`🔓 StudyPage: Déliaison du cours précédent ${targetTimer.linkedSubject.id} du timer ${targetTimer.id}`);
+            // Délier l'ancien cours du timer cible
+            await integratedTimerService.unlinkCourse(targetTimer.linkedSubject.id);
+          }
+          
+          // ✅ UTILISER LE BINDING RÉACTIF (pas de délai)
+          bindingLinkCourseToTimer(editingSubject.id, formData.timerConfig.linkedTimerId);
+          // Aussi persister en base
           await integratedTimerService.linkCourseToTimer(
             editingSubject.id, 
             formData.timerConfig.linkedTimerId
@@ -257,6 +308,9 @@ export const StudyPage: React.FC = () => {
           ? timers.find(t => t.id === editingSubject.linkedTimerId)
           : undefined;
         if (currentLinkedTimer) {
+          // ✅ UTILISER LE BINDING RÉACTIF (pas de délai)
+          bindingUnlinkCourse(editingSubject.id);
+          // Aussi persister en base
           await integratedTimerService.unlinkCourse(editingSubject.id);
         }
         
@@ -442,32 +496,19 @@ export const StudyPage: React.FC = () => {
       {filteredSubjects.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredSubjects.map((subject) => {
-            // CORRECTION: Recherche bidirectionnelle robuste
-            let linkedTimer: ActiveTimer | undefined;
+            // ✅ UTILISER LES DONNÉES DÉJÀ ENRICHIES (pas de recherche manuelle)
+            const linkedTimerName = subject.linkedTimer?.title;
             
-            if (subject.linkedTimerId) {
-              // Méthode 1: Recherche par ID du timer depuis le subject
-              linkedTimer = timers.find(timer => timer.id === subject.linkedTimerId);
-            }
-            
-            // Méthode 2: Recherche par référence du subject dans le timer (fallback)
-            if (!linkedTimer) {
-              linkedTimer = timers.find(timer => 
-                timer.linkedSubject?.id === subject.id && !timer.isEphemeral
-              );
-            }
-            
-            // Debug logging pour diagnostiquer les problèmes
-            if (subject.linkedTimerId && !linkedTimer) {
-              console.warn(`⚠️ Subject "${subject.name}" référence timer ${subject.linkedTimerId} mais timer non trouvé`);
-              console.log('Timers disponibles:', timers.map(t => ({ id: t.id, title: t.title, linkedSubject: t.linkedSubject })));
+            // Debug pour vérifier la cohérence
+            if (subject.linkedTimerId && !subject.hasValidLink) {
+              console.warn(`⚠️ Subject "${subject.name}" a une liaison invalide`);
             }
             
             return (
               <SubjectCard
                 key={subject.id}
                 subject={subject}
-                linkedTimerName={linkedTimer?.title}
+                linkedTimerName={linkedTimerName}
                 onEdit={handleEditSubject}
                 onDelete={handleDeleteSubject}
                 showQuickActions={true}

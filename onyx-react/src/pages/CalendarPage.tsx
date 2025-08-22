@@ -8,6 +8,7 @@ import { CalendarDay, DayStudySession } from '@/types/Subject';
 import { calendarRenderer } from '@/services/calendarRenderer';
 import { timerSubjectLinkService } from '@/services/timerSubjectLinkService';
 import { subjectService } from '@/services/subjectService';
+import { syncEventBus } from '@/services/syncEventBus';
 import { useTimerContext } from '@/contexts/TimerContext';
 import { ActiveTimer } from '@/types/ActiveTimer';
 import { Clock, BookOpen, CheckCircle2, TrendingUp, Calendar, RefreshCw, Target, Play, Timer, Pause, RotateCcw, Coffee } from 'lucide-react';
@@ -216,6 +217,20 @@ export const CalendarPage: React.FC = () => {
     };
   }, [saveStateImmediate]);
 
+  // ✅ S'abonner au bus synchrone pour synchronisation inter-pages
+  useEffect(() => {
+    const unsubscribeSyncBus = syncEventBus.on('linkage:changed', () => {
+      calendarLogger.info('🔄 Synchronisation immédiate calendrier depuis autre page');
+      saveStateImmediate();
+      // ✅ Exécution asynchrone sans bloquer le bus synchrone
+      Promise.resolve().then(() => {
+        loadCalendarData(true);
+      });
+    });
+    
+    return unsubscribeSyncBus;
+  }, [saveStateImmediate]);
+
   // S'abonner aux changements de liaisons avec guard de nettoyage
   useEffect(() => {
     let isSubscribed = true;
@@ -225,12 +240,8 @@ export const CalendarPage: React.FC = () => {
         calendarLogger.loading('Changement de liaison détecté, rechargement calendrier');
         // Sauvegarde immédiate avant rechargement
         saveStateImmediate();
-        // Forcer un rechargement complet avec un léger délai pour s'assurer que les données sont sauvegardées
-        setTimeout(() => {
-          if (isSubscribed) {
-            loadCalendarData(true);
-          }
-        }, 100);
+        // ✅ Rechargement immédiat (pas de délai)
+        loadCalendarData(true);
       }
     });
     

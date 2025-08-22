@@ -2,6 +2,7 @@ import { Subject, QuickTimerConfig } from '@/types/Subject';
 import { ActiveTimer } from '@/types/ActiveTimer';
 import { subjectService } from './subjectService';
 import { linkLogger } from '@/utils/logger';
+import { syncEventBus } from './syncEventBus';
 
 /**
  * 🔗 TimerSubjectLinkService
@@ -76,7 +77,7 @@ class TimerSubjectLinkService {
    */
   async linkCourseToTimer(courseId: string, timerId: string): Promise<void> {
     this.ensureTimerService();
-    linkLogger.link(`Liaison cours ${courseId} → timer ${timerId}`);
+    linkLogger.link(`🔗 DÉBUT Liaison cours ${courseId} → timer ${timerId}`);
 
     // État initial pour rollback
     const initialState = {
@@ -100,8 +101,10 @@ class TimerSubjectLinkService {
       initialState.previousTimerLinkedCourse = initialState.timer.linkedSubject || null;
 
       // 2. Délier les anciennes liaisons si nécessaire
+      linkLogger.debug(`🔓 Vérification liaisons existantes pour cours ${courseId} et timer ${timerId}`);
       await this.unlinkCourseFromAnyTimer(courseId);
       await this.unlinkTimerFromAnyCourse(timerId);
+      linkLogger.debug(`✅ Déliaisons préalables terminées`);
 
       // 3. Créer la nouvelle liaison bidirectionnelle
       await this.linkTimerToSubject(courseId, timerId);
@@ -115,7 +118,10 @@ class TimerSubjectLinkService {
       });
 
       linkLogger.success(`Liaison réussie : cours "${initialState.course.name}" ↔ timer "${initialState.timer.title}"`);
+      
+      // ✅ NOTIFICATION SYNCHRONE IMMÉDIATE (pas de délai)
       this.notifyListeners();
+      syncEventBus.notifyLinkageChange('link', courseId, timerId);
 
     } catch (error) {
       linkLogger.error('Erreur liaison cours-timer, tentative de rollback:', error);
@@ -215,7 +221,10 @@ class TimerSubjectLinkService {
       await this.unlinkTimerFromSubject(courseId);
 
       linkLogger.success(`Cours "${course.name}" délié et converti en timer rapide`);
+      
+      // ✅ NOTIFICATION SYNCHRONE IMMÉDIATE (pas de délai)
       this.notifyListeners();
+      syncEventBus.notifyLinkageChange('unlink', courseId, course.linkedTimerId);
 
     } catch (error) {
       linkLogger.error('Erreur déliaison cours:', error);
@@ -292,11 +301,9 @@ class TimerSubjectLinkService {
         await this.unlinkTimersFromDeletedSubject(courseId);
         linkLogger.debug(`Timer ${course.linkedTimerId} délié du cours supprimé`);
         
-        // Notifier immédiatement pour que les composants se mettent à jour
+        // ✅ NOTIFICATION SYNCHRONE IMMÉDIATE (pas d'attente)
         this.notifyListeners();
-        
-        // Attendre un peu pour s'assurer que la mise à jour est propagée
-        await new Promise(resolve => setTimeout(resolve, 100));
+        syncEventBus.emit('linkage:changed');
       }
 
       // Supprimer le cours
@@ -396,12 +403,10 @@ class TimerSubjectLinkService {
       });
     }
 
-    // Si le timer était lié à un autre cours, délier ce cours
+    // Si le timer était lié à un autre cours, délier ce cours COMPLÈTEMENT (avec conversion)
     if (targetTimer.linkedSubject && targetTimer.linkedSubject.id !== subjectId) {
-      console.log(`🔓 Déliaison automatique cours ${targetTimer.linkedSubject.id} du timer ${targetTimer.title}`);
-      await subjectService.updateSubject(targetTimer.linkedSubject.id, {
-        linkedTimerId: undefined
-      });
+      console.log(`🔓 Déliaison automatique complète cours ${targetTimer.linkedSubject.id} du timer ${targetTimer.title}`);
+      await this.unlinkTimerFromSubject(targetTimer.linkedSubject.id);
     }
 
     // Mettre à jour le cours AVEC les bonnes informations
@@ -423,13 +428,9 @@ class TimerSubjectLinkService {
       lastUsed: new Date()
     });
     
-    // FORCER UNE DOUBLE NOTIFICATION pour s'assurer que tous les composants se mettent à jour
+    // ✅ NOTIFICATION SYNCHRONE UNIQUE (pas de double notification)
     this.notifyListeners();
-    
-    // Petite pause pour éviter les race conditions
-    setTimeout(() => {
-      this.notifyListeners();
-    }, 100);
+    syncEventBus.emit('timers:refresh');
   }
 
   /**
@@ -479,8 +480,9 @@ class TimerSubjectLinkService {
 
     console.log(`✅ Timer délié du cours ${subject.name} et converti en timer rapide`);
     
-    // Notifier les changements
+    // ✅ NOTIFICATION SYNCHRONE IMMÉDIATE
     this.notifyListeners();
+    syncEventBus.emit('subjects:refresh');
   }
 
   /**

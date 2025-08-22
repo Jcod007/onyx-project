@@ -10,6 +10,7 @@ import { soundConfig } from '@/utils/soundConfig';
 import { Plus, Volume2, VolumeX } from 'lucide-react';
 import { storageService, STORAGE_KEYS, getSessionKey } from '@/services/storageService';
 import { useTranslation } from 'react-i18next';
+import { syncEventBus } from '@/services/syncEventBus';
 
 export const TimersPage: React.FC = () => {
   const { t } = useTranslation();
@@ -41,6 +42,17 @@ export const TimersPage: React.FC = () => {
 
   // Note: La synchronisation est maintenant automatique via TimerProvider
   // Plus besoin de synchroniser manuellement
+
+  // ✅ Écouter les changements de liaison depuis d'autres pages
+  useEffect(() => {
+    const unsubscribe = syncEventBus.on('linkage:changed', () => {
+      console.log('🔄 TimersPage: Synchronisation des liaisons depuis autre page');
+      // Les données se mettent à jour automatiquement via TimerContext
+      // Pas besoin de rechargement manuel
+    });
+    
+    return unsubscribe;
+  }, []);
 
   // Effet pour sauvegarder la préférence de son
   useEffect(() => {
@@ -339,6 +351,31 @@ export const TimersPage: React.FC = () => {
       isPomodoroMode,
       maxCycles
     });
+
+    // ✅ SYNCHRONISATION BIDIRECTIONNELLE avec la base de données
+    
+    // Si le timer avait déjà un cours lié différent, d'abord délier l'ancien cours
+    if (editingTimer.linkedSubject && (!finalLinkedSubject || finalLinkedSubject.id !== editingTimer.linkedSubject.id)) {
+      console.log(`🔓 TimersPage: Déliaison de l'ancien cours ${editingTimer.linkedSubject.id} du timer ${editingTimer.id}`);
+      try {
+        await integratedTimerService.unlinkCourse(editingTimer.linkedSubject.id);
+        console.log(`✅ TimersPage: Ancien cours délié avec succès`);
+      } catch (error) {
+        console.error('❌ TimersPage: Erreur lors de la déliaison de l\'ancien cours:', error);
+      }
+    }
+    
+    // Ensuite, créer la nouvelle liaison si nécessaire
+    if (finalLinkedSubject && finalLinkedSubject.id !== editingTimer.linkedSubject?.id) {
+      // Nouvelle liaison - utiliser integratedTimerService pour liaison bidirectionnelle
+      console.log(`🔗 TimersPage: Liaison bidirectionnelle cours ${finalLinkedSubject.id} ↔ timer ${editingTimer.id}`);
+      try {
+        await integratedTimerService.linkCourseToTimer(finalLinkedSubject.id, editingTimer.id);
+        console.log(`✅ TimersPage: Liaison bidirectionnelle réussie`);
+      } catch (error) {
+        console.error('❌ TimersPage: Erreur liaison bidirectionnelle:', error);
+      }
+    }
 
     setShowConfigDialog(false);
     setEditingTimer(null);

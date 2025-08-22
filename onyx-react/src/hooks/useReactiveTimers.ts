@@ -270,26 +270,31 @@ export const useReactiveTimers = () => {
     loadInitialState();
   }, [syncFromCentralizedService, cleanupExpiredEphemeralTimers]);
 
-  // Nettoyage périodique des timers éphémères expirés
+  // ✅ Nettoyage périodique des timers éphémères expirés (protégé contre les fuites)
   useEffect(() => {
+    let isComponentMounted = true;
+    
     // Nettoyer immédiatement au montage
     const initialCleanup = cleanupExpiredEphemeralTimers();
-    if (initialCleanup) {
-      // Programmer une synchronisation après le nettoyage initial
-      setTimeout(() => syncFromCentralizedService(), 50);
+    if (initialCleanup && isComponentMounted) {
+      // Synchronisation immédiate sans setTimeout
+      syncFromCentralizedService();
     }
     
     // Puis nettoyer toutes les 30 secondes
     const cleanupInterval = setInterval(() => {
+      if (!isComponentMounted) return;
+      
       console.log('🔄 Nettoyage périodique des timers éphémères');
       const cleanupPerformed = cleanupExpiredEphemeralTimers();
-      if (cleanupPerformed) {
-        // Programmer une synchronisation si un nettoyage a été effectué
-        setTimeout(() => syncFromCentralizedService(), 50);
+      if (cleanupPerformed && isComponentMounted) {
+        // Synchronisation immédiate sans setTimeout
+        syncFromCentralizedService();
       }
     }, 30000); // 30 secondes
     
     return () => {
+      isComponentMounted = false;
       clearInterval(cleanupInterval);
       console.log('🧹 Nettoyage périodique des timers éphémères arrêté');
     };
@@ -425,14 +430,12 @@ export const useReactiveTimers = () => {
           const ephemeralTimers = updatedTimers.filter(t => t.isEphemeral);
           saveEphemeralTimers(ephemeralTimers);
           
-          // Nettoyer immédiatement les timers expirés lors de la suppression
-          setTimeout(() => {
-            const cleanupPerformed = cleanupExpiredEphemeralTimers();
-            if (cleanupPerformed) {
-              // Forcer une re-synchronisation si un nettoyage a été effectué
-              syncFromCentralizedService();
-            }
-          }, 100);
+          // ✅ Nettoyer immédiatement les timers expirés lors de la suppression (sans délai)
+          const cleanupPerformed = cleanupExpiredEphemeralTimers();
+          if (cleanupPerformed) {
+            // Forcer une re-synchronisation immédiate
+            syncFromCentralizedService();
+          }
           
           return updatedTimers;
         });
