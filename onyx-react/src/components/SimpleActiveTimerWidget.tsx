@@ -5,6 +5,7 @@ import { formatDuration } from '@/utils/timeFormat';
 import { useTheme } from '@/contexts/ThemeContext';
 import { ActiveTimer } from '@/types/ActiveTimer';
 import { TimerState } from '@/types/Timer';
+import { useTranslation } from 'react-i18next';
 
 interface TimerExecutionState {
   state: TimerState;
@@ -194,6 +195,7 @@ export const SimpleActiveTimerWidget: React.FC<SimpleActiveTimerWidgetProps> = (
   onTimerAction, 
   className = '' 
 }) => {
+  const { t } = useTranslation();
   const { isDark } = useTheme();
   const [isVisible, setIsVisible] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
@@ -265,7 +267,7 @@ export const SimpleActiveTimerWidget: React.FC<SimpleActiveTimerWidgetProps> = (
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full bg-green-500 ${activeTimers.some(t => getTimerState(t.id)?.state === 'running') ? 'animate-pulse' : ''}`} />
           <span className="text-xs font-medium">
-            {activeTimers.length} timer{activeTimers.length > 1 ? 's' : ''}
+            {activeTimers.length} {t('timers.title').toLowerCase()}{activeTimers.length > 1 ? 's' : ''}
           </span>
           {activeTimers.length > 3 && !isCollapsed && (
             <span className="text-xs text-gray-500 bg-gray-100 px-1 rounded">
@@ -279,7 +281,7 @@ export const SimpleActiveTimerWidget: React.FC<SimpleActiveTimerWidgetProps> = (
           className={`
             p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors
           `}
-          title={isCollapsed ? "Agrandir" : "Réduire"}
+          title={isCollapsed ? t('common.expand', 'Agrandir') : t('common.collapse', 'Réduire')}
         >
           {isCollapsed ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
         </button>

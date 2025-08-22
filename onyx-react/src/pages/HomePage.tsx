@@ -4,6 +4,7 @@ import { Timer, BookOpen, BarChart3, Plus, Clock, Target, TrendingUp } from 'luc
 import { subjectService } from '@/services/subjectService';
 import { Subject } from '@/types/Subject';
 import { formatDuration } from '@/utils/timeFormat';
+import { useTranslation } from 'react-i18next';
 
 interface DashboardStats {
   total: number;
@@ -16,6 +17,7 @@ interface DashboardStats {
 }
 
 export const HomePage: React.FC = () => {
+  const { t } = useTranslation();
   const [stats, setStats] = useState<DashboardStats>({
     total: 0,
     completed: 0,
@@ -62,10 +64,10 @@ export const HomePage: React.FC = () => {
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-8 text-white">
         <div className="max-w-2xl">
           <h1 className="text-3xl font-bold mb-4">
-            Bienvenue sur Onyx
+            {t('home.welcome', 'Bienvenue sur Onyx')}
           </h1>
           <p className="text-lg opacity-90 mb-6">
-            Votre assistant personnel pour gérer efficacement vos sessions d'étude et atteindre vos objectifs académiques.
+            {t('home.subtitle', "Votre assistant personnel pour gérer efficacement vos sessions d'étude et atteindre vos objectifs académiques.")}
           </p>
           <div className="flex flex-wrap gap-4">
             <Link
@@ -73,14 +75,14 @@ export const HomePage: React.FC = () => {
               className="bg-white text-blue-600 px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors flex items-center gap-2"
             >
               <Timer size={20} />
-              Créer un timer
+              {t('timers.createTimer')}
             </Link>
             <Link
               to="/study"
               className="bg-blue-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-400 transition-colors flex items-center gap-2"
             >
               <BookOpen size={20} />
-              Gérer les matières
+              {t('home.manageSubjects', 'Gérer les matières')}
             </Link>
           </div>
         </div>
@@ -91,7 +93,7 @@ export const HomePage: React.FC = () => {
         <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total matières</p>
+              <p className="text-sm text-gray-600">{t('home.totalSubjects', 'Total matières')}</p>
               <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
             </div>
             <div className="p-3 bg-blue-100 rounded-lg">
@@ -103,7 +105,7 @@ export const HomePage: React.FC = () => {
         <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Matières terminées</p>
+              <p className="text-sm text-gray-600">{t('home.completedSubjects', 'Matières terminées')}</p>
               <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
             </div>
             <div className="p-3 bg-green-100 rounded-lg">
@@ -115,7 +117,7 @@ export const HomePage: React.FC = () => {
         <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Temps total d'étude</p>
+              <p className="text-sm text-gray-600">{t('home.totalStudyTime', "Temps total d'étude")}</p>
               <p className="text-2xl font-bold text-purple-600">
                 {formatDuration(stats.totalTimeSpent, 'stats')}
               </p>
@@ -129,7 +131,7 @@ export const HomePage: React.FC = () => {
         <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Progrès global</p>
+              <p className="text-sm text-gray-600">{t('home.overallProgress', 'Progrès global')}</p>
               <p className="text-2xl font-bold text-orange-600">
                 {Math.round(stats.overallProgress)}%
               </p>
@@ -145,12 +147,12 @@ export const HomePage: React.FC = () => {
         {/* Recent Activity */}
         <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Activité récente</h2>
+            <h2 className="text-xl font-semibold text-gray-900">{t('home.recentActivity', 'Activité récente')}</h2>
             <Link 
               to="/study" 
               className="text-blue-600 hover:text-blue-700 text-sm font-medium"
             >
-              Voir tout
+              {t('home.viewAll', 'Voir tout')}
             </Link>
           </div>
 
@@ -161,7 +163,7 @@ export const HomePage: React.FC = () => {
                   <div className="flex-1">
                     <h3 className="font-medium text-gray-900">{subject.name}</h3>
                     <p className="text-sm text-gray-500">
-                      Dernière session: {subject.lastStudyDate ? new Date(subject.lastStudyDate).toLocaleDateString('fr-FR') : 'Jamais'}
+                      {t('home.lastSession', 'Dernière session')}: {subject.lastStudyDate ? new Date(subject.lastStudyDate).toLocaleDateString() : t('home.never', 'Jamais')}
                     </p>
                   </div>
                   <div className="text-right">
@@ -179,17 +181,17 @@ export const HomePage: React.FC = () => {
             <div className="text-center py-8">
               <BookOpen size={48} className="mx-auto text-gray-400 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Aucune activité récente
+                {t('home.noRecentActivity', 'Aucune activité récente')}
               </h3>
               <p className="text-gray-500 mb-4">
-                Commencez à étudier pour voir vos progrès ici
+                {t('home.startStudying', 'Commencez à étudier pour voir vos progrès ici')}
               </p>
               <Link
                 to="/study"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 <Plus size={16} />
-                Créer une matière
+                {t('subjects.createSubject')}
               </Link>
             </div>
           )}
@@ -197,7 +199,7 @@ export const HomePage: React.FC = () => {
 
         {/* Quick Actions */}
         <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Actions rapides</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">{t('home.quickActions', 'Actions rapides')}</h2>
           
           <div className="space-y-4">
             <Link
@@ -208,9 +210,9 @@ export const HomePage: React.FC = () => {
                 <Timer size={24} className="text-blue-600" />
               </div>
               <div className="flex-1">
-                <h3 className="font-medium text-gray-900">Minuteur Pomodoro</h3>
+                <h3 className="font-medium text-gray-900">{t('home.pomodoroTimer', 'Minuteur Pomodoro')}</h3>
                 <p className="text-sm text-gray-500">
-                  Démarrer une session de travail concentré
+                  {t('home.startFocusSession', 'Démarrer une session de travail concentré')}
                 </p>
               </div>
             </Link>
@@ -223,9 +225,9 @@ export const HomePage: React.FC = () => {
                 <BookOpen size={24} className="text-green-600" />
               </div>
               <div className="flex-1">
-                <h3 className="font-medium text-gray-900">Session d'étude</h3>
+                <h3 className="font-medium text-gray-900">{t('home.studySession', "Session d'étude")}</h3>
                 <p className="text-sm text-gray-500">
-                  Étudier une matière spécifique
+                  {t('home.studySpecificSubject', 'Étudier une matière spécifique')}
                 </p>
               </div>
             </Link>
@@ -238,9 +240,9 @@ export const HomePage: React.FC = () => {
                 <BarChart3 size={24} className="text-purple-600" />
               </div>
               <div className="flex-1">
-                <h3 className="font-medium text-gray-900">Voir les statistiques</h3>
+                <h3 className="font-medium text-gray-900">{t('home.viewStatistics', 'Voir les statistiques')}</h3>
                 <p className="text-sm text-gray-500">
-                  Analyser vos progrès d'étude
+                  {t('home.analyzeProgress', "Analyser vos progrès d'étude")}
                 </p>
               </div>
             </Link>
@@ -252,12 +254,12 @@ export const HomePage: React.FC = () => {
       {stats.totalTargetTime > 0 && (
         <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">
-            Progrès global
+            {t('home.overallProgress', 'Progrès global')}
           </h2>
           
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">Progression générale</span>
+              <span className="text-gray-600">{t('home.generalProgress', 'Progression générale')}</span>
               <span className="font-medium text-gray-900">
                 {Math.round(stats.overallProgress)}%
               </span>
@@ -271,8 +273,8 @@ export const HomePage: React.FC = () => {
             </div>
             
             <div className="flex justify-between text-sm text-gray-500">
-              <span>{formatDuration(stats.totalTimeSpent, 'stats')} étudiés</span>
-              <span>{formatDuration(stats.totalTargetTime, 'planning')} objectif</span>
+              <span>{formatDuration(stats.totalTimeSpent, 'stats')} {t('calendar.studied')}</span>
+              <span>{formatDuration(stats.totalTargetTime, 'planning')} {t('home.objective', 'objectif')}</span>
             </div>
           </div>
         </div>

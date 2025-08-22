@@ -83,6 +83,18 @@ class SubjectService {
     }
 
     const result = await dataService.updateSubject(id, updates);
+    
+    if (result) {
+      // Synchroniser les informations avec les timers liés (import dynamique pour éviter la dépendance circulaire)
+      try {
+        const { timerSubjectLinkService } = await import('./timerSubjectLinkService');
+        await timerSubjectLinkService.syncSubjectInfoToLinkedTimers(id);
+      } catch (error) {
+        console.warn('Erreur synchronisation cours-timers:', error);
+        // Ne pas faire échouer la mise à jour du cours pour autant
+      }
+    }
+    
     this.notifyListeners();
     return result;
   }

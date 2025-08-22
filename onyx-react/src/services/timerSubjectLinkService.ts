@@ -533,6 +533,53 @@ class TimerSubjectLinkService {
   }
 
   /**
+   * 🔄 SYNCHRONISATION COURS → TIMER
+   * Met à jour les informations du cours dans tous les timers liés
+   */
+  async syncSubjectInfoToLinkedTimers(subjectId: string): Promise<void> {
+    this.ensureTimerService();
+    
+    try {
+      // Récupérer le cours mis à jour
+      const updatedSubject = await subjectService.getSubject(subjectId);
+      if (!updatedSubject) {
+        console.warn(`⚠️ Cours ${subjectId} introuvable pour synchronisation`);
+        return;
+      }
+
+      // Trouver tous les timers liés à ce cours
+      const timers = this.timerService!.getTimers();
+      const linkedTimers = timers.filter(timer => 
+        timer.linkedSubject?.id === subjectId
+      );
+
+      if (linkedTimers.length === 0) {
+        linkLogger.debug(`Aucun timer lié au cours ${updatedSubject.name} - pas de synchronisation nécessaire`);
+        return;
+      }
+
+      // Mettre à jour chaque timer lié avec les nouvelles informations du cours
+      for (const timer of linkedTimers) {
+        await this.timerService!.updateTimer(timer.id, {
+          linkedSubject: updatedSubject,
+          lastUsed: new Date()
+        });
+        
+        linkLogger.success(`Timer "${timer.title}" synchronisé avec cours "${updatedSubject.name}"`);
+      }
+
+      // Notifier les changements
+      this.notifyListeners();
+      
+      linkLogger.info(`${linkedTimers.length} timer(s) synchronisé(s) avec cours "${updatedSubject.name}"`);
+
+    } catch (error) {
+      linkLogger.error('Erreur synchronisation cours-timers:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Vérification de cohérence et réparation automatique
    */
   async ensureDataConsistency(): Promise<void> {

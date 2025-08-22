@@ -11,6 +11,7 @@ import { integratedTimerService } from '@/services/integratedTimerService';
 import { Plus, Search, Filter, BookOpen, X } from 'lucide-react';
 import { logger } from '@/utils/logger';
 import { diagnoseLinkageIssues, repairLinkageIssues } from '@/utils/linkageDiagnostic';
+import { useTranslation } from 'react-i18next';
 
 interface StudyTimer {
   subject: Subject;
@@ -18,6 +19,7 @@ interface StudyTimer {
 }
 
 export const StudyPage: React.FC = () => {
+  const { t } = useTranslation();
   const [timers, setTimers] = useState<ActiveTimer[]>([]);
   const { getAvailableTimersForSubject } = useReactiveTimers();
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -44,7 +46,7 @@ export const StudyPage: React.FC = () => {
       try {
         const diagnostic = await diagnoseLinkageIssues();
         if (diagnostic.status !== 'OK') {
-          console.warn('🚨 Problèmes de liaison détectés, tentative de réparation automatique');
+          console.warn('🚨 ' + t('study.linkageIssuesDetected', 'Problèmes de liaison détectés, tentative de réparation automatique'));
           await repairLinkageIssues();
           // Recharger les données après réparation
           await loadTimers();
@@ -369,7 +371,7 @@ export const StudyPage: React.FC = () => {
           className="flex items-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
         >
           <Plus size={20} />
-          Nouvelle matière
+          {t('subjects.createSubject')}
         </button>
       </div>
 
@@ -379,7 +381,7 @@ export const StudyPage: React.FC = () => {
           <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Rechercher une matière..."
+            placeholder={t('study.searchSubject', 'Rechercher une matière...')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -393,10 +395,10 @@ export const StudyPage: React.FC = () => {
             onChange={(e) => setStatusFilter(e.target.value as Subject['status'] | 'ALL')}
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
-            <option value="ALL">Tous les statuts</option>
-            <option value="NOT_STARTED">Non commencé</option>
-            <option value="IN_PROGRESS">En cours</option>
-            <option value="COMPLETED">Terminé</option>
+            <option value="ALL">{t('study.allStatuses', 'Tous les statuts')}</option>
+            <option value="NOT_STARTED">{t('subjects.status.notStarted')}</option>
+            <option value="IN_PROGRESS">{t('subjects.status.inProgress')}</option>
+            <option value="COMPLETED">{t('subjects.status.completed')}</option>
           </select>
         </div>
       </div>
@@ -407,9 +409,9 @@ export const StudyPage: React.FC = () => {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-lg font-semibold text-gray-900">
-                Session d'étude - {activeTimer.subject.name}
+                {t('home.studySession')} - {activeTimer.subject.name}
               </h3>
-              <p className="text-gray-600">Timer en cours</p>
+              <p className="text-gray-600">{t('study.timerInProgress', 'Timer en cours')}</p>
             </div>
             <button
               onClick={handleCloseTimer}
@@ -481,14 +483,14 @@ export const StudyPage: React.FC = () => {
           </div>
           <h3 className="text-xl font-medium text-gray-900 mb-2">
             {searchQuery || statusFilter !== 'ALL' 
-              ? 'Aucune matière trouvée' 
-              : 'Aucune matière créée'
+              ? t('study.noSubjectFound', 'Aucune matière trouvée') 
+              : t('study.noSubjectCreated', 'Aucune matière créée')
             }
           </h3>
           <p className="text-gray-500 mb-6 max-w-md mx-auto">
             {searchQuery || statusFilter !== 'ALL'
-              ? 'Essayez de modifier vos critères de recherche'
-              : 'Créez votre première matière pour commencer à suivre vos progrès d\'étude'
+              ? t('study.tryModifyingSearch', 'Essayez de modifier vos critères de recherche')
+              : t('study.createFirstSubject', "Créez votre première matière pour commencer à suivre vos progrès d'étude")
             }
           </p>
           {(!searchQuery && statusFilter === 'ALL') && (
@@ -497,7 +499,7 @@ export const StudyPage: React.FC = () => {
               className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
               <Plus size={20} />
-              Créer une matière
+              {t('subjects.createSubject')}
             </button>
           )}
         </div>

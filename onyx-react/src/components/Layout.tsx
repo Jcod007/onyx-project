@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { 
   Timer, 
   BookOpen, 
@@ -17,18 +18,21 @@ interface NavItem {
   icon: React.ComponentType<{ size?: number }>;
 }
 
-const navItems: NavItem[] = [
-  { path: '/', label: 'Accueil', icon: Home },
-  { path: '/timers', label: 'Minuteurs', icon: Timer },
-  { path: '/study', label: 'Étude', icon: BookOpen },
-  { path: '/calendar', label: 'Calendrier', icon: Calendar },
-  { path: '/statistics', label: 'Statistiques', icon: BarChart3 },
-  { path: '/settings', label: 'Paramètres', icon: Settings },
-];
+// Moved inside component to use translation
 
 export const Layout: React.FC = () => {
+  const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  
+  const navItems: NavItem[] = [
+    { path: '/', label: t('navigation.dashboard'), icon: Home },
+    { path: '/timers', label: t('navigation.timers'), icon: Timer },
+    { path: '/study', label: t('subjects.title'), icon: BookOpen },
+    { path: '/calendar', label: t('navigation.calendar'), icon: Calendar },
+    { path: '/statistics', label: t('navigation.statistics'), icon: BarChart3 },
+    { path: '/settings', label: t('navigation.settings'), icon: Settings },
+  ];
 
   // Fermer la sidebar lors des changements de route ou de taille d'écran
   useEffect(() => {
@@ -133,7 +137,7 @@ export const Layout: React.FC = () => {
         {/* Sidebar Footer */}
         <div className="p-4 border-t border-gray-200">
           <div className="text-xs text-gray-500">
-            <p>Onyx - Gestionnaire d'étude</p>
+            <p>Onyx - {t('common.appDescription', 'Gestionnaire d\'étude')}</p>
             <p>Version 2.0.0 (React)</p>
           </div>
         </div>
@@ -154,10 +158,10 @@ export const Layout: React.FC = () => {
               
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">
-                  {navItems.find(item => isActivePath(item.path))?.label || 'Accueil'}
+                  {navItems.find(item => isActivePath(item.path))?.label || t('navigation.dashboard')}
                 </h2>
                 <p className="text-sm text-gray-500">
-                  Gérez vos sessions d'étude efficacement
+                  {t('common.tagline', 'Gérez vos sessions d\'étude efficacement')}
                 </p>
               </div>
             </div>
@@ -165,8 +169,8 @@ export const Layout: React.FC = () => {
             {/* User section */}
             <div className="flex items-center space-x-4">
               <div className="hidden sm:block text-right">
-                <p className="text-sm font-medium text-gray-900">Utilisateur</p>
-                <p className="text-xs text-gray-500">Session active</p>
+                <p className="text-sm font-medium text-gray-900">{t('common.user', 'Utilisateur')}</p>
+                <p className="text-xs text-gray-500">{t('common.activeSession', 'Session active')}</p>
               </div>
               <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
                 <span className="text-sm font-medium text-gray-600">U</span>

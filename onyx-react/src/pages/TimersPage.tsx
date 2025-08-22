@@ -7,10 +7,12 @@ import { useTimerContext } from '@/contexts/TimerContext';
 import { ActiveTimer } from '@/types/ActiveTimer';
 import { integratedTimerService } from '@/services/integratedTimerService';
 import { soundConfig } from '@/utils/soundConfig';
-import { Plus, Settings, Volume2, VolumeX } from 'lucide-react';
+import { Plus, Volume2, VolumeX } from 'lucide-react';
 import { storageService, STORAGE_KEYS, getSessionKey } from '@/services/storageService';
+import { useTranslation } from 'react-i18next';
 
 export const TimersPage: React.FC = () => {
+  const { t } = useTranslation();
   // Utiliser uniquement le contexte global - source unique de vérité
   const {
     timers,
@@ -350,9 +352,9 @@ export const TimersPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Minuteurs</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('timers.title')}</h1>
           <p className="text-gray-600">
-            Créez et gérez vos sessions de travail Pomodoro
+            {t('timers.description', 'Créez et gérez vos sessions de travail Pomodoro')}
           </p>
         </div>
         
@@ -364,7 +366,7 @@ export const TimersPage: React.FC = () => {
                 ? 'bg-blue-50 border-blue-200 text-blue-600' 
                 : 'bg-gray-50 border-gray-200 text-gray-400'
             }`}
-            title={soundEnabled ? 'Désactiver le son' : 'Activer le son'}
+            title={soundEnabled ? t('settings.sound') + ' ' + t('common.off', 'Off') : t('settings.sound') + ' ' + t('common.on', 'On')}
           >
             {soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
           </button>
@@ -374,30 +376,12 @@ export const TimersPage: React.FC = () => {
             className="flex items-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
           >
             <Plus size={20} />
-            Nouveau timer
+            {t('timers.newTimer', 'Nouveau timer')}
           </button>
         </div>
       </div>
 
 
-      {/* Statistics */}
-      {completedSessions > 0 && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <Settings size={20} className="text-green-600" />
-            </div>
-            <div>
-              <h3 className="font-medium text-green-900">
-                Sessions terminées aujourd'hui
-              </h3>
-              <p className="text-green-700">
-                {completedSessions} session{completedSessions > 1 ? 's' : ''} de travail complétée{completedSessions > 1 ? 's' : ''}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Timers Grid - Utilisation des nouvelles cartes modernes */}
       {timers.filter(t => !t.isEphemeral).length > 0 ? (
@@ -454,17 +438,17 @@ export const TimersPage: React.FC = () => {
             <Plus size={32} className="text-blue-600" />
           </div>
           <h3 className="text-xl font-medium text-gray-900 mb-2">
-            Aucun timer actif
+            {t('timers.noTimers')}
           </h3>
           <p className="text-gray-500 mb-6 max-w-md mx-auto">
-            Créez votre premier timer pour commencer une session de travail concentré avec la technique Pomodoro ou un timer simple
+            {t('timers.createFirstTimer', 'Créez votre premier timer pour commencer une session de travail concentré avec la technique Pomodoro ou un timer simple')}
           </p>
           <button
             onClick={handleCreateTimer}
             className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
           >
             <Plus size={20} />
-            Créer un timer
+            {t('timers.createTimer')}
           </button>
         </div>
       )}
@@ -475,27 +459,27 @@ export const TimersPage: React.FC = () => {
           <div className="w-6 h-6 bg-yellow-200 rounded-full flex items-center justify-center">
             💡
           </div>
-          Conseils d'utilisation
+          {t('timers.usageTips', "Conseils d'utilisation")}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-3 text-sm text-yellow-800">
             <div className="flex items-start gap-2">
               <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
-              <span>Utilisez la technique Pomodoro : 00h25 de travail, 00h05 de pause</span>
+              <span>{t('timers.tip1', 'Utilisez la technique Pomodoro : 00h25 de travail, 00h05 de pause')}</span>
             </div>
             <div className="flex items-start gap-2">
               <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
-              <span>Liez vos timers à des matières pour suivre automatiquement vos progrès</span>
+              <span>{t('timers.tip2', 'Liez vos timers à des matières pour suivre automatiquement vos progrès')}</span>
             </div>
           </div>
           <div className="space-y-3 text-sm text-yellow-800">
             <div className="flex items-start gap-2">
               <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
-              <span>Prenez une pause longue (00h15) toutes les 4 sessions</span>
+              <span>{t('timers.tip3', 'Prenez une pause longue (00h15) toutes les 4 sessions')}</span>
             </div>
             <div className="flex items-start gap-2">
               <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
-              <span>Éliminez les distractions pendant vos sessions de travail</span>
+              <span>{t('timers.tip4', 'Éliminez les distractions pendant vos sessions de travail')}</span>
             </div>
           </div>
         </div>

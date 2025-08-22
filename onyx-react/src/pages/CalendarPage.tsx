@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { CalendarView } from '@/components/Calendar/CalendarView';
 import { CalendarHeader } from '@/components/Calendar/CalendarHeader';
 import { MobileCalendarHeader } from '@/components/Calendar/MobileCalendarHeader';
@@ -47,6 +48,7 @@ const loadInitialState = () => {
 };
 
 export const CalendarPage: React.FC = () => {
+  const { t } = useTranslation();
   const initialState = loadInitialState();
   
   const [calendarDays, setCalendarDays] = useState<CalendarDay[]>([]);
@@ -308,7 +310,7 @@ export const CalendarPage: React.FC = () => {
     
     let timerInfo = null;
     let buttonIcon = <Play size={14} />;
-    let buttonText = 'Démarrer';
+    let buttonText = t('common.start');
     let buttonColor = 'bg-blue-600 hover:bg-blue-700 border-blue-700';
     let isTimerRunning = false;
     let action: 'start' | 'pause' | 'reset' | null = null;
@@ -332,24 +334,24 @@ export const CalendarPage: React.FC = () => {
         
         if (timerState.state === 'running') {
           buttonIcon = <Pause size={14} />;
-          buttonText = 'Pause Timer';
+          buttonText = t('calendar.pauseTimer');
           buttonColor = 'bg-red-600 hover:bg-red-700 border-red-700';
           action = 'pause';
         } else if (timerState.state === 'paused') {
           buttonIcon = defaultIcon;
-          buttonText = 'Reprendre Timer';
+          buttonText = t('calendar.resumeTimer');
           buttonColor = 'bg-blue-600 hover:bg-blue-700 border-blue-700';
           action = 'start';
         } else if (timerState.state === 'idle') {
           // Timer en état idle après reset - permettre de redémarrer
           buttonIcon = defaultIcon;
-          buttonText = 'Démarrer Timer';
+          buttonText = t('calendar.startTimer');
           buttonColor = 'bg-blue-600 hover:bg-blue-700 border-blue-700';
           action = 'start';
         } else {
           // État inconnu, permettre de redémarrer
           buttonIcon = defaultIcon;
-          buttonText = 'Reprendre Timer';
+          buttonText = t('calendar.resumeTimer');
           buttonColor = 'bg-blue-600 hover:bg-blue-700 border-blue-700';
           action = 'start';
         }
@@ -361,7 +363,7 @@ export const CalendarPage: React.FC = () => {
                           'type' in session.timerConfig && 
                           session.timerConfig.type === 'pomodoro';
         buttonIcon = isPomodoro ? <Coffee size={14} /> : <Clock size={14} />;
-        buttonText = 'Reprendre Timer';
+        buttonText = t('calendar.resumeTimer');
         buttonColor = 'bg-blue-600 hover:bg-blue-700 border-blue-700';
         action = 'start';
       }
@@ -383,25 +385,25 @@ export const CalendarPage: React.FC = () => {
         
         if (linkedTimerState.state === 'running') {
           buttonIcon = <Pause size={14} />;
-          buttonText = 'Pause Timer';
+          buttonText = t('calendar.pauseTimer');
           buttonColor = 'bg-orange-600 hover:bg-orange-700 border-orange-700';
           action = 'pause';
         } else if (linkedTimerState.state === 'paused') {
           buttonIcon = <Play size={14} />;
-          buttonText = 'Reprendre Timer';
+          buttonText = t('calendar.resumeTimer');
           buttonColor = 'bg-green-600 hover:bg-green-700 border-green-700';
           action = 'start';
         } else {
           // Timer lié en état idle ou finished
           buttonIcon = <Timer size={14} />;
-          buttonText = 'Démarrer Timer';
+          buttonText = t('calendar.startTimer');
           buttonColor = 'bg-green-600 hover:bg-green-700 border-green-700';
           action = 'start';
         }
       } else {
         // Timer lié sans état d'exécution
         buttonIcon = <Timer size={14} />;
-        buttonText = 'Démarrer Timer';
+        buttonText = t('calendar.startTimer');
         buttonColor = 'bg-green-600 hover:bg-green-700 border-green-700';
         action = 'start';
       }
@@ -409,7 +411,7 @@ export const CalendarPage: React.FC = () => {
     // PRIORITÉ 3: Démarrer - pas de timer en cours
     else {
       buttonIcon = <Clock size={14} />;
-      buttonText = 'Démarrer Timer';
+      buttonText = t('calendar.startTimer');
       buttonColor = 'bg-purple-600 hover:bg-purple-700 border-purple-700';
       action = 'start';
     }
@@ -637,7 +639,7 @@ export const CalendarPage: React.FC = () => {
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Génération du calendrier...</p>
+          <p className="text-gray-600">{t('calendar.generateCalendar')}</p>
         </div>
       </div>
     );
@@ -706,7 +708,7 @@ export const CalendarPage: React.FC = () => {
                 <div className="p-1.5 bg-blue-50 rounded-lg shadow-sm">
                   <Clock className="text-blue-600" size={16} />
                 </div>
-                <div className="text-sm font-medium text-gray-700">Temps planifié</div>
+                <div className="text-sm font-medium text-gray-700">{t('calendar.plannedTime')}</div>
               </div>
               <div className="text-xl font-bold text-gray-900">
                 {formatMinutesToHours(todayStats.plannedTime)}
@@ -718,7 +720,7 @@ export const CalendarPage: React.FC = () => {
                 <div className="p-1.5 bg-green-50 rounded-lg shadow-sm">
                   <TrendingUp className="text-green-600" size={16} />
                 </div>
-                <div className="text-sm font-medium text-gray-700">Temps étudié</div>
+                <div className="text-sm font-medium text-gray-700">{t('calendar.studiedTime')}</div>
               </div>
               <div className="text-xl font-bold text-gray-900">
                 {formatMinutesToHours(Math.round(todayStats.studiedTime))}
@@ -730,7 +732,7 @@ export const CalendarPage: React.FC = () => {
                 <div className="p-1.5 bg-purple-50 rounded-lg shadow-sm">
                   <CheckCircle2 className="text-purple-600" size={16} />
                 </div>
-                <div className="text-sm font-medium text-gray-700">Sessions terminées</div>
+                <div className="text-sm font-medium text-gray-700">{t('calendar.completedSessions')}</div>
               </div>
               <div className="text-xl font-bold text-gray-900">
                 {todayStats.completedSessions} / {todayStats.totalSessions}
@@ -746,9 +748,9 @@ export const CalendarPage: React.FC = () => {
                   <Target size={16} className="text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Progression du jour</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">{t('calendar.dayProgress')}</h3>
                   <p className="text-sm text-gray-700">
-                    {todayStats.completedSessions} / {todayStats.totalSessions} sessions terminées
+                    {todayStats.completedSessions} / {todayStats.totalSessions} {t('calendar.completedSessions').toLowerCase()}
                   </p>
                 </div>
               </div>
@@ -757,7 +759,7 @@ export const CalendarPage: React.FC = () => {
                   {todayStats.progressPercentage}%
                 </span>
                 <div className="text-sm text-gray-700">
-                  {todayStats.progressPercentage >= 100 ? 'Objectif atteint !' : 'En cours'}
+                  {todayStats.progressPercentage >= 100 ? t('calendar.objectiveReached') : t('calendar.ongoing')}
                 </div>
               </div>
             </div>
@@ -790,11 +792,11 @@ export const CalendarPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="flex items-center gap-2 text-gray-700">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span>{formatMinutesToHours(Math.round(todayStats.studiedTime))} étudiées</span>
+                <span>{formatMinutesToHours(Math.round(todayStats.studiedTime))} {t('calendar.studied')}</span>
               </div>
               <div className="flex items-center gap-2 text-gray-700">
                 <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-                <span>{formatMinutesToHours(Math.max(0, todayStats.plannedTime - Math.round(todayStats.studiedTime)))} restantes</span>
+                <span>{formatMinutesToHours(Math.max(0, todayStats.plannedTime - Math.round(todayStats.studiedTime)))} {t('calendar.remaining')}</span>
               </div>
             </div>
           </div>
@@ -805,7 +807,7 @@ export const CalendarPage: React.FC = () => {
               <div className="p-1.5 bg-blue-50 rounded-lg shadow-sm">
                 <BookOpen size={16} className="text-blue-600" />
               </div>
-              Sessions d'aujourd'hui
+              {t('calendar.todaySessions')}
             </h3>
             
             {todayData.sessions.length > 0 ? (
@@ -818,13 +820,13 @@ export const CalendarPage: React.FC = () => {
                   const remainingMinutes = Math.max(0, (session.plannedDuration || 0) - studiedMinutes);
                   
                   let statusColor = 'gray';
-                  let statusText = 'En attente';
+                  let statusText = t('calendar.pending');
                   if (session.subject?.status === 'IN_PROGRESS') {
                     statusColor = 'yellow';
-                    statusText = 'En cours';
+                    statusText = t('calendar.inProgress');
                   } else if (session.subject?.status === 'COMPLETED') {
                     statusColor = 'green';
-                    statusText = 'Terminé';
+                    statusText = t('calendar.completed');
                   }
                   
                   // Obtenir les infos du bouton selon l'état du timer
@@ -840,7 +842,7 @@ export const CalendarPage: React.FC = () => {
                     <div key={session.id} className="border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md hover:border-gray-300 transition-all duration-200">
                       <div className="flex items-center justify-between mb-4">
                         <div>
-                          <h4 className="text-xl font-semibold text-gray-900">{session.subject?.name || 'Matière inconnue'}</h4>
+                          <h4 className="text-xl font-semibold text-gray-900">{session.subject?.name || t('subjects.title')}</h4>
                           <div className="flex items-center gap-4 mt-2">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                               statusColor === 'green' ? 'bg-green-100 text-green-800' :
@@ -849,12 +851,12 @@ export const CalendarPage: React.FC = () => {
                             }`}>
                               {statusText}
                             </span>
-                            <span className="text-sm text-gray-600">{formatMinutesToHours(session.plannedDuration)} planifiées</span>
-                            <span className="text-sm text-gray-600">{formatMinutesToHours(studiedMinutes)} étudiées</span>
-                            <span className="text-sm text-gray-600">{formatMinutesToHours(remainingMinutes)} restantes</span>
+                            <span className="text-sm text-gray-600">{formatMinutesToHours(session.plannedDuration)} {t('calendar.planned')}</span>
+                            <span className="text-sm text-gray-600">{formatMinutesToHours(studiedMinutes)} {t('calendar.studied')}</span>
+                            <span className="text-sm text-gray-600">{formatMinutesToHours(remainingMinutes)} {t('calendar.remaining')}</span>
                             {ephemeralTimer && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                                ⚡ Timer éphémère
+                                ⚡ {t('calendar.ephemeralTimer')}
                               </span>
                             )}
                           </div>
@@ -898,9 +900,9 @@ export const CalendarPage: React.FC = () => {
                             }}
                             className={`px-4 py-2 ${buttonColor} text-white text-sm font-medium rounded-lg border shadow-sm transition-all duration-200 flex items-center gap-2`}
                             title={
-                              action === 'pause' ? 'Mettre en pause' :
-                              action === 'start' && isTimerRunning ? 'Reprendre' :
-                              isTimerRunning ? 'Voir le timer en cours' : 'Démarrer la session'
+                              action === 'pause' ? t('common.pause') :
+                              action === 'start' && isTimerRunning ? t('common.resume') :
+                              isTimerRunning ? t('calendar.seeTimer') : t('calendar.startSession')
                             }
                           >
                             {buttonIcon}
@@ -920,7 +922,7 @@ export const CalendarPage: React.FC = () => {
                                 }
                               }}
                               className="px-3 py-2 bg-gray-600 hover:bg-gray-700 border-gray-700 text-white text-sm font-medium rounded-lg border shadow-sm transition-all duration-200 flex items-center gap-1"
-                              title="Réinitialiser le timer"
+                              title={t('common.reset')}
                             >
                               <RotateCcw size={14} />
                             </button>
@@ -931,7 +933,7 @@ export const CalendarPage: React.FC = () => {
                       {/* Barre de progression de la session */}
                       <div className="mt-4">
                         <div className="flex justify-between text-sm text-gray-600 mb-2">
-                          <span>Progression</span>
+                          <span>{t('calendar.sessionProgress')}</span>
                           <span>{sessionProgress}%</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
@@ -952,8 +954,8 @@ export const CalendarPage: React.FC = () => {
             ) : (
               <div className="text-center py-12 text-gray-500">
                 <Calendar size={48} className="mx-auto mb-4 opacity-50" />
-                <h4 className="text-lg font-medium mb-2">Aucune session prévue aujourd'hui</h4>
-                <p className="text-sm">Planifiez vos sessions d'étude pour cette journée</p>
+                <h4 className="text-lg font-medium mb-2">{t('calendar.noSession')}</h4>
+                <p className="text-sm">{t('calendar.noSession')}</p>
               </div>
             )}
           </div>
@@ -963,19 +965,19 @@ export const CalendarPage: React.FC = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div>
                 <div className="text-xl font-bold text-gray-900">{todayStats.totalSessions}</div>
-                <div className="text-sm text-gray-700">sessions planifiées</div>
+                <div className="text-sm text-gray-700">{t('calendar.plannedSessions')}</div>
               </div>
               <div>
                 <div className="text-xl font-bold text-gray-900">{formatMinutesToHours(todayStats.plannedTime)}</div>
-                <div className="text-sm text-gray-700">planifiées</div>
+                <div className="text-sm text-gray-700">{t('calendar.planned')}</div>
               </div>
               <div>
                 <div className="text-xl font-bold text-gray-900">{formatMinutesToHours(Math.round(todayStats.studiedTime))}</div>
-                <div className="text-sm text-gray-700">étudiées</div>
+                <div className="text-sm text-gray-700">{t('calendar.studied')}</div>
               </div>
               <div>
                 <div className="text-xl font-bold text-gray-900">{new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
-                <div className="text-sm text-gray-700">dernière mise à jour</div>
+                <div className="text-sm text-gray-700">{t('calendar.lastUpdate')}</div>
               </div>
             </div>
           </div>
@@ -992,7 +994,7 @@ export const CalendarPage: React.FC = () => {
                   </div>
                   {refreshing && <RefreshCw size={14} className="animate-spin text-blue-600" />}
                 </div>
-                <div className="text-sm font-medium text-gray-700 mb-1">Temps planifié</div>
+                <div className="text-sm font-medium text-gray-700 mb-1">{t('calendar.weeklyStats.plannedTime')}</div>
                 <div className="text-xl font-bold text-gray-900">
                   {formatMinutesToHours(weeklyStats.totalPlannedTime)}
                 </div>
@@ -1004,7 +1006,7 @@ export const CalendarPage: React.FC = () => {
                     <Target size={16} className="text-green-600" />
                   </div>
                 </div>
-                <div className="text-sm font-medium text-gray-700 mb-1">Sessions</div>
+                <div className="text-sm font-medium text-gray-700 mb-1">{t('calendar.weeklyStats.sessions')}</div>
                 <div className="text-xl font-bold text-gray-900">{weeklyStats.plannedSessions}</div>
               </div>
               
@@ -1014,7 +1016,7 @@ export const CalendarPage: React.FC = () => {
                     <BookOpen size={16} className="text-purple-600" />
                   </div>
                 </div>
-                <div className="text-sm font-medium text-gray-700 mb-1">Matières</div>
+                <div className="text-sm font-medium text-gray-700 mb-1">{t('calendar.weeklyStats.subjects')}</div>
                 <div className="text-xl font-bold text-gray-900">{weeklyStats.subjectsCount}</div>
               </div>
               
@@ -1024,7 +1026,7 @@ export const CalendarPage: React.FC = () => {
                     <TrendingUp size={16} className="text-orange-600" />
                   </div>
                 </div>
-                <div className="text-sm font-medium text-gray-700 mb-1">Durée moy.</div>
+                <div className="text-sm font-medium text-gray-700 mb-1">{t('calendar.weeklyStats.averageDuration')}</div>
                 <div className="text-xl font-bold text-gray-900">
                   {formatMinutesToHours(weeklyStats.averageSessionDuration > 0 ? Math.round(weeklyStats.averageSessionDuration) : 0)}
                 </div>
