@@ -7,9 +7,9 @@ export { TimerConfigDialog } from './TimerConfigDialog';
 export { SmartTimeInput } from './SmartTimeInput';
 export { SubjectCard } from './SubjectCard';
 export { SubjectConfigCard } from './SubjectConfigCard';
+export { StudyTimeActions } from './StudyTimeActions';
 
 // Active Timer Widget components
-// export { ActiveTimerWidget } from './ActiveTimerWidget'; // Obsolète
 export { SimpleActiveTimerWidget } from './SimpleActiveTimerWidget';
 export { TopTimerIndicator } from './TopTimerIndicator';
 

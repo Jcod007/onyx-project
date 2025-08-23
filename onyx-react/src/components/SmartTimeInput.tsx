@@ -6,6 +6,7 @@ interface SmartTimeInputProps {
   minutes: number;
   seconds: number;
   onChange: (hours: number, minutes: number, seconds: number) => void;
+  onRealTimeChange?: (hours: number, minutes: number, seconds: number) => void;
   className?: string;
   placeholder?: string;
 }
@@ -15,6 +16,7 @@ export const SmartTimeInput: React.FC<SmartTimeInputProps> = ({
   minutes,
   seconds,
   onChange,
+  onRealTimeChange,
   className = '',
   placeholder = '00:00:00'
 }) => {
@@ -130,8 +132,16 @@ export const SmartTimeInput: React.FC<SmartTimeInputProps> = ({
       if (newInputValue.length > 0) {
         const parsed = parseSmartInput(newInputValue, false);
         setDisplayValue(formatTimeDisplay(parsed.hours, parsed.minutes, parsed.seconds));
+        // Notifier les changements en temps réel lors du backspace
+        if (onRealTimeChange) {
+          onRealTimeChange(parsed.hours, parsed.minutes, parsed.seconds);
+        }
       } else {
         setDisplayValue('00:00:00');
+        // Notifier reset en temps réel lors du backspace
+        if (onRealTimeChange) {
+          onRealTimeChange(0, 0, 0);
+        }
       }
     } else if (/^\d$/.test(e.key)) {
       // Gérer les chiffres directement
@@ -142,6 +152,11 @@ export const SmartTimeInput: React.FC<SmartTimeInputProps> = ({
       setInputValue(newInputValue);
       const parsed = parseSmartInput(newInputValue, false);
       setDisplayValue(formatTimeDisplay(parsed.hours, parsed.minutes, parsed.seconds));
+      
+      // Notifier les changements en temps réel
+      if (onRealTimeChange) {
+        onRealTimeChange(parsed.hours, parsed.minutes, parsed.seconds);
+      }
     } else if (!/^(Tab|Shift|Control|Alt|Meta|Arrow|Home|End)/.test(e.key)) {
       // Bloquer les autres touches sauf les touches de navigation
       e.preventDefault();
@@ -164,8 +179,16 @@ export const SmartTimeInput: React.FC<SmartTimeInputProps> = ({
       if (digitsOnly.length > 0) {
         const parsed = parseSmartInput(digitsOnly, false);
         setDisplayValue(formatTimeDisplay(parsed.hours, parsed.minutes, parsed.seconds));
+        // Notifier les changements en temps réel
+        if (onRealTimeChange) {
+          onRealTimeChange(parsed.hours, parsed.minutes, parsed.seconds);
+        }
       } else {
         setDisplayValue('00:00:00');
+        // Notifier reset en temps réel
+        if (onRealTimeChange) {
+          onRealTimeChange(0, 0, 0);
+        }
       }
     } else {
       // Si l'utilisateur tape avec ":", laisser tel quel temporairement

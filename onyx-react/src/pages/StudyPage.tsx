@@ -346,13 +346,6 @@ export const StudyPage: React.FC = () => {
     }
   };
 
-  // Removed unused handleStartTimer function
-  /*const handleStartTimer = (subject: Subject) => {
-    setActiveTimer({
-      subject,
-      isActive: true
-    });
-  };*/
 
   const handleTimerComplete = async () => {
     if (!activeTimer) return;

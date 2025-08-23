@@ -23,7 +23,9 @@
     "expand": "Expand",
     "collapse": "Collapse",
     "on": "On",
-    "off": "Off"
+    "off": "Off",
+    "confirm": "Confirm",
+    "optional": "optional"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -182,5 +184,16 @@
       "fr": "Français",
       "en": "English"
     }
+  },
+  "studyTime": {
+    "manageStudyTime": "Manage study time",
+    "addManualTime": "Add manual time",
+    "resetStudyTime": "Reset study time",
+    "addManualTimeTitle": "Add time for {{subjectName}}",
+    "timeFormat": "Time (HH:MM:SS)",
+    "resetConfirmTitle": "Confirm reset",
+    "resetConfirmMessage": "Are you sure you want to reset all accumulated study time for \"{{subjectName}}\"? This action cannot be undone.",
+    "resetConfirm": "Reset",
+    "currentProgress": "Current progress"
   }
 }

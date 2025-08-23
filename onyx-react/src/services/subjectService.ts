@@ -145,6 +145,62 @@ class SubjectService {
     return updatedSubject;
   }
 
+  async resetStudyTime(subjectId: string): Promise<Subject | null> {
+    console.log(`🔄 SubjectService.resetStudyTime pour subject ${subjectId}`);
+    
+    const subject = await this.getSubject(subjectId);
+    if (!subject) {
+      throw new Error('Matière non trouvée');
+    }
+
+    const updatedSubject = await dataService.updateSubject(subjectId, { 
+      timeSpent: 0,
+      status: 'NOT_STARTED',
+      lastStudyDate: undefined
+    });
+    
+    if (updatedSubject) {
+      console.log(`✅ Temps d'étude réinitialisé pour: ${updatedSubject.name}`);
+      this.notifyListeners();
+    } else {
+      console.error(`❌ Échec réinitialisation subject ${subjectId}`);
+    }
+    
+    return updatedSubject;
+  }
+
+  async addManualStudyTime(subjectId: string, duration: number): Promise<Subject | null> {
+    console.log(`🔄 SubjectService.addManualStudyTime: ${duration}s pour subject ${subjectId}`);
+    
+    if (duration <= 0) {
+      throw new Error('La durée doit être supérieure à 0');
+    }
+
+    const updatedSubject = await dataService.addTimeToSubject(subjectId, duration);
+    
+    if (updatedSubject) {
+      console.log(`✅ Temps manuel ajouté: ${updatedSubject.name} - ${Math.floor(duration/60)}min ajoutées (${Math.floor(updatedSubject.timeSpent/60)}min total)`);
+      
+      // Enregistrer la session d'étude manuelle
+      const session: Omit<StudySession, 'id'> = {
+        subjectId: subjectId,
+        duration: duration,
+        startTime: new Date(Date.now() - duration * 1000),
+        endTime: new Date(),
+        completed: true,
+        timerType: 'MANUAL_ENTRY',
+        notes: 'Ajout manuel de temps d\'étude'
+      };
+      
+      await dataService.saveStudySession(session);
+      this.notifyListeners();
+    } else {
+      console.error(`❌ Échec ajout manuel subject ${subjectId}`);
+    }
+    
+    return updatedSubject;
+  }
+
   async getSubjectProgress(id: string): Promise<SubjectProgress | null> {
     const subject = await this.getSubject(id);
     if (!subject) return null;

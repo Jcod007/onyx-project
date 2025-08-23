@@ -38,17 +38,10 @@ class CentralizedTimerService {
     this.startConsistencyChecks();
   }
 
-  /**
-   * Normalise un timer en s'assurant que les dates sont des objets Date
-   * @deprecated Utilise maintenant l'utilitaire centralisé
-   */
-  private normalizeTimer(timer: ActiveTimer): ActiveTimer {
-    return normalizeTimer(timer);
-  }
   
   private generateHash(timer: ActiveTimer): string {
     try {
-      const normalizedTimer = this.normalizeTimer(timer);
+      const normalizedTimer = normalizeTimer(timer);
       const hashData = {
         title: normalizedTimer.title,
         config: normalizedTimer.config,
@@ -99,7 +92,7 @@ class CentralizedTimerService {
     console.log('🔄 updateTimerMetadata appelé pour timer:', timer.id, 'lastUsed:', timer.lastUsed, 'type:', typeof timer.lastUsed);
     
     try {
-      const normalizedTimer = this.normalizeTimer(timer);
+      const normalizedTimer = normalizeTimer(timer);
       const hash = this.generateHash(normalizedTimer);
       const now = Date.now();
       const currentMetadata = this.syncMetadata.get(timer.id);
@@ -356,81 +349,6 @@ class CentralizedTimerService {
   }
 
 
-  /**
-   * Liaison d'un timer à un cours (délégué au service unifié)
-   * @deprecated Utiliser timerSubjectLinkService.linkTimerToSubject
-   */
-  async linkTimerToSubject(_subjectId: string, timerId: string): Promise<void> {
-    console.warn('⚠️ Méthode dépréciée: utilisez timerSubjectLinkService.linkTimerToSubject');
-    
-    await this.executeAtomicOperation(async (timers) => {
-      const targetTimer = timers.find(t => t.id === timerId);
-      if (!targetTimer) {
-        throw new Error(`Timer ${timerId} introuvable`);
-      }
-
-      // Mise à jour simple du timer
-      const updatedTimers = timers.map(timer => 
-        timer.id === timerId 
-          ? { ...timer, lastUsed: new Date() }
-          : timer
-      );
-
-      return { timers: updatedTimers };
-    });
-  }
-
-  /**
-   * Délier un timer d'un cours (délégué au service unifié)
-   * @deprecated Utiliser timerSubjectLinkService.unlinkTimerFromSubject
-   */
-  async unlinkTimerFromSubject(_subjectId: string): Promise<void> {
-    console.warn('⚠️ Méthode dépréciée: utilisez timerSubjectLinkService.unlinkTimerFromSubject');
-    
-    await this.executeAtomicOperation(async (timers) => {
-      // Délier le timer
-      const updatedTimers = timers.map(timer => 
-        timer.linkedSubject?.id === _subjectId
-          ? { ...timer, linkedSubject: undefined, lastUsed: new Date() }
-          : timer
-      );
-
-      return { timers: updatedTimers };
-    });
-  }
-
-  /**
-   * Déliaison forcée lors de suppression de cours (délégué au service unifié)
-   * @deprecated Utiliser timerSubjectLinkService.unlinkTimersFromDeletedSubject
-   */
-  async unlinkTimersFromDeletedSubject(_subjectId: string): Promise<void> {
-    console.warn('⚠️ Méthode dépréciée: utilisez timerSubjectLinkService.unlinkTimersFromDeletedSubject');
-    
-    await this.executeAtomicOperation(async (timers) => {
-      // Délier TOUS les timers de ce cours
-      const updatedTimers = timers.map(timer => 
-        timer.linkedSubject?.id === _subjectId
-          ? { ...timer, linkedSubject: undefined, lastUsed: new Date() }
-          : timer
-      );
-
-      return { timers: updatedTimers };
-    });
-  }
-
-  /**
-   * Obtenir les timers disponibles pour liaison à un cours (délégué au service unifié)
-   * @deprecated Utiliser timerSubjectLinkService.getAvailableTimersForSubject
-   */
-  getAvailableTimersForSubject(subjectId?: string): ActiveTimer[] {
-    console.warn('⚠️ Méthode dépréciée: utilisez timerSubjectLinkService.getAvailableTimersForSubject');
-    const timers = this.getTimers();
-    return timers.filter(timer => 
-      !timer.isEphemeral && // Exclure les timers éphémères
-      (!timer.linkedSubject || 
-      (subjectId && timer.linkedSubject.id === subjectId))
-    );
-  }
 
   /**
    * Obtenir uniquement les timers non-éphémères (persistants)
@@ -440,15 +358,6 @@ class CentralizedTimerService {
     return timers.filter(timer => !timer.isEphemeral);
   }
 
-  /**
-   * Obtenir les timers liés à un cours spécifique (délégué au service unifié)
-   * @deprecated Utiliser timerSubjectLinkService.getLinkedTimersForSubject
-   */
-  getLinkedTimersForSubject(subjectId: string): ActiveTimer[] {
-    console.warn('⚠️ Méthode dépréciée: utilisez timerSubjectLinkService.getLinkedTimersForSubject');
-    const timers = this.getTimers();
-    return timers.filter(timer => timer.linkedSubject?.id === subjectId);
-  }
 
   /**
    * Vérification de cohérence interne des métadonnées

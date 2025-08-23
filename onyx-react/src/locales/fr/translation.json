@@ -23,7 +23,9 @@
     "expand": "Agrandir",
     "collapse": "Réduire",
     "on": "Activé",
-    "off": "Désactivé"
+    "off": "Désactivé",
+    "confirm": "Confirmer",
+    "optional": "optionnel"
   },
   "navigation": {
     "dashboard": "Accueil",
@@ -182,5 +184,16 @@
       "fr": "Français",
       "en": "English"
     }
+  },
+  "studyTime": {
+    "manageStudyTime": "Gérer le temps d'étude",
+    "addManualTime": "Ajouter du temps manuellement",
+    "resetStudyTime": "Réinitialiser le temps d'étude",
+    "addManualTimeTitle": "Ajouter du temps pour {{subjectName}}",
+    "timeFormat": "Temps (HH:MM:SS)",
+    "resetConfirmTitle": "Confirmer la réinitialisation",
+    "resetConfirmMessage": "Êtes-vous sûr de vouloir réinitialiser tout le temps d'étude accumulé pour \"{{subjectName}}\" ? Cette action est irréversible.",
+    "resetConfirm": "Réinitialiser",
+    "currentProgress": "Progrès actuel"
   }
 }

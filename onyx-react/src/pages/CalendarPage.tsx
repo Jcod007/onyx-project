@@ -12,6 +12,7 @@ import { syncEventBus } from '@/services/syncEventBus';
 import { useTimerContext } from '@/contexts/TimerContext';
 import { ActiveTimer } from '@/types/ActiveTimer';
 import { Clock, BookOpen, CheckCircle2, TrendingUp, Calendar, RefreshCw, Target, Play, Timer, Pause, RotateCcw, Coffee } from 'lucide-react';
+import { StudyTimeActions } from '@/components/StudyTimeActions';
 import { formatMinutesToHours } from '@/utils/timeFormat';
 import { calendarLogger } from '@/utils/logger';
 import { storageService, STORAGE_KEYS } from '@/services/storageService';
@@ -535,7 +536,20 @@ export const CalendarPage: React.FC = () => {
           break;
           
         case 'start':
-          startTimer(ephemeralTimer.id, ephemeralTimer);
+          // Vérifier l'état du timer éphémère avant de le démarrer
+          const ephemeralTimerState = getTimerState(ephemeralTimer.id);
+          if (ephemeralTimerState && ephemeralTimerState.state === 'finished') {
+            // Timer terminé - d'abord le reset puis le démarrer
+            console.log('🔄 Timer éphémère terminé détecté, reset puis démarrage depuis calendrier');
+            resetTimer(ephemeralTimer.id);
+            // Attendre un peu pour que le reset soit effectif
+            setTimeout(() => {
+              startTimer(ephemeralTimer.id, ephemeralTimer);
+            }, 50);
+          } else {
+            // Timer en état normal - démarrage direct
+            startTimer(ephemeralTimer.id, ephemeralTimer);
+          }
           break;
           
         default:
@@ -873,6 +887,16 @@ export const CalendarPage: React.FC = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
+                          {/* Actions de gestion du temps d'étude */}
+                          <StudyTimeActions
+                            subject={session.subject}
+                            onSuccess={() => {
+                              // Recharger les données du calendrier après modification
+                              loadCalendarData(true);
+                            }}
+                            className="mr-2"
+                          />
+                          
                           <button 
                             onClick={() => {
                               // GESTION DES ACTIONS selon le type de timer
@@ -895,7 +919,20 @@ export const CalendarPage: React.FC = () => {
                                   if (action === 'pause') {
                                     pauseTimer(linkedTimerId);
                                   } else if (action === 'start') {
-                                    startTimer(linkedTimerId, linkedTimer);
+                                    // Vérifier l'état du timer avant de le démarrer
+                                    const timerState = getTimerState(linkedTimerId);
+                                    if (timerState && timerState.state === 'finished') {
+                                      // Timer terminé - d'abord le reset puis le démarrer
+                                      console.log('🔄 Timer terminé détecté, reset puis démarrage depuis calendrier');
+                                      resetTimer(linkedTimerId);
+                                      // Attendre un peu pour que le reset soit effectif
+                                      setTimeout(() => {
+                                        startTimer(linkedTimerId, linkedTimer);
+                                      }, 50);
+                                    } else {
+                                      // Timer en état normal - démarrage direct
+                                      startTimer(linkedTimerId, linkedTimer);
+                                    }
                                   }
                                 } else {
                                   // Démarrer nouveau timer lié ou rediriger vers page timers

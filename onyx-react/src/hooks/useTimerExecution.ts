@@ -110,12 +110,17 @@ export const useTimerExecution = (
             }
             
             // Notifier la fin du timer
+            console.log(`🔍 DEBUG useTimerExecution - Timer terminé: ${timerId}, mode: ${data.mode}, totalTime: ${data.totalTime}`);
             if (onTimerFinish) {
+              console.log(`🔍 DEBUG - Appel onTimerFinish pour timer: ${timer.title}`);
               onTimerFinish(timerId, timer, data.totalTime);
+            } else {
+              console.warn(`⚠️ onTimerFinish callback non défini pour timer: ${timerId}`);
             }
 
             // Si c'était une session de travail, notifier la completion
             if (data.mode === 'work' && onSessionComplete) {
+              console.log(`🔍 DEBUG - Appel onSessionComplete pour timer: ${timer.title}`);
               onSessionComplete(timerId, timer);
             }
           });

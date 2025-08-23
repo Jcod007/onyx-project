@@ -49,6 +49,8 @@ export interface UpdateSubjectDto {
   targetTime?: number; // en minutes
   defaultTimerDuration?: number; // en minutes
   status?: SubjectStatus;
+  timeSpent?: number; // en secondes
+  lastStudyDate?: Date;
   
   // 📅 PLANIFICATION CALENDRIER
   weeklyTimeGoal?: number; // Objectif hebdomadaire en minutes
