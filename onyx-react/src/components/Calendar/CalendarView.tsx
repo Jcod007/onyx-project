@@ -19,6 +19,7 @@ interface CalendarViewProps {
     expandedSessions: Set<string>;
   };
   onPersistentStateChange?: (state: any) => void;
+  getSubjectTimeForDate?: (subjectId: string, date: Date) => number;
 }
 
 export const CalendarView: React.FC<CalendarViewProps> = ({
@@ -32,7 +33,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   getSessionButtonInfo,
   navigate,
   persistentState,
-  onPersistentStateChange
+  onPersistentStateChange,
+  getSubjectTimeForDate
 }) => {
   // Variables utilisées seulement par DayView - éviter warning unused
   void { getSessionButtonInfo, navigate, persistentState, onPersistentStateChange };
@@ -42,6 +44,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         calendarDays={calendarDays}
         currentDate={currentDate}
         onDateClick={onDateClick}
+        getSubjectTimeForDate={getSubjectTimeForDate}
       />
     );
   } else {

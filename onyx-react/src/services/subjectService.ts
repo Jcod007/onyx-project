@@ -5,7 +5,7 @@
 import { Subject, CreateSubjectDto, UpdateSubjectDto, SubjectProgress } from '@/types/Subject';
 import { StudySession } from '@/types/Timer';  
 import { dataService } from './dataService';
-import { formatDuration, calculateProgress } from '@/utils/timeFormat';
+import { formatDuration, calculateProgress, normalizeWeeklyGoal } from '@/utils/timeFormat';
 
 class SubjectService {
   private listeners: Set<() => void> = new Set();
@@ -170,13 +170,14 @@ class SubjectService {
   }
 
   async addManualStudyTime(subjectId: string, duration: number): Promise<Subject | null> {
-    console.log(`🔄 SubjectService.addManualStudyTime: ${duration}s pour subject ${subjectId}`);
+    console.log(`🔄 [SubjectService] addManualStudyTime: ${duration}s pour subject ${subjectId}`);
     
     if (duration <= 0) {
       throw new Error('La durée doit être supérieure à 0');
     }
 
     const updatedSubject = await dataService.addTimeToSubject(subjectId, duration);
+    console.log(`🔍 [SubjectService] Résultat dataService.addTimeToSubject:`, updatedSubject);
     
     if (updatedSubject) {
       console.log(`✅ Temps manuel ajouté: ${updatedSubject.name} - ${Math.floor(duration/60)}min ajoutées (${Math.floor(updatedSubject.timeSpent/60)}min total)`);
@@ -192,8 +193,10 @@ class SubjectService {
         notes: 'Ajout manuel de temps d\'étude'
       };
       
-      await dataService.saveStudySession(session);
+      const savedSession = await dataService.saveStudySession(session);
+      console.log(`💾 [SubjectService] Session manuelle sauvegardée:`, savedSession);
       this.notifyListeners();
+      console.log(`📢 [SubjectService] notifyListeners() appelé après ajout manuel`);
     } else {
       console.error(`❌ Échec ajout manuel subject ${subjectId}`);
     }
@@ -214,10 +217,14 @@ class SubjectService {
 
     const dailyProgress = this.calculateDailyProgress(subjectSessions, thirtyDaysAgo);
 
+    // 🔧 CORRECTIF: utiliser weeklyTimeGoal normalisé au lieu du targetTime corrompu
+    const normalizedWeeklyGoal = normalizeWeeklyGoal(subject.weeklyTimeGoal || 240);
+    const weeklyGoalInSeconds = normalizedWeeklyGoal * 60;
+    
     return {
       subject,
-      progressPercentage: calculateProgress(subject.timeSpent, subject.targetTime),
-      remainingTime: Math.max(0, subject.targetTime - subject.timeSpent),
+      progressPercentage: calculateProgress(subject.timeSpent, weeklyGoalInSeconds),
+      remainingTime: Math.max(0, weeklyGoalInSeconds - subject.timeSpent),
       isCompleted: subject.status === 'COMPLETED',
       dailyProgress
     };

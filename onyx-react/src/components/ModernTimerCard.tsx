@@ -2,6 +2,7 @@ import React from 'react';
 import { Play, Pause, RotateCcw, BookOpen, Clock, Link2, Plus, Edit3, Trash2 } from 'lucide-react';
 import { Subject } from '@/types/Subject';
 import { TimerState } from '@/types/Timer';
+import { useTranslation } from 'react-i18next';
 
 interface ModernTimerCardProps {
   id: string;
@@ -42,6 +43,7 @@ export const ModernTimerCard: React.FC<ModernTimerCardProps> = ({
   onLinkSubject,
   className = ''
 }) => {
+  const { t } = useTranslation();
   // Déterminer les styles selon l'état
   const getStateStyles = () => {
     switch (state) {
@@ -80,10 +82,10 @@ export const ModernTimerCard: React.FC<ModernTimerCardProps> = ({
   
   const getStateLabel = () => {
     switch (state) {
-      case 'running': return 'EN COURS';
-      case 'paused': return 'PAUSE';
-      case 'finished': return 'TERMINÉ';
-      default: return 'PRÊT';
+      case 'running': return t('timerCard.running', 'EN COURS');
+      case 'paused': return t('timerCard.paused', 'PAUSE');
+      case 'finished': return t('timerCard.finished', 'TERMINÉ');
+      default: return t('timerCard.ready', 'PRÊT');
     }
   };
 
@@ -115,7 +117,7 @@ export const ModernTimerCard: React.FC<ModernTimerCardProps> = ({
                 onEdit();
               }}
               className="p-2 bg-white/90 backdrop-blur-sm text-blue-600 rounded-lg shadow-sm hover:bg-blue-50 transition-colors border border-gray-200"
-              title="Modifier ce timer"
+              title={t('timerCard.editTimer', 'Modifier ce timer')}
             >
               <Edit3 size={14} />
             </button>
@@ -127,7 +129,7 @@ export const ModernTimerCard: React.FC<ModernTimerCardProps> = ({
                 onDelete();
               }}
               className="p-2 bg-white/90 backdrop-blur-sm text-red-600 rounded-lg shadow-sm hover:bg-red-50 transition-colors border border-gray-200"
-              title="Supprimer ce timer"
+              title={t('timerCard.deleteTimer', 'Supprimer ce timer')}
             >
               <Trash2 size={14} />
             </button>
@@ -163,7 +165,7 @@ export const ModernTimerCard: React.FC<ModernTimerCardProps> = ({
           </div>
           
           <div className="text-xs text-gray-500">
-            {Math.round(progress)}% complété
+            {Math.round(progress)}% {t('timerCard.completed', 'complété')}
           </div>
         </div>
 
@@ -174,7 +176,7 @@ export const ModernTimerCard: React.FC<ModernTimerCardProps> = ({
               <BookOpen size={14} className="text-blue-600 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <span className="text-xs font-medium text-blue-900 block truncate">
-                  Thème lié à : {linkedSubject.name}
+                  {t('timerCard.linkedTo', 'Thème lié à :')} {linkedSubject.name}
                 </span>
               </div>
             </div>
@@ -185,7 +187,7 @@ export const ModernTimerCard: React.FC<ModernTimerCardProps> = ({
             >
               <Link2 size={14} className="text-gray-400 group-hover/link:text-gray-600" />
               <span className="text-xs text-gray-500 group-hover/link:text-gray-700">
-                Pas encore lié à un cours
+                {t('timerCard.notLinked', 'Pas encore lié à un cours')}
               </span>
               <Plus size={12} className="ml-auto text-gray-400 group-hover/link:text-gray-600" />
             </button>
@@ -197,14 +199,14 @@ export const ModernTimerCard: React.FC<ModernTimerCardProps> = ({
           <div className="flex items-center gap-1">
             <Clock size={12} />
             <span>
-              {isPomodoroMode ? 'Pomodoro' : 'Simple'} 
-              {sessionCount > 0 && ` • ${sessionCount} sessions`}
+              {isPomodoroMode ? t('timerCard.pomodoro', 'Pomodoro') : t('timerCard.simple', 'Simple')} 
+              {sessionCount > 0 && ` • ${sessionCount} ${t('timerCard.sessions', 'sessions')}`}
             </span>
           </div>
           
           {isPomodoroMode && maxCycles && (
             <div className="text-purple-600 font-medium">
-              Cycles: {Math.ceil(sessionCount / 4)}/{maxCycles}
+              {t('timerCard.cycles', 'Cycles')}: {Math.ceil(sessionCount / 4)}/{maxCycles}
             </div>
           )}
         </div>
@@ -217,7 +219,7 @@ export const ModernTimerCard: React.FC<ModernTimerCardProps> = ({
               className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
               <RotateCcw size={16} />
-              Recommencer
+              {t('timerCard.restart', 'Recommencer')}
             </button>
           ) : state === 'running' ? (
             <div className="flex gap-2">
@@ -226,12 +228,12 @@ export const ModernTimerCard: React.FC<ModernTimerCardProps> = ({
                 className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium"
               >
                 <Pause size={16} />
-                Pause
+                {t('common.pause', 'Pause')}
               </button>
               <button
                 onClick={onReset}
                 className="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-                title="Reset"
+                title={t('common.reset', 'Reset')}
               >
                 <RotateCcw size={16} />
               </button>
@@ -243,12 +245,12 @@ export const ModernTimerCard: React.FC<ModernTimerCardProps> = ({
                 className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
               >
                 <Play size={16} />
-                Reprendre
+                {t('common.resume', 'Reprendre')}
               </button>
               <button
                 onClick={onReset}
                 className="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-                title="Reset"
+                title={t('common.reset', 'Reset')}
               >
                 <RotateCcw size={16} />
               </button>
@@ -259,7 +261,7 @@ export const ModernTimerCard: React.FC<ModernTimerCardProps> = ({
               className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
             >
               <Play size={16} />
-              Démarrer
+              {t('common.start', 'Démarrer')}
             </button>
           )}
         </div>

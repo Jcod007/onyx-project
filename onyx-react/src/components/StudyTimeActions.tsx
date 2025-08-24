@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { 
@@ -7,15 +7,16 @@ import {
   AlertTriangle,
   Plus
 } from 'lucide-react';
-import { subjectService } from '@/services/subjectService';
+import { dailyTimeService } from '@/services/dailyTimeService';
 import { Subject } from '@/types/Subject';
-import { formatMinutesToHours } from '@/utils/timeFormat';
+import { formatMinutesToHours, normalizeWeeklyGoal } from '@/utils/timeFormat';
 import { SmartTimeInput } from '@/components/SmartTimeInput';
 
 interface StudyTimeActionsProps {
   subject: Subject;
   onSuccess?: () => void;
   className?: string;
+  targetDate?: Date; // 🆕 Date cible pour l'ajout/réinitialisation (par défaut: aujourd'hui)
 }
 
 interface TimeInputModalProps {
@@ -46,7 +47,10 @@ const TimeInputModal: React.FC<TimeInputModalProps> = ({
     setHasInput(h > 0 || m > 0 || s > 0);
   };
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    
     const totalSeconds = hours * 3600 + minutes * 60 + seconds;
     if (totalSeconds <= 0) {
       return;
@@ -96,12 +100,17 @@ const TimeInputModal: React.FC<TimeInputModalProps> = ({
             onChange={handleTimeChange}
             onRealTimeChange={handleTimeChange}
             placeholder="00:00:00"
+            showExamples={false}
           />
         </div>
 
         <div className="flex justify-end gap-3 mt-6">
           <button
-            onClick={onClose}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClose();
+            }}
             disabled={isLoading}
             className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-200"
           >
@@ -110,7 +119,8 @@ const TimeInputModal: React.FC<TimeInputModalProps> = ({
           <button
             onClick={handleConfirm}
             disabled={isLoading || !hasInput}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-md transition-colors duration-200 flex items-center gap-2"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-md transition-colors duration-200 flex items-center gap-2 relative z-10"
+            style={{ pointerEvents: isLoading || !hasInput ? 'none' : 'auto' }}
           >
             {isLoading ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -132,16 +142,35 @@ interface ResetConfirmModalProps {
   onClose: () => void;
   onConfirm: () => void;
   subject: Subject;
+  targetDate: Date;
 }
 
 const ResetConfirmModal: React.FC<ResetConfirmModalProps> = ({
   isOpen,
   onClose,
   onConfirm,
-  subject
+  subject,
+  targetDate
 }) => {
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
+  const [dailyTimeMinutes, setDailyTimeMinutes] = useState(0);
+  
+  // Charger le temps quotidien pour cette date
+  useEffect(() => {
+    const loadDailyTime = async () => {
+      if (isOpen) {
+        try {
+          const timeSeconds = await dailyTimeService.getTimeSpentForDate(subject.id, targetDate);
+          setDailyTimeMinutes(Math.round(timeSeconds / 60));
+        } catch (error) {
+          console.error('Erreur chargement temps quotidien:', error);
+          setDailyTimeMinutes(0);
+        }
+      }
+    };
+    loadDailyTime();
+  }, [isOpen, subject.id, targetDate]);
 
   const handleConfirm = async () => {
     setIsLoading(true);
@@ -192,7 +221,23 @@ const ResetConfirmModal: React.FC<ResetConfirmModalProps> = ({
               {t('studyTime.currentProgress')}:
             </div>
             <div className="text-lg font-semibold text-gray-900">
-              {formatMinutesToHours(Math.floor(subject.timeSpent / 60))} / {formatMinutesToHours(Math.floor(subject.targetTime / 60))}
+              {(() => {
+                // 🎯 NOUVEAU: Afficher le temps quotidien au lieu du temps total cumulé
+                const weeklyGoalMinutes = normalizeWeeklyGoal(subject.weeklyTimeGoal || 240);
+                const studyDaysCount = subject.studyDays?.length || 3;
+                const dailyGoalMinutes = Math.round(weeklyGoalMinutes / studyDaysCount);
+                
+                console.log('🗑️ [ResetModal] Affichage temps quotidien:', {
+                  subjectName: subject.name,
+                  targetDate: targetDate.toDateString(),
+                  dailyTimeMinutes,
+                  dailyGoalMinutes,
+                  weeklyGoalMinutes,
+                  studyDaysCount
+                });
+                
+                return `${formatMinutesToHours(dailyTimeMinutes)} / ${formatMinutesToHours(dailyGoalMinutes)} (pour ${targetDate.toLocaleDateString()})`;
+              })()}
             </div>
           </div>
         </div>
@@ -228,7 +273,8 @@ const ResetConfirmModal: React.FC<ResetConfirmModalProps> = ({
 export const StudyTimeActions: React.FC<StudyTimeActionsProps> = ({
   subject,
   onSuccess,
-  className = ""
+  className = "",
+  targetDate = new Date() // 🎯 Par défaut: aujourd'hui
 }) => {
   const { t } = useTranslation();
   const [showDropdown, setShowDropdown] = useState(false);
@@ -238,13 +284,21 @@ export const StudyTimeActions: React.FC<StudyTimeActionsProps> = ({
 
   const handleAddManualTime = async (totalSeconds: number) => {
     setIsLoading(true);
+    const dateStr = targetDate.toDateString();
+    console.log(`🚀 [StudyTimeActions] DÉBUT ajout quotidien: ${totalSeconds}s à "${subject.name}" pour ${dateStr}`);
     try {
-      await subjectService.addManualStudyTime(subject.id, totalSeconds);
-      const totalMinutes = Math.floor(totalSeconds / 60);
-      console.log(`✅ ${totalMinutes} minutes (${totalSeconds}s) ajoutées manuellement à ${subject.name}`);
-      onSuccess?.();
+      // 🎯 NOUVEAU: Utiliser le service quotidien au lieu du service global
+      const success = await dailyTimeService.addTimeForDay(subject.id, totalSeconds, targetDate);
+      
+      if (success) {
+        const totalMinutes = Math.floor(totalSeconds / 60);
+        console.log(`✅ [StudyTimeActions] SUCCÈS ajout quotidien: ${totalMinutes}min pour ${dateStr}`);
+        onSuccess?.();
+      } else {
+        throw new Error('Échec ajout temps quotidien');
+      }
     } catch (error) {
-      console.error('Erreur ajout temps manuel:', error);
+      console.error('❌ [StudyTimeActions] ERREUR ajout temps quotidien:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -253,12 +307,19 @@ export const StudyTimeActions: React.FC<StudyTimeActionsProps> = ({
 
   const handleResetStudyTime = async () => {
     setIsLoading(true);
+    const dateStr = targetDate.toDateString();
     try {
-      await subjectService.resetStudyTime(subject.id);
-      console.log(`✅ Temps d'étude réinitialisé pour ${subject.name}`);
-      onSuccess?.();
+      // 🎯 NOUVEAU: Réinitialiser seulement pour la journée spécifique
+      const success = await dailyTimeService.resetTimeForDay(subject.id, targetDate);
+      
+      if (success) {
+        console.log(`✅ Temps d'étude quotidien réinitialisé pour ${subject.name} - ${dateStr}`);
+        onSuccess?.();
+      } else {
+        throw new Error('Échec réinitialisation quotidienne');
+      }
     } catch (error) {
-      console.error('Erreur réinitialisation:', error);
+      console.error('❌ Erreur réinitialisation quotidienne:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -277,11 +338,15 @@ export const StudyTimeActions: React.FC<StudyTimeActionsProps> = ({
       </button>
 
       {showDropdown && (
-        <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-[50]">
+        <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-[1000]">
           <button
-            onClick={() => {
-              setShowAddTimeModal(true);
+            onClick={(e) => {
+              e.stopPropagation();
               setShowDropdown(false);
+              // Délai pour laisser le dropdown se fermer avant d'ouvrir la modal
+              setTimeout(() => {
+                setShowAddTimeModal(true);
+              }, 50);
             }}
             className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors duration-200"
           >
@@ -290,9 +355,13 @@ export const StudyTimeActions: React.FC<StudyTimeActionsProps> = ({
           </button>
           
           <button
-            onClick={() => {
-              setShowResetModal(true);
+            onClick={(e) => {
+              e.stopPropagation();
               setShowDropdown(false);
+              // Délai pour laisser le dropdown se fermer avant d'ouvrir la modal
+              setTimeout(() => {
+                setShowResetModal(true);
+              }, 50);
             }}
             className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors duration-200"
           >
@@ -305,7 +374,7 @@ export const StudyTimeActions: React.FC<StudyTimeActionsProps> = ({
       {/* Overlay pour fermer le dropdown */}
       {showDropdown && (
         <div
-          className="fixed inset-0 z-[10]"
+          className="fixed inset-0 z-[999]"
           onClick={() => setShowDropdown(false)}
         />
       )}
@@ -322,6 +391,7 @@ export const StudyTimeActions: React.FC<StudyTimeActionsProps> = ({
         onClose={() => setShowResetModal(false)}
         onConfirm={handleResetStudyTime}
         subject={subject}
+        targetDate={targetDate}
       />
     </div>
   );

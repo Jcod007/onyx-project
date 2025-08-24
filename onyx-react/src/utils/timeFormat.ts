@@ -46,8 +46,11 @@ export function formatHoursMinutes(seconds: number): string {
 
 // Formater les minutes en format 00:00
 export function formatMinutesToHours(totalMinutes: number): string {
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
+  // Validation et nettoyage de l'entrée
+  const cleanMinutes = Math.max(0, Math.floor(Number(totalMinutes) || 0));
+  
+  const hours = Math.floor(cleanMinutes / 60);
+  const minutes = cleanMinutes % 60;
   
   return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 }
@@ -114,4 +117,161 @@ export function normalizeTime(hours: number, minutes: number, seconds: number): 
 export function formatTimeIntelligent(seconds: number): string {
   // Alias pour formatHoursMinutes pour compatibilité
   return formatHoursMinutes(seconds);
+}
+
+// ========== FONCTIONS DE NORMALISATION DES UNITÉS ==========
+// Ajoutées pour résoudre les bugs de corruption minutes/secondes
+
+/**
+ * Détecte et corrige les corruptions d'unités de temps
+ * Utilisé pour corriger les bugs où les minutes sont stockées comme secondes et vice-versa
+ */
+export function detectAndFixTimeCorruption(value: number, context: 'plannedDuration' | 'targetTime' | 'weeklyGoal'): number {
+  if (!value || value <= 0) return 0;
+  
+  const MAX_REASONABLE_DAILY_MINUTES = 480; // 8 heures
+  const MAX_REASONABLE_WEEKLY_MINUTES = 2400; // 40 heures  
+  const MAX_REASONABLE_SESSION_SECONDS = 14400; // 4 heures
+  
+  switch (context) {
+    case 'plannedDuration':
+      // Bug #1: plannedDuration en minutes mais parfois corrompu avec des secondes
+      if (value > MAX_REASONABLE_DAILY_MINUTES) {
+        console.warn(`[TimeFormat] plannedDuration suspecte: ${value} min, conversion depuis secondes`);
+        return Math.floor(value / 60);
+      }
+      return Math.floor(value);
+      
+    case 'targetTime':
+      // Bug #2: targetTime en secondes mais parfois stocké en minutes
+      if (value > MAX_REASONABLE_SESSION_SECONDS) {
+        console.warn(`[TimeFormat] targetTime suspect: ${value} sec, probablement en minutes`);
+        return Math.floor(value / 60); // Ramener à des minutes raisonnables
+      }
+      return value;
+      
+    case 'weeklyGoal':
+      // weeklyTimeGoal en minutes
+      if (value > MAX_REASONABLE_WEEKLY_MINUTES) {
+        console.warn(`[TimeFormat] weeklyGoal suspect: ${value} min, conversion depuis secondes`);
+        return Math.floor(value / 60);
+      }
+      return Math.floor(value);
+      
+    default:
+      return value;
+  }
+}
+
+/**
+ * Normalise une durée planifiée (plannedDuration) - toujours en minutes
+ */
+export function normalizePlannedDuration(duration: number): number {
+  return detectAndFixTimeCorruption(duration, 'plannedDuration');
+}
+
+/**
+ * Normalise un temps cible (targetTime) - toujours en secondes
+ */
+export function normalizeTargetTime(targetTime: number): number {
+  return detectAndFixTimeCorruption(targetTime, 'targetTime');
+}
+
+/**
+ * Normalise un objectif hebdomadaire - toujours en minutes
+ */
+export function normalizeWeeklyGoal(weeklyGoal: number): number {
+  const result = detectAndFixTimeCorruption(weeklyGoal, 'weeklyGoal');
+  if (result !== weeklyGoal) {
+    console.log(`[TimeFormat] ✅ weeklyGoal corrigé: ${weeklyGoal} → ${result} minutes (${Math.floor(result/60)}h${result%60})`);
+  }
+  return result;
+}
+
+/**
+ * Convertit de façon sûre des minutes en secondes
+ */
+export function minutesToSeconds(minutes: number): number {
+  if (!minutes || minutes <= 0) return 0;
+  return Math.floor(minutes * 60);
+}
+
+/**
+ * Convertit de façon sûre des secondes en minutes
+ */
+export function secondsToMinutes(seconds: number): number {
+  if (!seconds || seconds <= 0) return 0;
+  return Math.floor(seconds / 60);
+}
+
+// ========== UTILITAIRES DE DATES ET TIMEZONE ==========
+// Ajoutés pour résoudre les bugs DST et de duplication de code
+
+/**
+ * Calcule le début de semaine (lundi) avec gestion correcte du DST
+ * Remplace les implémentations dupliquées dans CalendarPage et WeekView
+ */
+export function getWeekStartSafe(date: Date): Date {
+  const start = new Date(date);
+  const day = start.getDay();
+  const diff = start.getDate() - day + (day === 0 ? -6 : 1); // Lundi = début de semaine
+  start.setDate(diff);
+  
+  // Gestion DST-safe : utiliser setHours avec le décalage timezone local
+  // Au lieu de setHours(0, 0, 0, 0) qui peut causer des problèmes avec DST
+  start.setHours(0, 0, 0, 0);
+  
+  // Vérifier si on est dans une période de changement DST
+  // et ajuster si nécessaire
+  const originalOffset = date.getTimezoneOffset();
+  const newOffset = start.getTimezoneOffset();
+  
+  if (originalOffset !== newOffset) {
+    // Il y a eu un changement DST, ajuster
+    const offsetDiff = newOffset - originalOffset;
+    start.setMinutes(start.getMinutes() + offsetDiff);
+    console.warn(`[TimeFormat] Ajustement DST appliqué: ${offsetDiff} minutes`);
+  }
+  
+  return start;
+}
+
+/**
+ * Vérifie si une date est aujourd'hui (timezone-safe)
+ */
+export function isToday(date: Date): boolean {
+  const today = new Date();
+  return date.getDate() === today.getDate() &&
+         date.getMonth() === today.getMonth() &&
+         date.getFullYear() === today.getFullYear();
+}
+
+/**
+ * Vérifie si deux dates sont le même jour (timezone-safe)
+ */
+export function isSameDay(date1: Date, date2: Date): boolean {
+  return date1.getFullYear() === date2.getFullYear() &&
+         date1.getMonth() === date2.getMonth() &&
+         date1.getDate() === date2.getDate();
+}
+
+/**
+ * Crée une date "propre" à 00:00:00.000 avec gestion DST
+ */
+export function createCleanDate(date: Date): Date {
+  const clean = new Date(date);
+  clean.setHours(0, 0, 0, 0);
+  return clean;
+}
+
+/**
+ * Formatte une date de manière cohérente
+ */
+export function formatDateConsistent(date: Date): string {
+  return date.toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
 }

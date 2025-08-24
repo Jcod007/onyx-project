@@ -8,12 +8,13 @@ import { CalendarDay, DayStudySession } from '@/types/Subject';
 import { calendarRenderer } from '@/services/calendarRenderer';
 import { timerSubjectLinkService } from '@/services/timerSubjectLinkService';
 import { subjectService } from '@/services/subjectService';
+import { dailyTimeService } from '@/services/dailyTimeService';
 import { syncEventBus } from '@/services/syncEventBus';
 import { useTimerContext } from '@/contexts/TimerContext';
 import { ActiveTimer } from '@/types/ActiveTimer';
 import { Clock, BookOpen, CheckCircle2, TrendingUp, Calendar, RefreshCw, Target, Play, Timer, Pause, RotateCcw, Coffee } from 'lucide-react';
 import { StudyTimeActions } from '@/components/StudyTimeActions';
-import { formatMinutesToHours } from '@/utils/timeFormat';
+import { formatMinutesToHours, getWeekStartSafe } from '@/utils/timeFormat';
 import { calendarLogger } from '@/utils/logger';
 import { storageService, STORAGE_KEYS } from '@/services/storageService';
 
@@ -54,6 +55,8 @@ export const CalendarPage: React.FC = () => {
   const initialState = loadInitialState();
   
   const [calendarDays, setCalendarDays] = useState<CalendarDay[]>([]);
+  const [subjectsProgress, setSubjectsProgress] = useState<Map<string, Array<{date: Date, timeSpent: number}>>>(new Map());
+  const [dailyTimes, setDailyTimes] = useState<Map<string, number>>(new Map());
   const [currentDate, setCurrentDate] = useState(initialState.currentDate);
   const [viewMode, setViewMode] = useState<'week' | 'day'>(initialState.viewMode);
   // Sauvegarder les dates pour chaque vue
@@ -81,6 +84,52 @@ export const CalendarPage: React.FC = () => {
   
   const { timers, startTimer, addTimer, pauseTimer, resetTimer, getTimerState, removeTimer } = useTimerContext();
   const navigate = useNavigate();
+
+  // 🆕 Fonction pour charger les temps quotidiens pour la vue jour - optimisée et indépendante
+  const loadDailyTimesForCurrentDay = useCallback(async (dateToLoad?: Date) => {
+    const targetDate = dateToLoad || currentDate;
+    console.log('🔄 [CalendarPage] Chargement temps quotidiens pour:', targetDate.toDateString());
+    
+    try {
+      // Récupérer tous les sujets pour charger leurs temps
+      const allSubjects = await subjectService.getAllSubjects();
+      
+      if (!allSubjects || allSubjects.length === 0) {
+        console.log('📅 [CalendarPage] Aucun sujet trouvé');
+        setDailyTimes(new Map());
+        return;
+      }
+      
+      const newDailyTimes = new Map<string, number>();
+      
+      // Charger tous les temps en parallèle pour de meilleures performances
+      const timePromises = allSubjects.map(async (subject) => {
+        const key = `${subject.id}-${targetDate.toDateString()}`;
+        try {
+          const timeSpentSeconds = await dailyTimeService.getTimeSpentForDate(subject.id, targetDate);
+          const timeSpentMinutes = Math.round(timeSpentSeconds / 60);
+          return { key, timeSpentMinutes };
+        } catch (error) {
+          console.error(`Erreur chargement temps quotidien pour ${key}:`, error);
+          return { key, timeSpentMinutes: 0 };
+        }
+      });
+
+      const timeResults = await Promise.all(timePromises);
+      timeResults.forEach(({ key, timeSpentMinutes }) => {
+        if (timeSpentMinutes > 0) { // Ne stocker que les temps > 0 pour optimiser
+          newDailyTimes.set(key, timeSpentMinutes);
+        }
+      });
+      
+      setDailyTimes(newDailyTimes);
+      console.log('📊 [CalendarPage] Temps quotidiens chargés pour vue jour:', Object.fromEntries(newDailyTimes));
+    } catch (error) {
+      console.error('❌ Erreur chargement temps quotidiens vue jour:', error);
+      // En cas d'erreur, vider les données pour éviter l'affichage de données incorrectes
+      setDailyTimes(new Map());
+    }
+  }, [currentDate]);
 
   // Charger les états persistants supplémentaires
   useEffect(() => {
@@ -159,15 +208,34 @@ export const CalendarPage: React.FC = () => {
     loadCalendarData();
   }, [currentDate, viewMode]);
 
+  // 🆕 Charger les temps quotidiens en vue jour (indépendant de calendarDays)
+  useEffect(() => {
+    if (viewMode === 'day') {
+      loadDailyTimesForCurrentDay();
+    }
+  }, [viewMode, loadDailyTimesForCurrentDay]);
+
   // S'abonner aux changements du subjectService pour la réactivité
   useEffect(() => {
     const unsubscribe = subjectService.subscribe(() => {
-      console.log('🔄 SubjectService changé - rechargement calendrier');
+      console.log('🔔 [CalendarPage] SubjectService changé - rechargement calendrier');
       loadCalendarData(true);
     });
 
     return unsubscribe;
   }, []);
+
+  // S'abonner aux changements du dailyTimeService
+  useEffect(() => {
+    const unsubscribe = dailyTimeService.subscribe(() => {
+      console.log('🔄 [CalendarPage] DailyTimeService changé - rechargement temps quotidiens');
+      if (viewMode === 'day') {
+        loadDailyTimesForCurrentDay();
+      }
+    });
+
+    return unsubscribe;
+  }, [viewMode, currentDate, loadDailyTimesForCurrentDay]);
   
   // Sauvegarder l'état quand on quitte la page avec guards de nettoyage
   useEffect(() => {
@@ -262,6 +330,7 @@ export const CalendarPage: React.FC = () => {
     // Le re-render sera déclenché automatiquement par le changement de timers et getTimerState
   }, [timers, getTimerState]);
 
+
   const loadCalendarData = async (isRefresh = false) => {
     try {
       if (isRefresh) {
@@ -280,8 +349,23 @@ export const CalendarPage: React.FC = () => {
       const days = await calendarRenderer.generateCalendarDays(startDate, endDate);
       setCalendarDays(days);
       
+      // Charger les données de progression quotidienne pour chaque matière (pour vue semaine)
+      const progressMap = new Map<string, Array<{date: Date, timeSpent: number}>>();
+      const allSubjects = await subjectService.getAllSubjects();
+      
+      for (const subject of allSubjects) {
+        const progress = await subjectService.getSubjectProgress(subject.id);
+        if (progress?.dailyProgress) {
+          progressMap.set(subject.id, progress.dailyProgress);
+        }
+      }
+      
+      setSubjectsProgress(progressMap);
+      
+      // 🆕 Les temps quotidiens sont gérés indépendamment par useEffect
+      
       // Calculer les statistiques hebdomadaires
-      const weekStart = getWeekStart(currentDate);
+      const weekStart = getWeekStartSafe(currentDate);
       const stats = await calendarRenderer.getWeeklyStats(weekStart);
       setWeeklyStats(stats);
       
@@ -305,6 +389,34 @@ export const CalendarPage: React.FC = () => {
   
   const handleRefresh = () => {
     loadCalendarData(true);
+  };
+
+  // 🆕 Fonction utilitaire pour récupérer le temps étudié quotidien d'une matière pour un jour spécifique
+  const getSubjectTimeForDate = (subjectId: string, date: Date): number => {
+    if (viewMode === 'day') {
+      // Vue jour - utiliser le nouveau système dailyTimeService
+      const key = `${subjectId}-${date.toDateString()}`;
+      const dailyTimeMinutes = dailyTimes.get(key) || 0;
+      return dailyTimeMinutes; // ⚠️ Déjà en minutes, pas besoin de convertir !
+    } else {
+      // Vue semaine - garder l'ancien système pour compatibilité (sera géré dans WeekView)
+      const subjectProgress = subjectsProgress.get(subjectId);
+      if (!subjectProgress) {
+        return 0;
+      }
+      
+      // Normaliser les dates pour éviter les problèmes de fuseaux horaires
+      const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      
+      const dayProgress = subjectProgress.find(progress => {
+        const progressDate = new Date(progress.date.getFullYear(), progress.date.getMonth(), progress.date.getDate());
+        return progressDate.getTime() === targetDate.getTime();
+      });
+      
+      const minutes = dayProgress ? Math.round(dayProgress.timeSpent / 60) : 0;
+      
+      return minutes; // Convertir secondes en minutes
+    }
   };
 
 
@@ -456,8 +568,25 @@ export const CalendarPage: React.FC = () => {
         t.linkedSubject?.id === session.subject.id
       );
       
-      // Si un timer éphémère existe déjà, le supprimer d'abord
+      // Si un timer éphémère existe déjà, vérifier son état avant suppression
       if (existingEphemeralTimer) {
+        const timerState = getTimerState(existingEphemeralTimer.id);
+        
+        if (timerState && timerState.state === 'running') {
+          // Timer actif - demander confirmation utilisateur
+          const shouldStop = window.confirm(
+            `Un timer est déjà en cours pour "${session.subject.name}". Voulez-vous l'arrêter et démarrer une nouvelle session ?`
+          );
+          
+          if (!shouldStop) {
+            console.log('❌ Utilisateur a annulé le lancement de session');
+            return;
+          }
+          
+          console.log(`⏸️ Arrêt du timer actif: ${existingEphemeralTimer.title}`);
+          await pauseTimer(existingEphemeralTimer.id);
+        }
+        
         console.log(`🗑️ Suppression de l'ancien timer éphémère: ${existingEphemeralTimer.title}`);
         await removeTimer(existingEphemeralTimer.id);
       }
@@ -613,25 +742,34 @@ export const CalendarPage: React.FC = () => {
       setCurrentDate(savedWeekViewDate);
     }
     setViewMode(mode);
-    // Sauvegarde immédiate
-    setTimeout(saveState, 100);
+    
+    // 🆕 Les temps quotidiens seront chargés automatiquement par useEffect
+    // quand viewMode change et que calendarDays est disponible
+    
+    // Sauvegarde avec délai minimal
+    setTimeout(saveState, 50);
   };
 
   /**
    * 📅 GESTION DU CHANGEMENT DE DATE
    * Met à jour la date sauvegardée pour la vue actuelle
    */
-  const handleDateChange = (date: Date) => {
+  const handleDateChange = useCallback((date: Date) => {
+    console.log('🔄 [CalendarPage] handleDateChange appelé:', date.toDateString());
     setCurrentDate(date);
+    
     // Sauvegarder la nouvelle date pour la vue actuelle
     if (viewMode === 'day') {
       setSavedDayViewDate(date);
+      // ⚡ Charger immédiatement les temps pour la nouvelle date
+      loadDailyTimesForCurrentDay(date);
     } else {
       setSavedWeekViewDate(date);
     }
-    // Sauvegarde immédiate
-    setTimeout(saveState, 100);
-  };
+    
+    // Sauvegarde avec délai minimal pour éviter les appels répétés
+    setTimeout(saveState, 50);
+  }, [viewMode, loadDailyTimesForCurrentDay]);
 
   /**
    * Fonctions utilitaires pour les calculs de période
@@ -643,21 +781,14 @@ export const CalendarPage: React.FC = () => {
         endDate: new Date(date)
       };
     } else {
-      const startDate = getWeekStart(date);
+      const startDate = getWeekStartSafe(date);
       const endDate = new Date(startDate);
       endDate.setDate(startDate.getDate() + 6);
       return { startDate, endDate };
     }
   };
 
-  const getWeekStart = (date: Date) => {
-    const start = new Date(date);
-    const day = start.getDay();
-    const diff = start.getDate() - day + (day === 0 ? -6 : 1); // Lundi = début de semaine
-    start.setDate(diff);
-    start.setHours(0, 0, 0, 0);
-    return start;
-  };
+  // Fonction getWeekStart supprimée - utilisation de getWeekStartSafe centralisée
 
   if (loading) {
     return (
@@ -680,14 +811,35 @@ export const CalendarPage: React.FC = () => {
     totalPlannedTime: 0
   };
 
-  // Calculer les statistiques du jour
+  // Calculer les statistiques du jour avec le temps réel par jour
+  const todayRealStudiedTime = todayData.sessions.reduce((sum, session) => {
+    return sum + getSubjectTimeForDate(session.subject.id, todayData.date);
+  }, 0);
+
+  // 🔧 Calcul correct des sessions terminées
+  const completedSessions = todayData.sessions.filter(session => {
+    const studiedMinutes = getSubjectTimeForDate(session.subject.id, todayData.date);
+    const plannedMinutes = session.plannedDuration || 0;
+    const isCompleted = studiedMinutes >= plannedMinutes && plannedMinutes > 0;
+    
+    console.log(`📊 [CalendarPage] Session ${session.subject.name}:`, {
+      studiedMinutes,
+      plannedMinutes,
+      isCompleted,
+      date: todayData.date.toDateString()
+    });
+    
+    // Une session est terminée si on a étudié >= temps planifié pour cette session
+    return isCompleted;
+  }).length;
+
   const todayStats = {
     plannedTime: todayData.totalPlannedTime,
-    studiedTime: todayData.sessions.reduce((sum, session) => sum + ((session.subject?.timeSpent || 0) / 60), 0),
-    completedSessions: todayData.sessions.filter(session => session.subject?.status === 'COMPLETED').length,
+    studiedTime: todayRealStudiedTime,
+    completedSessions: completedSessions,
     totalSessions: todayData.sessions.length,
     progressPercentage: todayData.totalPlannedTime > 0 
-      ? Math.min(100, Math.round((todayData.sessions.reduce((sum, session) => sum + ((session.subject?.timeSpent || 0) / 60), 0) / (todayData.totalPlannedTime || 1)) * 100))
+      ? Math.min(100, Math.round((todayRealStudiedTime / (todayData.totalPlannedTime || 1)) * 100))
       : 0
   };
 
@@ -838,21 +990,29 @@ export const CalendarPage: React.FC = () => {
             {todayData.sessions.length > 0 ? (
               <div className="space-y-4">
                 {todayData.sessions.map((session) => {
-                  const sessionProgress = (session.subject?.targetTime || 0) > 0 
-                    ? Math.min(100, Math.round(((session.subject?.timeSpent || 0) / (session.subject?.targetTime || 1)) * 100))
+                  const todayStudiedMinutes = getSubjectTimeForDate(session.subject.id, todayData.date);
+                  const sessionProgress = (session.plannedDuration || 0) > 0 
+                    ? Math.min(100, Math.round((todayStudiedMinutes / (session.plannedDuration || 1)) * 100))
                     : 0;
-                  const studiedMinutes = Math.round((session.subject?.timeSpent || 0) / 60);
+                  const studiedMinutes = todayStudiedMinutes;
                   const remainingMinutes = Math.max(0, (session.plannedDuration || 0) - studiedMinutes);
                   
+                  // 🔧 Statut basé sur le temps étudié vs planifié pour CETTE session
                   let statusColor = 'gray';
                   let statusText = t('calendar.pending');
-                  if (session.subject?.status === 'IN_PROGRESS') {
-                    statusColor = 'yellow';
-                    statusText = t('calendar.inProgress');
-                  } else if (session.subject?.status === 'COMPLETED') {
-                    statusColor = 'green';
-                    statusText = t('calendar.completed');
+                  
+                  if (studiedMinutes > 0) {
+                    if (studiedMinutes >= (session.plannedDuration || 0)) {
+                      // Session terminée : temps étudié >= temps planifié
+                      statusColor = 'green';
+                      statusText = t('calendar.completed');
+                    } else {
+                      // Session en cours : du temps étudié mais pas fini
+                      statusColor = 'yellow';
+                      statusText = t('calendar.inProgress');
+                    }
                   }
+                  // Sinon reste "En attente" (gray/pending) si studiedMinutes === 0
                   
                   // Obtenir les infos du bouton selon l'état du timer
                   const { buttonIcon, buttonText, buttonColor, isTimerRunning, action, showResetButton } = getSessionButtonInfo(session);
@@ -890,6 +1050,7 @@ export const CalendarPage: React.FC = () => {
                           {/* Actions de gestion du temps d'étude */}
                           <StudyTimeActions
                             subject={session.subject}
+                            targetDate={todayData.date}
                             onSuccess={() => {
                               // Recharger les données du calendrier après modification
                               loadCalendarData(true);
@@ -1009,7 +1170,7 @@ export const CalendarPage: React.FC = () => {
           </div>
 
           {/* 📌 Résumé uniforme */}
-          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm mt-6">
+          <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm mt-6 mb-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div>
                 <div className="text-xl font-bold text-gray-900">{todayStats.totalSessions}</div>
@@ -1094,6 +1255,7 @@ export const CalendarPage: React.FC = () => {
             navigate={navigate}
             persistentState={persistentState}
             onPersistentStateChange={setPersistentState}
+            getSubjectTimeForDate={getSubjectTimeForDate}
           />
         </>
       )}

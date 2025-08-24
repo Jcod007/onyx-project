@@ -2,10 +2,13 @@ import React from 'react';
 import { Settings, Palette, Clock, Database, Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export const SettingsPage: React.FC = () => {
   const { t } = useTranslation();
   const { language, setLanguage } = useLanguage();
+  const { theme, setTheme } = useTheme();
+  
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -34,9 +37,13 @@ export const SettingsPage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 {t('settings.theme')}
               </label>
-              <select className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <select 
+                value={theme}
+                onChange={(e) => setTheme(e.target.value as 'light' | 'dark' | 'onyx' | 'auto')}
+                className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 <option value="light">{t('settings.lightMode')}</option>
                 <option value="dark">{t('settings.darkMode')}</option>
+                <option value="onyx">{t('settings.onyxTheme')}</option>
                 <option value="auto">{t('settings.systemTheme')}</option>
               </select>
             </div>

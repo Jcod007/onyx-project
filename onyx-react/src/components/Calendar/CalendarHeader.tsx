@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Calendar, Grid3X3, RotateCcw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface CalendarHeaderProps {
   currentDate: Date;
@@ -18,6 +19,7 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   onRefresh,
   isLoading = false
 }) => {
+  const { t, i18n } = useTranslation();
   
   // Raccourcis clavier
   useEffect(() => {
@@ -86,6 +88,8 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
   };
 
   const formatHeaderDate = () => {
+    const locale = i18n.language === 'fr' ? 'fr-FR' : 'en-US';
+    
     if (viewMode === 'week') {
       const startOfWeek = new Date(currentDate);
       startOfWeek.setDate(currentDate.getDate() - currentDate.getDay() + 1); // Lundi
@@ -93,12 +97,12 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
       endOfWeek.setDate(startOfWeek.getDate() + 6); // Dimanche
 
       if (startOfWeek.getMonth() === endOfWeek.getMonth()) {
-        return `${startOfWeek.getDate()}-${endOfWeek.getDate()} ${startOfWeek.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`;
+        return `${startOfWeek.getDate()}-${endOfWeek.getDate()} ${startOfWeek.toLocaleDateString(locale, { month: 'long', year: 'numeric' })}`;
       } else {
-        return `${startOfWeek.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} - ${endOfWeek.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+        return `${startOfWeek.toLocaleDateString(locale, { day: 'numeric', month: 'short' })} - ${endOfWeek.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })}`;
       }
     } else {
-      return currentDate.toLocaleDateString('fr-FR', { 
+      return currentDate.toLocaleDateString(locale, { 
         weekday: 'long',
         day: 'numeric', 
         month: 'long', 
@@ -118,10 +122,10 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
             </div>
             <div>
               <h1 className="text-lg font-semibold text-gray-900">
-                Calendrier d'étude
+                {t('calendarHeader.title', 'Calendrier d\'étude')}
               </h1>
               <p className="text-gray-600 text-sm">
-                Planifiez et suivez vos sessions
+                {t('calendarHeader.subtitle', 'Planifiez et suivez vos sessions')}
               </p>
             </div>
           </div>
@@ -129,7 +133,7 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
           {/* Raccourcis clavier - séparés sur mobile */}
           <div className="sm:ml-auto xl:ml-0">
             <span className="text-xs bg-gray-100 px-2 py-1 rounded-md text-gray-700 border border-gray-200">
-              ←→ Naviguer • T Aujourd'hui • W/D Changer vue • Ctrl+R Actualiser
+              {t('calendarHeader.shortcuts', '←→ Naviguer • T Aujourd\'hui • W/D Changer vue • Ctrl+R Actualiser')}
             </span>
           </div>
         </div>
@@ -145,10 +149,10 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
                   ? 'bg-white text-blue-600 shadow-sm border border-blue-200'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
-              title="Vue semaine (W)"
+              title={t('calendarHeader.weekViewTitle', 'Vue semaine (W)')}
             >
               <Grid3X3 size={14} />
-              Semaine
+              {t('calendar.week', 'Semaine')}
             </button>
             <button
               onClick={() => onViewModeChange('day')}
@@ -157,10 +161,10 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
                   ? 'bg-white text-blue-600 shadow-sm border border-blue-200'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
-              title="Vue jour (D)"
+              title={t('calendarHeader.dayViewTitle', 'Vue jour (D)')}
             >
               <Calendar size={14} />
-              Jour
+              {t('calendar.day', 'Jour')}
             </button>
           </div>
 
@@ -180,7 +184,7 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
                 {formatHeaderDate()}
               </div>
               <div className="text-xs text-gray-500">
-                {viewMode === 'week' ? 'Semaine' : 'Journée'} • {new Date().getFullYear()}
+                {viewMode === 'week' ? t('calendar.week', 'Semaine') : t('calendarHeader.day', 'Journée')} • {new Date().getFullYear()}
               </div>
             </div>
             
@@ -210,10 +214,10 @@ export const CalendarHeader: React.FC<CalendarHeaderProps> = ({
             <button
               onClick={goToToday}
               className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg border border-blue-700 shadow-sm hover:bg-blue-700 transition-all duration-200 disabled:opacity-50"
-              title="Aujourd'hui (T)"
+              title={t('calendarHeader.todayTitle', 'Aujourd\'hui (T)')}
               disabled={isLoading}
             >
-              Aujourd'hui
+              {t('calendar.today', 'Aujourd\'hui')}
             </button>
           </div>
         </div>

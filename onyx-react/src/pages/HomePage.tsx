@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Timer, BookOpen, BarChart3, Plus, Clock, Target, TrendingUp } from 'lucide-react';
 import { subjectService } from '@/services/subjectService';
+import { dailyTimeService } from '@/services/dailyTimeService';
 import { Subject } from '@/types/Subject';
 import { formatDuration } from '@/utils/timeFormat';
 import { useTranslation } from 'react-i18next';
@@ -32,16 +33,170 @@ export const HomePage: React.FC = () => {
 
   useEffect(() => {
     loadDashboardData();
+
+    // 🔄 S'abonner aux changements des services 
+    const unsubscribeSubjects = subjectService.subscribe(() => {
+      console.log('🔄 [HomePage] Mise à jour sujets détectée, rechargement des données...');
+      loadDashboardData();
+    });
+
+    const unsubscribeDaily = dailyTimeService.subscribe(() => {
+      console.log('🔄 [HomePage] Mise à jour temps quotidien détectée, rechargement des données...');
+      loadDashboardData();
+    });
+
+    return () => {
+      unsubscribeSubjects();
+      unsubscribeDaily();
+    };
   }, []);
+
+  // 🧹 Fonction de nettoyage des données corrompues
+  const cleanCorruptedData = async () => {
+    try {
+      const subjects = await subjectService.getAllSubjects();
+      let hasCorruption = false;
+      
+      for (const subject of subjects) {
+        if (subject.targetTime > 1000000) { // Détection de corruption
+          hasCorruption = true;
+          console.warn(`🧹 [HomePage] Nettoyage de ${subject.name}: targetTime=${subject.targetTime}`);
+          
+          // Calculer une valeur raisonnable basée sur weeklyTimeGoal
+          let correctedTargetTime = 0;
+          if (subject.weeklyTimeGoal) {
+            // Convertir l'objectif hebdomadaire en objectif total (ex: 12 semaines = 3 mois)
+            correctedTargetTime = subject.weeklyTimeGoal * 12 * 60; // 12 semaines * minutes * 60s
+          } else {
+            correctedTargetTime = 7200; // 2h par défaut
+          }
+          
+          // Mettre à jour avec la valeur corrigée
+          await subjectService.updateSubject(subject.id, {
+            targetTime: Math.floor(correctedTargetTime / 60) // Converti en minutes pour l'API
+          });
+          
+          console.log(`✅ [HomePage] ${subject.name} corrigé: ${correctedTargetTime}s`);
+        }
+      }
+      
+      if (hasCorruption) {
+        console.log('🔄 [HomePage] Rechargement après nettoyage...');
+        return true; // Indique qu'un rechargement est nécessaire
+      }
+    } catch (error) {
+      console.error('❌ [HomePage] Erreur nettoyage:', error);
+    }
+    
+    return false;
+  };
 
   const loadDashboardData = async () => {
     try {
-      const [subjectsStats, recentlyStudied] = await Promise.all([
-        subjectService.getSubjectsStats(),
-        subjectService.getRecentlyStudiedSubjects(3)
-      ]);
+      // 🧹 Vérifier et nettoyer les données corrompues
+      const needsReload = await cleanCorruptedData();
+      if (needsReload) {
+        // Rechargement avec données nettoyées
+        setTimeout(() => loadDashboardData(), 500);
+        return;
+      }
 
-      setStats(subjectsStats);
+      // 🔄 Charger les statistiques cumulatives (vue globale)
+      const subjects = await subjectService.getAllSubjects();
+      
+      // Calculer le temps total cumulé pour chaque matière
+      let totalTimeSpent = 0;
+      const subjectsWithCumulativeTime = await Promise.all(
+        subjects.map(async (subject) => {
+          const cumulativeTime = await dailyTimeService.getTotalTimeSpent(subject.id);
+          totalTimeSpent += cumulativeTime;
+          return { ...subject, cumulativeTimeSpent: cumulativeTime };
+        })
+      );
+
+      // 🔧 Debug détaillé des valeurs targetTime et weeklyTimeGoal
+      console.log('🐛 [HomePage] Debug COMPLET des sujets:', subjects.map(s => ({
+        name: s.name,
+        targetTime: s.targetTime,
+        targetTimeFormatted: formatDuration(s.targetTime, 'planning'),
+        targetTimeHours: (s.targetTime / 3600).toFixed(2),
+        weeklyTimeGoal: s.weeklyTimeGoal,
+        weeklyTimeGoalHours: ((s.weeklyTimeGoal || 0) / 60).toFixed(2),
+        status: s.status,
+        createdAt: s.createdAt,
+        studyDays: s.studyDays
+      })));
+
+      const totalTargetTime = subjects.reduce((sum, s) => {
+        // 🔧 Validation et nettoyage des données aberrantes
+        let validTargetTime = s.targetTime;
+        
+        // Détecter et corriger les valeurs aberrantes (probablement double conversion)
+        if (validTargetTime > 1000000) { // Plus de 277h est suspect
+          console.warn(`⚠️ [HomePage] Valeur targetTime aberrante détectée pour ${s.name}: ${validTargetTime}s`);
+          // Essayer de corriger en divisant par un facteur commun
+          if (validTargetTime > 100000000) { // Très aberrant, probablement en millisecondes
+            validTargetTime = Math.floor(validTargetTime / 1000); // ms → s
+            console.warn(`🔧 [HomePage] Correction ms→s: ${validTargetTime}s`);
+          } else if (validTargetTime > 1000000) { // Aberrant, probablement double conversion
+            validTargetTime = Math.floor(validTargetTime / 60); // Annuler une conversion * 60
+            console.warn(`🔧 [HomePage] Correction double conversion: ${validTargetTime}s`);
+          }
+        }
+        
+        // Validation finale
+        if (isNaN(validTargetTime) || validTargetTime < 0) {
+          validTargetTime = 0;
+        }
+        
+        console.log(`📊 [HomePage] ${s.name}: targetTime=${s.targetTime}, validé=${validTargetTime}`);
+        return sum + validTargetTime;
+      }, 0);
+
+      console.log('📊 [HomePage] Total targetTime calculé:', {
+        totalTargetTime,
+        totalTargetTimeFormatted: formatDuration(totalTargetTime, 'planning'),
+        subjectsCount: subjects.length
+      });
+
+      // Calculer les statistiques globales
+      const stats = {
+        total: subjects.length,
+        completed: subjects.filter(s => s.status === 'COMPLETED').length,
+        inProgress: subjects.filter(s => s.status === 'IN_PROGRESS').length,
+        notStarted: subjects.filter(s => s.status === 'NOT_STARTED').length,
+        totalTimeSpent, // 🎯 Temps cumulé réel basé sur les sessions
+        totalTargetTime,
+        overallProgress: 0
+      };
+
+      // 🔧 Calcul sécurisé de la progression
+      if (stats.totalTargetTime > 0 && stats.totalTimeSpent >= 0) {
+        stats.overallProgress = Math.min(100, (stats.totalTimeSpent / stats.totalTargetTime) * 100);
+      } else {
+        stats.overallProgress = 0;
+      }
+
+      // Récents sujets avec temps cumulatif
+      const recentlyStudied = subjectsWithCumulativeTime
+        .filter(s => s.cumulativeTimeSpent > 0)
+        .sort((a, b) => {
+          const dateA = a.lastStudyDate ? new Date(a.lastStudyDate).getTime() : 0;
+          const dateB = b.lastStudyDate ? new Date(b.lastStudyDate).getTime() : 0;
+          return dateB - dateA;
+        })
+        .slice(0, 3);
+
+      console.log('📊 [HomePage] Statistiques cumulatives chargées:', {
+        totalTimeSpentHours: Math.round(totalTimeSpent / 3600),
+        totalTimeSpentSeconds: totalTimeSpent,
+        totalTargetTimeSeconds: totalTargetTime,
+        totalTargetTimeHours: Math.round(totalTargetTime / 3600),
+        subjectsCount: subjects.length,
+        overallProgress: Math.round(stats.overallProgress)
+      });
+
+      setStats(stats);
       setRecentSubjects(recentlyStudied);
     } catch (error) {
       console.error('Erreur lors du chargement des données:', error);
@@ -168,10 +323,19 @@ export const HomePage: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium text-gray-900">
-                      {formatDuration(subject.timeSpent, 'stats')}
+                      {formatDuration((subject as any).cumulativeTimeSpent || 0, 'stats')} / {formatDuration(subject.targetTime, 'stats')}
                     </p>
+                    {/* Barre de progression */}
+                    <div className="w-20 bg-gray-200 rounded-full h-1.5 mt-1 mb-1">
+                      <div 
+                        className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
+                        style={{ 
+                          width: `${Math.min(100, ((subject as any).cumulativeTimeSpent / subject.targetTime) * 100)}%` 
+                        }}
+                      />
+                    </div>
                     <p className="text-xs text-gray-500">
-                      / {formatDuration(subject.targetTime, 'planning')}
+                      📊 {t('home.progressSince', 'Progression depuis le')} {new Date(subject.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
@@ -252,7 +416,7 @@ export const HomePage: React.FC = () => {
 
       {/* Progress Overview */}
       {stats.totalTargetTime > 0 && (
-        <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+        <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">
             {t('home.overallProgress', 'Progrès global')}
           </h2>
@@ -274,7 +438,13 @@ export const HomePage: React.FC = () => {
             
             <div className="flex justify-between text-sm text-gray-500">
               <span>{formatDuration(stats.totalTimeSpent, 'stats')} {t('calendar.studied')}</span>
-              <span>{formatDuration(stats.totalTargetTime, 'planning')} {t('home.objective', 'objectif')}</span>
+              <span>
+                {/* 🔧 Protection contre les valeurs aberrantes */}
+                {stats.totalTargetTime > 1000000 // Plus de ~277h semble aberrant
+                  ? "-- --" 
+                  : formatDuration(stats.totalTargetTime, 'planning')
+                } {t('home.objective', 'objectif')}
+              </span>
             </div>
           </div>
         </div>

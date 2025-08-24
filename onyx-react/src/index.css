@@ -149,3 +149,1023 @@ body {
     padding: 0 2rem;
   }
 }
+
+/* Onyx Theme Styles */
+html.onyx {
+  background-color: #0d1117 !important;
+  color: #f8f9fa !important;
+}
+
+html.onyx body {
+  background-color: #0d1117 !important;
+  color: #f8f9fa !important;
+}
+
+html.onyx #root {
+  background-color: #0d1117 !important;
+}
+
+/* Onyx Global Overrides */
+.onyx,
+html.onyx {
+  /* Backgrounds */
+  --color-background: #0d1117;
+  --color-surface: #343a40;
+  --color-border: #495057;
+  --color-primary: #ca8a04;
+  --color-primary-dark: #a16207;
+  --color-secondary: #6c757d;
+  --color-success: #16a34a;
+  --color-warning: #eab308;
+  --color-danger: #dc2626;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+}
+
+/* Onyx Tailwind Class Overrides */
+html.onyx .bg-white {
+  background-color: #343a40 !important;
+}
+
+html.onyx .bg-gray-50 {
+  background-color: #212529 !important;
+}
+
+html.onyx .bg-gray-100 {
+  background-color: #495057 !important;
+}
+
+html.onyx .bg-gray-200 {
+  background-color: #6c757d !important;
+}
+
+html.onyx .text-gray-900 {
+  color: #f8f9fa !important;
+}
+
+html.onyx .text-gray-800 {
+  color: #e9ecef !important;
+}
+
+html.onyx .text-gray-700 {
+  color: #ced4da !important;
+}
+
+html.onyx .text-gray-600 {
+  color: #adb5bd !important;
+}
+
+html.onyx .text-gray-500 {
+  color: #6c757d !important;
+}
+
+html.onyx .border-gray-200 {
+  border-color: #495057 !important;
+}
+
+html.onyx .border-gray-300 {
+  border-color: #6c757d !important;
+}
+
+html.onyx .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #495057 !important;
+}
+
+/* Onyx Blue Color Overrides */
+html.onyx .bg-blue-50 {
+  background-color: #1e293b !important;
+}
+
+html.onyx .bg-blue-100 {
+  background-color: #334155 !important;
+}
+
+html.onyx .bg-blue-600 {
+  background-color: #ca8a04 !important;
+}
+
+html.onyx .bg-blue-700 {
+  background-color: #a16207 !important;
+}
+
+html.onyx .text-blue-600 {
+  color: #eab308 !important;
+}
+
+html.onyx .text-blue-700 {
+  color: #ca8a04 !important;
+}
+
+/* Onyx scrollbar */
+html.onyx ::-webkit-scrollbar-track {
+  background: #212529 !important;
+}
+
+html.onyx ::-webkit-scrollbar-thumb {
+  background: #495057 !important;
+}
+
+html.onyx ::-webkit-scrollbar-thumb:hover {
+  background: #6c757d !important;
+}
+
+/* Onyx button styles */
+html.onyx .btn-primary {
+  background-color: #ca8a04 !important;
+  color: #0d1117 !important;
+}
+
+html.onyx .btn-primary:hover {
+  background-color: #a16207 !important;
+}
+
+html.onyx .btn-secondary {
+  background-color: #334155 !important;
+  color: #e9ecef !important;
+}
+
+html.onyx .btn-secondary:hover {
+  background-color: #475569 !important;
+}
+
+/* Onyx card styles */
+html.onyx .card {
+  background-color: #1e293b !important;
+  border-color: #495057 !important;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3) !important;
+}
+
+html.onyx .card-hover:hover {
+  background-color: #334155 !important;
+}
+
+/* Onyx Configuration Boxes and Dialog Styles */
+html.onyx .rounded-lg.bg-white {
+  background-color: #343a40 !important;
+}
+
+html.onyx .rounded-xl.bg-white {
+  background-color: #343a40 !important;
+}
+
+html.onyx .rounded-md.bg-white {
+  background-color: #343a40 !important;
+}
+
+/* Onyx Specific Component Boxes */
+html.onyx .space-y-4 > .bg-white {
+  background-color: #343a40 !important;
+}
+
+html.onyx .space-y-6 > .bg-white {
+  background-color: #343a40 !important;
+}
+
+html.onyx .grid > .bg-white {
+  background-color: #343a40 !important;
+}
+
+/* Onyx Dialog/Modal Content */
+html.onyx [role="dialog"] {
+  background-color: #1e293b !important;
+  border-color: #495057 !important;
+}
+
+html.onyx .dialog-content {
+  background-color: #1e293b !important;
+  border-color: #495057 !important;
+}
+
+/* Onyx Card Headers */
+html.onyx .card-header {
+  background-color: #212529 !important;
+  border-bottom-color: #495057 !important;
+}
+
+/* Onyx Card Body */
+html.onyx .card-body {
+  background-color: #343a40 !important;
+}
+
+/* Onyx Configuration Card Specific */
+html.onyx .config-card {
+  background-color: #1e293b !important;
+  border-color: #495057 !important;
+}
+
+html.onyx .config-section {
+  background-color: #343a40 !important;
+  border-color: #6c757d !important;
+}
+
+/* Onyx Subject Configuration Card */
+html.onyx .subject-card {
+  background-color: #343a40 !important;
+  border-color: #495057 !important;
+}
+
+html.onyx .subject-card:hover {
+  background-color: #475569 !important;
+  border-color: #6c757d !important;
+}
+
+/* Onyx Timer Configuration Box */
+html.onyx .timer-config-box {
+  background-color: #1e293b !important;
+  border-color: #495057 !important;
+}
+
+html.onyx .timer-preset-card {
+  background-color: #343a40 !important;
+  border-color: #6c757d !important;
+}
+
+html.onyx .timer-preset-card:hover {
+  background-color: #475569 !important;
+  border-color: #ca8a04 !important;
+}
+
+/* Onyx Tabs and Tab Content */
+html.onyx .tab-list {
+  background-color: #212529 !important;
+  border-bottom-color: #495057 !important;
+}
+
+html.onyx .tab-button {
+  background-color: transparent !important;
+  color: #adb5bd !important;
+}
+
+html.onyx .tab-button:hover {
+  background-color: #343a40 !important;
+  color: #f8f9fa !important;
+}
+
+html.onyx .tab-button.active {
+  background-color: #343a40 !important;
+  color: #ca8a04 !important;
+  border-bottom-color: #ca8a04 !important;
+}
+
+html.onyx .tab-content {
+  background-color: #343a40 !important;
+}
+
+/* Onyx Dropdown Menus */
+html.onyx .dropdown-menu {
+  background-color: #1e293b !important;
+  border-color: #495057 !important;
+}
+
+html.onyx .dropdown-item {
+  background-color: transparent !important;
+  color: #f8f9fa !important;
+}
+
+html.onyx .dropdown-item:hover {
+  background-color: #343a40 !important;
+  color: #ca8a04 !important;
+}
+
+/* Onyx Alert/Notification Boxes */
+html.onyx .alert {
+  background-color: #343a40 !important;
+  border-color: #495057 !important;
+  color: #f8f9fa !important;
+}
+
+html.onyx .alert-info {
+  background-color: #1e3a5f !important;
+  border-color: #2563eb !important;
+}
+
+html.onyx .alert-success {
+  background-color: #14532d !important;
+  border-color: #16a34a !important;
+}
+
+html.onyx .alert-warning {
+  background-color: #713f12 !important;
+  border-color: #ca8a04 !important;
+}
+
+html.onyx .alert-danger {
+  background-color: #7f1d1d !important;
+  border-color: #dc2626 !important;
+}
+
+/* Onyx Tooltips */
+html.onyx .tooltip {
+  background-color: #0d1117 !important;
+  border-color: #ca8a04 !important;
+  color: #f8f9fa !important;
+}
+
+html.onyx .tooltip-arrow {
+  border-color: #0d1117 !important;
+}
+
+/* Onyx Badges and Pills */
+html.onyx .badge {
+  background-color: #495057 !important;
+  color: #f8f9fa !important;
+}
+
+html.onyx .badge-primary {
+  background-color: #ca8a04 !important;
+  color: #0d1117 !important;
+}
+
+html.onyx .badge-success {
+  background-color: #16a34a !important;
+}
+
+html.onyx .badge-warning {
+  background-color: #eab308 !important;
+  color: #0d1117 !important;
+}
+
+html.onyx .badge-danger {
+  background-color: #dc2626 !important;
+}
+
+/* Onyx Navigation Sidebar */
+html.onyx .sidebar {
+  background-color: #0d1117 !important;
+  border-right-color: #495057 !important;
+}
+
+html.onyx .nav-item {
+  background-color: transparent !important;
+}
+
+html.onyx .nav-item:hover {
+  background-color: #1e293b !important;
+}
+
+html.onyx .nav-item.active {
+  background-color: #343a40 !important;
+  border-left-color: #ca8a04 !important;
+}
+
+/* Onyx Breadcrumbs */
+html.onyx .breadcrumb {
+  background-color: #1e293b !important;
+}
+
+html.onyx .breadcrumb-item {
+  color: #adb5bd !important;
+}
+
+html.onyx .breadcrumb-item.active {
+  color: #ca8a04 !important;
+}
+
+/* Onyx Pagination */
+html.onyx .pagination {
+  background-color: transparent !important;
+}
+
+html.onyx .page-item .page-link {
+  background-color: #343a40 !important;
+  border-color: #495057 !important;
+  color: #f8f9fa !important;
+}
+
+html.onyx .page-item.active .page-link {
+  background-color: #ca8a04 !important;
+  border-color: #ca8a04 !important;
+  color: #0d1117 !important;
+}
+
+html.onyx .page-item:hover .page-link {
+  background-color: #475569 !important;
+  border-color: #6c757d !important;
+}
+
+/* Onyx Progress Bars Extended */
+html.onyx .progress {
+  background-color: #1e293b !important;
+}
+
+html.onyx .progress-bar {
+  background-color: #ca8a04 !important;
+}
+
+html.onyx .progress-bar.bg-success {
+  background-color: #16a34a !important;
+}
+
+html.onyx .progress-bar.bg-warning {
+  background-color: #eab308 !important;
+}
+
+html.onyx .progress-bar.bg-danger {
+  background-color: #dc2626 !important;
+}
+
+/* Onyx List Groups */
+html.onyx .list-group {
+  background-color: #343a40 !important;
+}
+
+html.onyx .list-group-item {
+  background-color: #343a40 !important;
+  border-color: #495057 !important;
+  color: #f8f9fa !important;
+}
+
+html.onyx .list-group-item:hover {
+  background-color: #475569 !important;
+}
+
+html.onyx .list-group-item.active {
+  background-color: #ca8a04 !important;
+  border-color: #ca8a04 !important;
+  color: #0d1117 !important;
+}
+
+/* Onyx Input Styles */
+html.onyx input,
+html.onyx textarea,
+html.onyx select {
+  background-color: #212529 !important;
+  border-color: #495057 !important;
+  color: #f8f9fa !important;
+}
+
+html.onyx input:focus,
+html.onyx textarea:focus,
+html.onyx select:focus {
+  border-color: #ca8a04 !important;
+  box-shadow: 0 0 0 1px #ca8a04 !important;
+}
+
+/* Onyx Modal/Dialog Styles */
+html.onyx .bg-opacity-50 {
+  background-color: rgba(13, 17, 23, 0.8) !important;
+}
+
+/* Onyx Hover States */
+html.onyx .hover\:bg-gray-50:hover {
+  background-color: #495057 !important;
+}
+
+html.onyx .hover\:bg-gray-100:hover {
+  background-color: #6c757d !important;
+}
+
+html.onyx .hover\:bg-blue-50:hover {
+  background-color: #334155 !important;
+}
+
+/* Onyx Ring/Focus States */
+html.onyx .focus\:ring-blue-500:focus {
+  --tw-ring-color: #ca8a04 !important;
+}
+
+html.onyx .focus\:ring-2:focus {
+  --tw-ring-color: #ca8a04 !important;
+}
+
+/* Onyx Shadow Overrides */
+html.onyx .shadow-sm {
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.3) !important;
+}
+
+html.onyx .shadow-md {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4) !important;
+}
+
+html.onyx .shadow-lg {
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.4) !important;
+}
+
+/* Onyx Navigation/Menu Styles */
+html.onyx .bg-opacity-75 {
+  background-color: rgba(52, 58, 64, 0.75) !important;
+}
+
+/* Onyx Progress Bar Styles */
+html.onyx .bg-green-500 {
+  background-color: #16a34a !important;
+}
+
+html.onyx .bg-green-600 {
+  background-color: #15803d !important;
+}
+
+html.onyx .bg-red-500 {
+  background-color: #dc2626 !important;
+}
+
+html.onyx .bg-red-600 {
+  background-color: #b91c1c !important;
+}
+
+html.onyx .bg-yellow-500 {
+  background-color: #eab308 !important;
+}
+
+html.onyx .bg-yellow-600 {
+  background-color: #ca8a04 !important;
+}
+
+/* Onyx Purple/Violet Color Overrides */
+html.onyx .bg-purple-50 {
+  background-color: #2d1b69 !important;
+}
+
+html.onyx .bg-purple-100 {
+  background-color: #3730a3 !important;
+}
+
+html.onyx .bg-purple-600 {
+  background-color: #9333ea !important;
+}
+
+html.onyx .text-purple-600 {
+  color: #c084fc !important;
+}
+
+/* Onyx Orange Color Overrides */
+html.onyx .bg-orange-50 {
+  background-color: #431407 !important;
+}
+
+html.onyx .bg-orange-100 {
+  background-color: #9a3412 !important;
+}
+
+html.onyx .bg-orange-600 {
+  background-color: #ea580c !important;
+}
+
+html.onyx .text-orange-600 {
+  color: #fb923c !important;
+}
+
+/* Onyx Indigo Color Overrides */
+html.onyx .bg-indigo-50 {
+  background-color: #1e1b4b !important;
+}
+
+html.onyx .bg-indigo-100 {
+  background-color: #312e81 !important;
+}
+
+html.onyx .bg-indigo-600 {
+  background-color: #4f46e5 !important;
+}
+
+html.onyx .text-indigo-600 {
+  color: #818cf8 !important;
+}
+
+/* Onyx Slate Color Overrides */
+html.onyx .bg-slate-50 {
+  background-color: #0f172a !important;
+}
+
+html.onyx .bg-slate-100 {
+  background-color: #1e293b !important;
+}
+
+html.onyx .bg-slate-200 {
+  background-color: #334155 !important;
+}
+
+html.onyx .bg-slate-300 {
+  background-color: #475569 !important;
+}
+
+html.onyx .text-slate-900 {
+  color: #f1f5f9 !important;
+}
+
+html.onyx .text-slate-700 {
+  color: #cbd5e1 !important;
+}
+
+html.onyx .text-slate-600 {
+  color: #94a3b8 !important;
+}
+
+html.onyx .text-slate-500 {
+  color: #64748b !important;
+}
+
+/* Onyx Additional Background Variants */
+html.onyx .bg-gray-900 {
+  background-color: #0f172a !important;
+}
+
+html.onyx .bg-gray-800 {
+  background-color: #1e293b !important;
+}
+
+html.onyx .bg-gray-700 {
+  background-color: #334155 !important;
+}
+
+html.onyx .bg-gray-600 {
+  background-color: #475569 !important;
+}
+
+html.onyx .bg-gray-500 {
+  background-color: #64748b !important;
+}
+
+html.onyx .bg-gray-400 {
+  background-color: #94a3b8 !important;
+}
+
+html.onyx .bg-gray-300 {
+  background-color: #cbd5e1 !important;
+}
+
+/* Onyx Additional Text Variants */
+html.onyx .text-gray-400 {
+  color: #94a3b8 !important;
+}
+
+html.onyx .text-gray-300 {
+  color: #cbd5e1 !important;
+}
+
+html.onyx .text-gray-200 {
+  color: #e2e8f0 !important;
+}
+
+html.onyx .text-gray-100 {
+  color: #f1f5f9 !important;
+}
+
+html.onyx .text-white {
+  color: #f8f9fa !important;
+}
+
+html.onyx .text-black {
+  color: #f8f9fa !important;
+}
+
+/* Onyx Border Color Variants */
+html.onyx .border-gray-100 {
+  border-color: #475569 !important;
+}
+
+html.onyx .border-gray-400 {
+  border-color: #6c757d !important;
+}
+
+html.onyx .border-gray-500 {
+  border-color: #adb5bd !important;
+}
+
+html.onyx .border-gray-600 {
+  border-color: #ced4da !important;
+}
+
+html.onyx .border-gray-700 {
+  border-color: #dee2e6 !important;
+}
+
+html.onyx .border-gray-800 {
+  border-color: #e9ecef !important;
+}
+
+html.onyx .border-gray-900 {
+  border-color: #f8f9fa !important;
+}
+
+/* Onyx Divide Color Variants */
+html.onyx .divide-gray-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #475569 !important;
+}
+
+html.onyx .divide-gray-300 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #6c757d !important;
+}
+
+/* Onyx Ring Color Variants */
+html.onyx .ring-gray-200 {
+  --tw-ring-color: #475569 !important;
+}
+
+html.onyx .ring-gray-300 {
+  --tw-ring-color: #6c757d !important;
+}
+
+html.onyx .ring-blue-200 {
+  --tw-ring-color: #ca8a04 !important;
+}
+
+html.onyx .ring-blue-300 {
+  --tw-ring-color: #eab308 !important;
+}
+
+/* Onyx Accent Colors for Status/State */
+html.onyx .text-emerald-600 {
+  color: #10b981 !important;
+}
+
+html.onyx .text-emerald-500 {
+  color: #34d399 !important;
+}
+
+html.onyx .bg-emerald-50 {
+  background-color: #064e3b !important;
+}
+
+html.onyx .bg-emerald-100 {
+  background-color: #065f46 !important;
+}
+
+html.onyx .text-rose-600 {
+  color: #f43f5e !important;
+}
+
+html.onyx .text-rose-500 {
+  color: #fb7185 !important;
+}
+
+html.onyx .bg-rose-50 {
+  background-color: #4c1d24 !important;
+}
+
+html.onyx .bg-rose-100 {
+  background-color: #881337 !important;
+}
+
+/* Onyx Additional Hover States */
+html.onyx .hover\:bg-gray-200:hover {
+  background-color: #475569 !important;
+}
+
+html.onyx .hover\:bg-gray-300:hover {
+  background-color: #64748b !important;
+}
+
+html.onyx .hover\:bg-blue-100:hover {
+  background-color: #475569 !important;
+}
+
+html.onyx .hover\:bg-blue-600:hover {
+  background-color: #a16207 !important;
+}
+
+html.onyx .hover\:bg-blue-700:hover {
+  background-color: #92400e !important;
+}
+
+html.onyx .hover\:text-blue-600:hover {
+  color: #eab308 !important;
+}
+
+html.onyx .hover\:text-blue-700:hover {
+  color: #ca8a04 !important;
+}
+
+html.onyx .hover\:text-gray-900:hover {
+  color: #f8f9fa !important;
+}
+
+html.onyx .hover\:text-gray-700:hover {
+  color: #ced4da !important;
+}
+
+/* Onyx Active States */
+html.onyx .active\:bg-blue-600:active {
+  background-color: #92400e !important;
+}
+
+html.onyx .active\:bg-gray-100:active {
+  background-color: #64748b !important;
+}
+
+/* Onyx Disabled States */
+html.onyx .disabled\:bg-gray-50:disabled {
+  background-color: #1e293b !important;
+}
+
+html.onyx .disabled\:text-gray-500:disabled {
+  color: #64748b !important;
+}
+
+html.onyx .disabled\:border-gray-200:disabled {
+  border-color: #334155 !important;
+}
+
+/* Onyx Placeholder Text */
+html.onyx .placeholder-gray-400::placeholder {
+  color: #6c757d !important;
+}
+
+html.onyx .placeholder-gray-500::placeholder {
+  color: #adb5bd !important;
+}
+
+/* Onyx Selection States */
+html.onyx ::selection {
+  background-color: #ca8a04 !important;
+  color: #0d1117 !important;
+}
+
+/* Onyx Focus Within States */
+html.onyx .focus-within\:ring-blue-500:focus-within {
+  --tw-ring-color: #ca8a04 !important;
+}
+
+/* Onyx Group Hover States */
+html.onyx .group:hover .group-hover\:bg-gray-50 {
+  background-color: #495057 !important;
+}
+
+html.onyx .group:hover .group-hover\:text-blue-600 {
+  color: #eab308 !important;
+}
+
+/* Onyx Peer States */
+html.onyx .peer:checked ~ .peer-checked\:bg-blue-600 {
+  background-color: #ca8a04 !important;
+}
+
+html.onyx .peer:focus ~ .peer-focus\:ring-blue-500 {
+  --tw-ring-color: #ca8a04 !important;
+}
+
+/* Onyx File Input States */
+html.onyx input[type="file"]::-webkit-file-upload-button {
+  background-color: #334155 !important;
+  border-color: #6c757d !important;
+  color: #f8f9fa !important;
+}
+
+html.onyx input[type="file"]::-webkit-file-upload-button:hover {
+  background-color: #475569 !important;
+}
+
+/* Onyx Progress Bar Specific Styles */
+html.onyx progress::-webkit-progress-bar {
+  background-color: #334155 !important;
+}
+
+html.onyx progress::-webkit-progress-value {
+  background-color: #ca8a04 !important;
+}
+
+/* Onyx Range Input Styles */
+html.onyx input[type="range"]::-webkit-slider-track {
+  background-color: #495057 !important;
+}
+
+html.onyx input[type="range"]::-webkit-slider-thumb {
+  background-color: #ca8a04 !important;
+}
+
+html.onyx input[type="range"]::-moz-range-track {
+  background-color: #495057 !important;
+}
+
+html.onyx input[type="range"]::-moz-range-thumb {
+  background-color: #ca8a04 !important;
+  border: none !important;
+}
+
+/* Onyx Checkbox and Radio Styles */
+html.onyx input[type="checkbox"]:checked {
+  background-color: #ca8a04 !important;
+  border-color: #ca8a04 !important;
+}
+
+html.onyx input[type="radio"]:checked {
+  background-color: #ca8a04 !important;
+  border-color: #ca8a04 !important;
+}
+
+/* Onyx Table Styles */
+html.onyx .table-auto thead {
+  background-color: #1e293b !important;
+}
+
+html.onyx .table-auto tbody tr:nth-child(even) {
+  background-color: #334155 !important;
+}
+
+html.onyx .table-auto tbody tr:hover {
+  background-color: #475569 !important;
+}
+
+/* Onyx Modal and Overlay Specific Colors */
+html.onyx .backdrop-blur {
+  backdrop-filter: blur(8px) !important;
+}
+
+html.onyx .bg-black\/50 {
+  background-color: rgba(13, 17, 23, 0.75) !important;
+}
+
+html.onyx .bg-white\/90 {
+  background-color: rgba(52, 58, 64, 0.9) !important;
+}
+
+/* Onyx Special Component Color Mappings */
+html.onyx .text-primary {
+  color: var(--color-primary) !important;
+}
+
+html.onyx .bg-primary {
+  background-color: var(--color-primary) !important;
+}
+
+html.onyx .border-primary {
+  border-color: var(--color-primary) !important;
+}
+
+html.onyx .text-success {
+  color: var(--color-success) !important;
+}
+
+html.onyx .bg-success {
+  background-color: var(--color-success) !important;
+}
+
+html.onyx .text-warning {
+  color: var(--color-warning) !important;
+}
+
+html.onyx .bg-warning {
+  background-color: var(--color-warning) !important;
+}
+
+html.onyx .text-danger {
+  color: var(--color-danger) !important;
+}
+
+html.onyx .bg-danger {
+  background-color: var(--color-danger) !important;
+}
+
+/* Onyx Opacity Variants */
+html.onyx .bg-opacity-10 {
+  background-color: rgba(202, 138, 4, 0.1) !important;
+}
+
+html.onyx .bg-opacity-20 {
+  background-color: rgba(202, 138, 4, 0.2) !important;
+}
+
+html.onyx .bg-opacity-30 {
+  background-color: rgba(202, 138, 4, 0.3) !important;
+}
+
+html.onyx .bg-opacity-40 {
+  background-color: rgba(202, 138, 4, 0.4) !important;
+}
+
+html.onyx .bg-opacity-60 {
+  background-color: rgba(202, 138, 4, 0.6) !important;
+}
+
+html.onyx .bg-opacity-70 {
+  background-color: rgba(202, 138, 4, 0.7) !important;
+}
+
+html.onyx .bg-opacity-80 {
+  background-color: rgba(202, 138, 4, 0.8) !important;
+}
+
+html.onyx .bg-opacity-90 {
+  background-color: rgba(202, 138, 4, 0.9) !important;
+}
+
+/* Onyx Gradient Support */
+html.onyx .from-blue-500 {
+  --tw-gradient-from: #ca8a04 !important;
+}
+
+html.onyx .from-blue-600 {
+  --tw-gradient-from: #a16207 !important;
+}
+
+html.onyx .to-blue-700 {
+  --tw-gradient-to: #92400e !important;
+}
+
+html.onyx .to-blue-800 {
+  --tw-gradient-to: #78350f !important;
+}
+
+html.onyx .via-blue-600 {
+  --tw-gradient-stops: var(--tw-gradient-from), #a16207, var(--tw-gradient-to) !important;
+}
+
+/* Onyx Text Shadow and Effects */
+html.onyx .text-shadow {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+}
+
+html.onyx .text-shadow-lg {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9) !important;
+}

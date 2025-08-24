@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { TimerType } from '@/types/Timer';
 import { Subject } from '@/types/Subject';
 import { subjectService } from '@/services/subjectService';
@@ -16,12 +17,7 @@ type PomodoroPreset = {
   cycles: number;
 };
 
-const POMODORO_PRESETS: PomodoroPreset[] = [
-  { name: 'Classique 25/5', workDuration: 25, breakDuration: 5, longBreakDuration: 15, cycles: 4 },
-  { name: 'Intense 50/10', workDuration: 50, breakDuration: 10, longBreakDuration: 30, cycles: 3 },
-  { name: 'Équilibré 45/15', workDuration: 45, breakDuration: 15, longBreakDuration: 30, cycles: 3 },
-  { name: 'Sprint 15/5', workDuration: 15, breakDuration: 5, longBreakDuration: 15, cycles: 6 }
-];
+// Les presets seront créés dynamiquement avec les traductions
 
 interface TimerConfigDialogProps {
   isOpen: boolean;
@@ -74,6 +70,15 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
   editingTimerData,
   existingTimers = []
 }) => {
+  const { t } = useTranslation();
+  
+  // Presets Pomodoro avec traductions dynamiques
+  const POMODORO_PRESETS: PomodoroPreset[] = [
+    { name: t('timerDialog.classicPreset', 'Classique 25/5'), workDuration: 25, breakDuration: 5, longBreakDuration: 15, cycles: 4 },
+    { name: t('timerDialog.intensePreset', 'Intense 50/10'), workDuration: 50, breakDuration: 10, longBreakDuration: 30, cycles: 3 },
+    { name: t('timerDialog.balancedPreset', 'Équilibré 45/15'), workDuration: 45, breakDuration: 15, longBreakDuration: 30, cycles: 3 },
+    { name: t('timerDialog.sprintPreset', 'Sprint 15/5'), workDuration: 15, breakDuration: 5, longBreakDuration: 15, cycles: 6 }
+  ];
   const [name, setName] = useState(defaultName);
   const [hours, setHours] = useState(defaultDuration.hours);
   const [minutes, setMinutes] = useState(defaultDuration.minutes);
@@ -162,12 +167,12 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
 
     // Validation du temps
     if (!isValidTimeInput(hours, minutes, seconds)) {
-      newErrors.push('Veuillez entrer une durée valide (format HH:MM:SS)');
+      newErrors.push(t('timerDialog.validTimeError', 'Veuillez entrer une durée valide (format HH:MM:SS)'));
     }
 
     // Validation de la matière pour les sessions d'étude
     if (timerType === 'STUDY_SESSION' && !selectedSubject) {
-      newErrors.push('Veuillez sélectionner une matière pour une session d\'étude');
+      newErrors.push(t('timerDialog.selectSubjectError', 'Veuillez sélectionner une matière pour une session d\'étude'));
     }
 
     setErrors(newErrors);
@@ -226,7 +231,7 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
           <Clock size={20} className="text-blue-600" />
         </div>
         <h2 className="text-xl font-semibold text-gray-900">
-          {isEditMode ? 'Modifier le Timer' : 'Configuration du Timer'}
+          {isEditMode ? t('timerDialog.modifyTimer', 'Modifier le Timer') : t('timerDialog.configureTimer', 'Configuration du Timer')}
         </h2>
       </div>
 
@@ -246,7 +251,7 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
           {/* Type de session - Design amélioré */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
-              Choix du mode de session
+              {t('timerDialog.sessionModeChoice', 'Choix du mode de session')}
             </label>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -266,7 +271,7 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
                   }`}>
                     <Zap size={16} className={timerType === 'FREE_SESSION' ? 'text-purple-600' : 'text-gray-500'} />
                   </div>
-                  <span className="font-medium text-sm">Session libre</span>
+                  <span className="font-medium text-sm">{t('timerDialog.freeSession', 'Session libre')}</span>
                 </div>
               </button>
               
@@ -284,7 +289,7 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
                   }`}>
                     <BookOpen size={16} className={timerType === 'STUDY_SESSION' ? 'text-blue-600' : 'text-gray-500'} />
                   </div>
-                  <span className="font-medium text-sm">Session d'étude</span>
+                  <span className="font-medium text-sm">{t('timerDialog.studySession', 'Session d\'étude')}</span>
                 </div>
               </button>
             </div>
@@ -296,7 +301,7 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
               <label className="block text-sm font-medium text-gray-700 mb-3">
                 <div className="flex items-center space-x-2">
                   <BookOpen size={16} />
-                  <span>Matière d'étude</span>
+                  <span>{t('timerDialog.studySubject', 'Matière d\'étude')}</span>
                 </div>
               </label>
               
@@ -310,7 +315,7 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="">Sélectionner une matière</option>
+                    <option value="">{t('timerDialog.selectSubject', 'Sélectionner une matière')}</option>
                     {subjects.map((subject) => {
                       const linkedTimer = getLinkedTimerForSubject(subject.id);
                       const isLinkedToOtherTimer = linkedTimer && (!isEditMode || linkedTimer.id !== editingTimerData?.id);
@@ -318,7 +323,7 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
                       return (
                         <option key={subject.id} value={subject.id}>
                           {subject.name}
-                          {isLinkedToOtherTimer ? ` (déjà lié au timer "${linkedTimer.title}")` : ''}
+                          {isLinkedToOtherTimer ? ` ${t('timerDialog.alreadyLinked', '(déjà lié au timer "{{timerTitle}}")', { timerTitle: linkedTimer.title })}` : ''}
                         </option>
                       );
                     })}
@@ -328,8 +333,7 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
                   {selectedSubject && getLinkedTimerForSubject(selectedSubject.id) && (
                     <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
                       <p className="text-xs text-blue-700">
-                        ℹ Ce cours est déjà lié au timer "{getLinkedTimerForSubject(selectedSubject.id)?.title}". 
-                        En confirmant, l'ancien timer sera délié automatiquement (relation 1:1).
+                        ℹ {t('timerDialog.linkageInfo', 'Ce cours est déjà lié au timer "{{timerTitle}}". En confirmant, l\'ancien timer sera délié automatiquement (relation 1:1).', { timerTitle: getLinkedTimerForSubject(selectedSubject.id)?.title })}
                       </p>
                     </div>
                   )}
@@ -337,10 +341,10 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
               ) : (
                 <div className="p-4 bg-gray-50 rounded-lg text-center">
                   <p className="text-sm text-gray-500 mb-2">
-                    Aucune matière disponible
+                    {t('timerDialog.noSubjectsAvailable', 'Aucune matière disponible')}
                   </p>
                   <p className="text-xs text-gray-400">
-                    Créez d'abord des matières dans la section Étude
+                    {t('timerDialog.createSubjectsFirst', 'Créez d\'abord des matières dans la section Étude')}
                   </p>
                 </div>
               )}
@@ -350,7 +354,7 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
           {/* Choix du type de timer - Design amélioré */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
-              Choix du type de timer
+              {t('timerDialog.timerTypeChoice', 'Choix du type de timer')}
             </label>
             <div className="grid grid-cols-2 gap-2 mb-4">
               <button
@@ -368,7 +372,7 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
                   }`}>
                     <Timer size={16} className={timerMode === 'simple' ? 'text-green-600' : 'text-gray-500'} />
                   </div>
-                  <span className="font-medium text-sm">Timer Simple</span>
+                  <span className="font-medium text-sm">{t('timerDialog.simpleTimer', 'Timer Simple')}</span>
                 </div>
               </button>
               <button
@@ -386,7 +390,7 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
                   }`}>
                     <Coffee size={16} className={timerMode === 'pomodoro' ? 'text-red-600' : 'text-gray-500'} />
                   </div>
-                  <span className="font-medium text-sm">Pomodoro</span>
+                  <span className="font-medium text-sm">{t('timerDialog.pomodoro', 'Pomodoro')}</span>
                 </div>
               </button>
             </div>
@@ -396,12 +400,12 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
           {timerMode === 'simple' ? (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
-                Durée du timer
+                {t('timerDialog.timerDuration', 'Durée du timer')}
               </label>
               
               {/* Durées courantes prédéfinies */}
               <div className="mb-4">
-                <div className="text-sm font-medium text-gray-600 mb-2">Durées courantes :</div>
+                <div className="text-sm font-medium text-gray-600 mb-2">{t('timerDialog.commonDurations', 'Durées courantes :')}</div>
                 <div className="grid grid-cols-5 gap-2">
                   {[5, 15, 25, 45, 60].map((preset) => (
                     <button
@@ -435,12 +439,12 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
           ) : (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
-                Configuration Pomodoro
+                {t('timerDialog.pomodoroConfig', 'Configuration Pomodoro')}
               </label>
               
               {/* Presets Pomodoro */}
               <div className="space-y-2 mb-4">
-                <div className="text-sm font-medium text-gray-600 mb-2">Configurations prédéfinies:</div>
+                <div className="text-sm font-medium text-gray-600 mb-2">{t('timerDialog.predefinedConfigs', 'Configurations prédéfinies:')}</div>
                 {POMODORO_PRESETS.map((preset, index) => (
                   <label key={index} className="flex items-center space-x-3 cursor-pointer p-3 border rounded-lg hover:bg-gray-50">
                     <input
@@ -453,7 +457,7 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
                     <div className="flex-1">
                       <div className="font-medium text-gray-900">{preset.name}</div>
                       <div className="text-sm text-gray-600">
-                        {preset.workDuration}min travail • {preset.breakDuration}min pause • {preset.cycles} cycles
+                        {preset.workDuration}min {t('timerDialog.workTime', 'travail')} • {preset.breakDuration}min {t('timerDialog.pauseTime', 'pause')} • {preset.cycles} {t('timerDialog.cycles', 'cycles')}
                       </div>
                     </div>
                   </label>
@@ -462,10 +466,10 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
 
               {/* Configuration personnalisée */}
               <div className="border-t pt-4">
-                <div className="text-sm font-medium text-gray-600 mb-3">Configuration personnalisée:</div>
+                <div className="text-sm font-medium text-gray-600 mb-3">{t('timerDialog.customConfig', 'Configuration personnalisée:')}</div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1">Travail (min)</label>
+                    <label className="block text-xs text-gray-500 mb-1">{t('timerDialog.workMinutes', 'Travail (min)')}</label>
                     <input
                       type="number"
                       value={customPomodoro.workDuration}
@@ -476,7 +480,7 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1">Pause (min)</label>
+                    <label className="block text-xs text-gray-500 mb-1">{t('timerDialog.pauseMinutes', 'Pause (min)')}</label>
                     <input
                       type="number"
                       value={customPomodoro.breakDuration}
@@ -487,7 +491,7 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1">Pause longue (min)</label>
+                    <label className="block text-xs text-gray-500 mb-1">{t('timerDialog.longPauseMinutes', 'Pause longue (min)')}</label>
                     <input
                       type="number"
                       value={customPomodoro.longBreakDuration}
@@ -498,7 +502,7 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1">Nombre de cycles</label>
+                    <label className="block text-xs text-gray-500 mb-1">{t('timerDialog.cycleCount', 'Nombre de cycles')}</label>
                     <input
                       type="number"
                       value={customPomodoro.cycles}
@@ -514,7 +518,7 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
                   onClick={() => setSelectedPreset({...customPomodoro, name: 'Personnalisé'})}
                   className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
                 >
-                  Utiliser cette configuration personnalisée
+                  {t('timerDialog.useCustomConfig', 'Utiliser cette configuration personnalisée')}
                 </button>
               </div>
             </div>
@@ -523,7 +527,7 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
           {/* Nom du timer */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nom du timer (optionnel)
+              {t('timerDialog.timerNameOptional', 'Nom du timer (optionnel)')}
             </label>
             <input
               type="text"
@@ -533,7 +537,7 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
               placeholder={timerMode === 'pomodoro' ? 'Timer Pomodoro' : 'Timer Simple'}
             />
             <p className="text-xs text-gray-500 mt-1">
-              Un nom sera généré automatiquement si vide
+              {t('timerDialog.autoGeneratedName', 'Un nom sera généré automatiquement si vide')}
             </p>
           </div>
 
@@ -545,15 +549,15 @@ export const TimerConfigDialog: React.FC<TimerConfigDialogProps> = ({
           onClick={onClose}
           className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium"
         >
-          Annuler
+          {t('timerDialog.cancel', 'Annuler')}
         </button>
         <button
           onClick={handleConfirm}
           className="px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors font-medium"
         >
           {isEditMode 
-            ? (timerMode === 'pomodoro' ? 'Modifier le Pomodoro' : 'Modifier le timer')
-            : (timerMode === 'pomodoro' ? 'Créer le Pomodoro' : 'Créer le timer')
+            ? (timerMode === 'pomodoro' ? t('timerDialog.modifyPomodoro', 'Modifier le Pomodoro') : t('timerDialog.modifyTimer', 'Modifier le timer'))
+            : (timerMode === 'pomodoro' ? t('timerDialog.createPomodoro', 'Créer le Pomodoro') : t('timerDialog.createTimer', 'Créer le timer'))
           }
         </button>
       </div>

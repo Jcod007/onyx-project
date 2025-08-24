@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Subject, DayLabels, DayOfWeek } from '@/types/Subject';
 import { Calendar, Target, Edit, Trash2, Link, Unlink } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface SubjectCardProps {
   subject: Subject;
@@ -20,6 +21,7 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
   className = ''
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const { t } = useTranslation();
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -33,19 +35,20 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
 
   // Formater les jours d'étude
   const formatStudyDays = (days: DayOfWeek[]): string => {
-    if (!days || days.length === 0) return 'Aucun jour défini';
-    return days.map(day => DayLabels[day]).join(', ');
+    if (!days || days.length === 0) return t('subjectCard.noDaysDefined', 'Aucun jour défini');
+    return days.map(day => t(`subjectConfig.${day.toLowerCase()}`, DayLabels[day])).join(', ');
   };
 
   // Formater l'objectif hebdomadaire (convertir minutes en format lisible)
   const formatWeeklyGoal = (minutes?: number): string => {
-    if (!minutes || minutes === 0) return 'Aucun objectif';
+    if (!minutes || minutes === 0) return t('subjectCard.noObjective', 'Aucun objectif');
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
+    const perWeek = t('subjectCard.perWeek', '/semaine');
     if (hours > 0) {
-      return remainingMinutes > 0 ? `${hours.toString().padStart(2, '0')}:${remainingMinutes.toString().padStart(2, '0')}/semaine` : `${hours.toString().padStart(2, '0')}:00/semaine`;
+      return remainingMinutes > 0 ? `${hours.toString().padStart(2, '0')}:${remainingMinutes.toString().padStart(2, '0')}${perWeek}` : `${hours.toString().padStart(2, '0')}:00${perWeek}`;
     }
-    return `00:${remainingMinutes.toString().padStart(2, '0')}/semaine`;
+    return `00:${remainingMinutes.toString().padStart(2, '0')}${perWeek}`;
   };
 
   return (
@@ -69,14 +72,14 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
             <button
               onClick={handleEdit}
               className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-              title="Modifier"
+              title={t('common.edit', 'Modifier')}
             >
               <Edit size={18} />
             </button>
             <button
               onClick={handleDelete}
               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-              title="Supprimer"
+              title={t('common.delete', 'Supprimer')}
             >
               <Trash2 size={18} />
             </button>
@@ -92,7 +95,7 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
             <Target size={18} className="text-green-600" />
           </div>
           <div>
-            <p className="text-sm text-gray-500">Objectif par semaine</p>
+            <p className="text-sm text-gray-500">{t('subjectCard.weeklyObjective', 'Objectif par semaine')}</p>
             <p className="text-base font-medium text-gray-900">
               {formatWeeklyGoal(subject.weeklyTimeGoal || 0)}
             </p>
@@ -105,7 +108,7 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
             <Calendar size={18} className="text-blue-600" />
           </div>
           <div>
-            <p className="text-sm text-gray-500">Jours d'étude</p>
+            <p className="text-sm text-gray-500">{t('subjectCard.studyDays', 'Jours d\'étude')}</p>
             <p className="text-base font-medium text-gray-900">
               {formatStudyDays(subject.studyDays || [])}
             </p>
@@ -130,7 +133,7 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
             )}
           </div>
           <div>
-            <p className="text-sm text-gray-500">Liaison timer</p>
+            <p className="text-sm text-gray-500">{t('subjectCard.timerLink', 'Liaison timer')}</p>
             <p className={`text-base font-medium ${
               linkedTimerName
                 ? 'text-purple-900' 
@@ -139,10 +142,10 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({
                 : 'text-gray-600'
             }`}>
               {linkedTimerName 
-                ? `Lié à "${linkedTimerName}"` 
+                ? t('subjectCard.linkedTo', 'Lié à "{{name}}"', { name: linkedTimerName })
                 : subject.linkedTimerId 
                 ? `Timer ID: ${subject.linkedTimerId.slice(0, 8)}...` 
-                : 'Aucune liaison'}
+                : t('subjectCard.noLink', 'Aucune liaison')}
             </p>
           </div>
         </div>

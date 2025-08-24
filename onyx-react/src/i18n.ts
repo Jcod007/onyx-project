@@ -2,8 +2,8 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
-import frTranslation from './locales/fr/translation.json';
-import enTranslation from './locales/en/translation.json';
+import frTranslation from './i18n/fr/translation.json';
+import enTranslation from './i18n/en/translation.json';
 
 const resources = {
   fr: {
@@ -29,6 +29,11 @@ i18n
     detection: {
       order: ['localStorage', 'navigator', 'htmlTag'],
       caches: ['localStorage']
+    },
+    
+    // Forcer les re-renders
+    react: {
+      useSuspense: false
     }
   });
 

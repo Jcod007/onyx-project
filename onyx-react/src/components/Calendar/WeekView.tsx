@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CalendarDay } from '@/types/Subject';
 import { BookOpen, Clock, Target, TrendingUp } from 'lucide-react';
-import { formatMinutesToHours } from '@/utils/timeFormat';
+import { formatMinutesToHours, getWeekStartSafe } from '@/utils/timeFormat';
+import { dailyTimeService } from '@/services/dailyTimeService';
+import { useTranslation } from 'react-i18next';
 
 interface WeekViewProps {
   calendarDays: CalendarDay[];
   currentDate: Date;
   onDateClick?: (date: Date) => void;
+  getSubjectTimeForDate?: (subjectId: string, date: Date) => number;
 }
 
 export const WeekView: React.FC<WeekViewProps> = ({
@@ -14,20 +17,60 @@ export const WeekView: React.FC<WeekViewProps> = ({
   currentDate,
   onDateClick
 }) => {
+  const { t } = useTranslation();
   const [hoveredSession, setHoveredSession] = useState<string | null>(null);
-  const dayNames = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+  const [dailyTimes, setDailyTimes] = useState<Map<string, number>>(new Map());
+  const [loadingTimes, setLoadingTimes] = useState(true);
+  const dayNames = [
+    t('calendar.days.mon', 'Lun'),
+    t('calendar.days.tue', 'Mar'), 
+    t('calendar.days.wed', 'Mer'),
+    t('calendar.days.thu', 'Jeu'),
+    t('calendar.days.fri', 'Ven'),
+    t('calendar.days.sat', 'Sam'),
+    t('calendar.days.sun', 'Dim')
+  ];
   
-  // Trier les jours du calendrier pour la semaine courante
-  const getWeekStart = (date: Date) => {
-    const start = new Date(date);
-    const day = start.getDay();
-    const diff = start.getDate() - day + (day === 0 ? -6 : 1); // Lundi = début de semaine
-    start.setDate(diff);
-    start.setHours(0, 0, 0, 0);
-    return start;
-  };
-  
-  const weekStart = getWeekStart(currentDate);
+  // Utiliser la fonction centralisée avec gestion DST
+  const weekStart = getWeekStartSafe(currentDate);
+
+  // 📊 Charger les temps quotidiens pour toutes les sessions
+  useEffect(() => {
+    const loadDailyTimes = async () => {
+      const newDailyTimes = new Map<string, number>();
+      
+      for (const calendarDay of calendarDays) {
+        for (const session of calendarDay.sessions) {
+          const key = `${session.subject.id}-${calendarDay.date.toDateString()}`;
+          try {
+            const timeSpent = await dailyTimeService.getTimeSpentForDate(
+              session.subject.id, 
+              calendarDay.date
+            );
+            newDailyTimes.set(key, timeSpent);
+          } catch (error) {
+            console.error(`Erreur chargement temps quotidien pour ${key}:`, error);
+            newDailyTimes.set(key, 0);
+          }
+        }
+      }
+      
+      setDailyTimes(newDailyTimes);
+      setLoadingTimes(false);
+      console.log('📊 [WeekView] Temps quotidiens chargés:', Object.fromEntries(newDailyTimes));
+    };
+
+    loadDailyTimes();
+    
+    // S'abonner aux changements du service quotidien
+    const unsubscribe = dailyTimeService.subscribe(() => {
+      console.log('🔄 [WeekView] Rechargement des temps quotidiens...');
+      setLoadingTimes(true);
+      loadDailyTimes();
+    });
+
+    return unsubscribe;
+  }, [calendarDays]);
   const weekDays: Array<{date: Date; data: CalendarDay}> = [];
   for (let i = 0; i < 7; i++) {
     const day = new Date(weekStart);
@@ -55,8 +98,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
     return 'min-h-[700px]';
   };
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // const today = createCleanDate(new Date()); // Unused for now
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
@@ -137,8 +179,38 @@ export const WeekView: React.FC<WeekViewProps> = ({
                 {dayInfo.data.sessions.map((session) => {
                   const isHovered = hoveredSession === `${dayInfo.date.toISOString()}-${session.id}`;
                   const sessionKey = `${dayInfo.date.toISOString()}-${session.id}`;
-                  const studiedMinutes = Math.round((session.subject.timeSpent || 0) / 60);
-                  const progress = session.plannedDuration > 0 ? (studiedMinutes / session.plannedDuration) * 100 : 0;
+                  // 🎯 NOUVEAU: Utiliser le temps quotidien de la journée spécifique
+                  const dailyKey = `${session.subject.id}-${dayInfo.date.toDateString()}`;
+                  const dailyTimeSeconds = dailyTimes.get(dailyKey) || 0;
+                  const dailyTimeMinutes = Math.round(dailyTimeSeconds / 60);
+                  
+                  // 🎯 CORRECTION: Vérifier si c'est un jour d'étude planifié
+                  const dayOfWeek = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'][dayInfo.date.getDay()];
+                  const isPlannedStudyDay = session.subject.studyDays?.includes(dayOfWeek as any) || false;
+                  
+                  // Calculer l'objectif quotidien basé sur l'objectif hebdomadaire
+                  const weeklyGoalMinutes = (session.subject.weeklyTimeGoal && session.subject.weeklyTimeGoal > 0) 
+                    ? session.subject.weeklyTimeGoal 
+                    : 240; // 4h par défaut
+                  const studyDaysCount = session.subject.studyDays?.length || 3;
+                  const dailyGoalMinutes = isPlannedStudyDay ? Math.round(weeklyGoalMinutes / studyDaysCount) : 0;
+                  
+                  // Progression basée sur l'objectif quotidien
+                  const progress = dailyGoalMinutes > 0 ? (dailyTimeMinutes / dailyGoalMinutes) * 100 : 
+                                  dailyTimeMinutes > 0 ? 100 : 0; // Si pas de jour planifié mais temps ajouté = 100%
+                  
+                  if (!loadingTimes) {
+                    console.log(`📅 [WeekView] Progression QUOTIDIENNE "${session.subject.name}" (${dayInfo.date.toDateString()}):`, {
+                      dayOfWeek,
+                      isPlannedStudyDay,
+                      dailyTimeMinutes,
+                      dailyGoalMinutes,
+                      progressCalculation: `${dailyTimeMinutes}/${dailyGoalMinutes} = ${Math.round(progress)}%`,
+                      studyDaysCount,
+                      studyDays: session.subject.studyDays,
+                      hasData: dailyTimes.has(dailyKey)
+                    });
+                  }
                   const isCompleted = progress >= 100;
                   
                   return (
@@ -171,16 +243,27 @@ export const WeekView: React.FC<WeekViewProps> = ({
                         
                         <div className="flex items-center justify-between mb-1.5">
                           <span className="text-xs text-gray-600 flex items-center gap-1">
-                            <Clock size={10} />
-                            {formatMinutesToHours(session.plannedDuration)}
+                            <Target size={10} />
+                            {isPlannedStudyDay ? 
+                              `${t('calendar.objective', 'Objectif')}: ${formatMinutesToHours(dailyGoalMinutes)}` : 
+                              t('calendar.freeDay', 'Jour libre')
+                            }
                           </span>
-                          {studiedMinutes > 0 && (
+                          {loadingTimes ? (
+                            <span className="text-xs px-1 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                              ⏳ {t('common.loading', 'Chargement...')}
+                            </span>
+                          ) : dailyTimeMinutes > 0 ? (
                             <span className={`text-xs px-1 py-0.5 rounded-full ${
                               isCompleted 
                                 ? 'bg-green-100 text-green-700' 
                                 : 'bg-blue-100 text-blue-700'
                             }`}>
-                              {formatMinutesToHours(studiedMinutes)}
+                              ✅ {formatMinutesToHours(dailyTimeMinutes)}
+                            </span>
+                          ) : (
+                            <span className="text-xs px-1 py-0.5 rounded-full bg-gray-100 text-gray-400">
+                              0min
                             </span>
                           )}
                         </div>
@@ -217,7 +300,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
           <div className="p-1.5 bg-blue-50 rounded-lg shadow-sm">
             <BookOpen size={16} className="text-blue-600" />
           </div>
-          Résumé de la semaine
+          {t('weekView.weekSummary', 'Résumé de la semaine')}
         </h3>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -227,7 +310,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
                 <Target size={16} className="text-blue-600" />
               </div>
             </div>
-            <div className="text-sm font-medium text-gray-700 mb-1">Sessions</div>
+            <div className="text-sm font-medium text-gray-700 mb-1">{t('weekView.sessions', 'Sessions')}</div>
             <div className="text-xl font-bold text-gray-900">
               {calendarDays.reduce((sum, day) => sum + day.sessions.length, 0)}
             </div>
@@ -239,7 +322,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
                 <Clock size={16} className="text-green-600" />
               </div>
             </div>
-            <div className="text-sm font-medium text-gray-700 mb-1">Temps planifié</div>
+            <div className="text-sm font-medium text-gray-700 mb-1">{t('weekView.plannedTime', 'Temps planifié')}</div>
             <div className="text-xl font-bold text-gray-900">
               {formatMinutesToHours(calendarDays.reduce((sum, day) => sum + day.totalPlannedTime, 0))}
             </div>
@@ -251,7 +334,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
                 <BookOpen size={16} className="text-purple-600" />
               </div>
             </div>
-            <div className="text-sm font-medium text-gray-700 mb-1">Matières</div>
+            <div className="text-sm font-medium text-gray-700 mb-1">{t('weekView.subjects', 'Matières')}</div>
             <div className="text-xl font-bold text-gray-900">
               {new Set(calendarDays.flatMap(day => day.sessions.map(s => s.subjectId))).size}
             </div>
@@ -263,7 +346,7 @@ export const WeekView: React.FC<WeekViewProps> = ({
                 <TrendingUp size={16} className="text-orange-600" />
               </div>
             </div>
-            <div className="text-sm font-medium text-gray-700 mb-1">Durée moy.</div>
+            <div className="text-sm font-medium text-gray-700 mb-1">{t('weekView.avgDuration', 'Durée moy.')}</div>
             <div className="text-xl font-bold text-gray-900">
               {formatMinutesToHours(
                 calendarDays.reduce((sum, day) => sum + day.sessions.length, 0) > 0 

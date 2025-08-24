@@ -40,7 +40,7 @@ class DataService {
       id: crypto.randomUUID(),
       name: subjectData.name,
       status: 'NOT_STARTED',
-      targetTime: subjectData.targetTime * 60, // conversion minutes -> secondes
+      targetTime: subjectData.targetTime, // déjà en secondes depuis StudyPage
       timeSpent: 0,
       defaultTimerDuration: (subjectData.defaultTimerDuration || 25) * 60,
       createdAt: new Date(),
@@ -66,9 +66,9 @@ class DataService {
       updatedAt: new Date()
     };
 
-    // Conversion minutes -> secondes si nécessaire
+    // targetTime déjà en secondes depuis StudyPage
     if (updates.targetTime !== undefined) {
-      updatedSubject.targetTime = updates.targetTime * 60;
+      updatedSubject.targetTime = updates.targetTime;
     }
     if (updates.defaultTimerDuration !== undefined) {
       updatedSubject.defaultTimerDuration = updates.defaultTimerDuration * 60;
@@ -93,8 +93,13 @@ class DataService {
   }
 
   async addTimeToSubject(subjectId: string, duration: number): Promise<Subject | null> {
+    console.log(`🔄 [DataService] addTimeToSubject: ${duration}s à subjectId ${subjectId}`);
     const subject = await this.getSubject(subjectId);
-    if (!subject) return null;
+    if (!subject) {
+      console.error(`❌ [DataService] Subject ${subjectId} non trouvé`);
+      return null;
+    }
+    console.log(`📋 [DataService] Subject avant:`, { name: subject.name, timeSpent: subject.timeSpent });
 
     const updatedSubject: Subject = {
       ...subject,
@@ -102,6 +107,7 @@ class DataService {
       lastStudyDate: new Date(),
       updatedAt: new Date()
     };
+    console.log(`📊 [DataService] Subject après calcul:`, { name: updatedSubject.name, timeSpent: updatedSubject.timeSpent });
 
     // Mettre à jour le statut si l'objectif est atteint
     if (updatedSubject.timeSpent >= updatedSubject.targetTime) {
@@ -110,7 +116,9 @@ class DataService {
       updatedSubject.status = 'IN_PROGRESS';
     }
 
-    return await this.updateSubject(subjectId, updatedSubject);
+    const result = await this.updateSubject(subjectId, updatedSubject);
+    console.log(`💾 [DataService] Résultat final updateSubject:`, result);
+    return result;
   }
 
   // Timers
@@ -183,6 +191,16 @@ class DataService {
     sessions.push(newSession);
     await localforage.setItem(STORAGE_KEYS.STUDY_SESSIONS, sessions);
     return newSession;
+  }
+
+  async updateStudySessions(sessions: StudySession[]): Promise<boolean> {
+    try {
+      await localforage.setItem(STORAGE_KEYS.STUDY_SESSIONS, sessions);
+      return true;
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour des sessions:', error);
+      return false;
+    }
   }
 
   // Study Decks

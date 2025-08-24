@@ -441,13 +441,13 @@ export const TimersPage: React.FC = () => {
                 onStart={() => {
                   const currentState = getTimerState(timer.id);
                   
-                  // Empêcher le lancement multiple si le timer est déjà en cours
-                  if (currentState && (currentState.state === 'running' || currentState.state === 'paused')) {
-                    console.log('Timer already running or paused, ignoring start request');
+                  // Empêcher le lancement multiple si le timer est déjà en cours (mais permettre la reprise)
+                  if (currentState && currentState.state === 'running') {
+                    console.log('Timer already running, ignoring start request');
                     return;
                   }
                   
-                  console.log('Starting timer:', timer.id);
+                  console.log('Starting/resuming timer:', timer.id);
                   startTimer(timer.id, timer);
                 }}
                 onPause={() => {

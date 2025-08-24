@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Clock } from 'lucide-react';
 
 interface SmartTimeInputProps {
@@ -9,6 +10,8 @@ interface SmartTimeInputProps {
   onRealTimeChange?: (hours: number, minutes: number, seconds: number) => void;
   className?: string;
   placeholder?: string;
+  label?: string;
+  showExamples?: boolean;
 }
 
 export const SmartTimeInput: React.FC<SmartTimeInputProps> = ({
@@ -18,8 +21,12 @@ export const SmartTimeInput: React.FC<SmartTimeInputProps> = ({
   onChange,
   onRealTimeChange,
   className = '',
-  placeholder = '00:00:00'
+  placeholder = '00:00:00',
+  label,
+  showExamples = true
 }) => {
+  const { t } = useTranslation();
+  const defaultLabel = label || t('timeInput.timeConfiguration', 'Configuration du temps');
   const [displayValue, setDisplayValue] = useState('');
   const [inputValue, setInputValue] = useState('');
   const [isFocused, setIsFocused] = useState(false);
@@ -88,6 +95,16 @@ export const SmartTimeInput: React.FC<SmartTimeInputProps> = ({
       s = Math.min(s, 59);
       m = Math.min(m, 59);
       h = Math.min(h, 99);
+    }
+    
+    // Validation de base : éviter les valeurs complètement aberrantes même sans normalize
+    if (s > 59) {
+      console.warn(`[SmartTimeInput] Secondes invalides détectées: ${s}, clamping à 59`);
+      s = Math.min(s, 59);
+    }
+    if (m > 59) {
+      console.warn(`[SmartTimeInput] Minutes invalides détectées: ${m}, clamping à 59`);
+      m = Math.min(m, 59);
     }
 
     return { hours: h, minutes: m, seconds: s };
@@ -202,7 +219,7 @@ export const SmartTimeInput: React.FC<SmartTimeInputProps> = ({
     <div className={`space-y-2 ${className}`}>
       <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
         <Clock size={16} className="text-gray-500" />
-        Configuration du temps
+        {defaultLabel}
       </label>
       
       <div className="relative">
@@ -226,12 +243,12 @@ export const SmartTimeInput: React.FC<SmartTimeInputProps> = ({
       <div className="flex items-center gap-2 text-xs text-gray-500">
         <div className="flex items-center gap-1">
           <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
-          <span>Tapez directement : 1→2→3 = 00:01:23</span>
+          <span>{t('timeInput.helpText', 'Tapez directement : 1→2→3 = 00:01:23')}</span>
         </div>
       </div>
 
       {/* Exemples d'utilisation */}
-      {isFocused && (
+      {showExamples && isFocused && (
         <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
           <div className="text-xs font-medium text-blue-700 mb-2">💡 Tapez directement les chiffres :</div>
           <div className="grid grid-cols-2 gap-2 text-xs text-blue-600">
@@ -239,7 +256,7 @@ export const SmartTimeInput: React.FC<SmartTimeInputProps> = ({
             <div><code className="bg-white px-1 rounded text-gray-800">123</code> = 00:01:23</div>
             <div><code className="bg-white px-1 rounded text-gray-800">2530</code> = 00:25:30</div>
             <div><code className="bg-white px-1 rounded text-gray-800">12345</code> = 01:23:45</div>
-            <div><code className="bg-white px-1 rounded text-gray-800">99956034</code> = 95:60:34</div>
+            <div><code className="bg-white px-1 rounded text-gray-800">99956034</code> = 99:56:34</div>
             <div>Décalage infini sans limite</div>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { SubjectCard } from '@/components/SubjectCard';
 import { Timer } from '@/components/Timer';
 import { Modal } from '@/components/Modal';
@@ -13,7 +14,6 @@ import { syncEventBus } from '@/services/syncEventBus';
 import { Plus, Search, Filter, BookOpen, X } from 'lucide-react';
 import { logger } from '@/utils/logger';
 import { diagnoseLinkageIssues, repairLinkageIssues } from '@/utils/linkageDiagnostic';
-import { useTranslation } from 'react-i18next';
 
 interface StudyTimer {
   subject: Subject;
@@ -175,7 +175,7 @@ export const StudyPage: React.FC = () => {
   const handleSubjectConfigSave = async (formData: any) => {
     const newSubjectData: CreateSubjectDto = {
       name: formData.name,
-      targetTime: Math.round(formData.weeklyTimeMinutes * 60), // Convertir minutes en secondes
+      targetTime: Math.round(formData.weeklyTimeMinutes * 60), // Conversion minutes -> secondes
       defaultTimerDuration: formData.timerConfig?.simpleTimerDuration 
         ? formData.timerConfig.simpleTimerDuration * 60 
         : 1500, // 25 minutes par défaut
@@ -252,7 +252,7 @@ export const StudyPage: React.FC = () => {
     
     const updateData: UpdateSubjectDto = {
       name: formData.name,
-      targetTime: Math.round(formData.weeklyTimeMinutes * 60), // Convertir minutes en secondes
+      targetTime: Math.round(formData.weeklyTimeMinutes * 60), // Conversion minutes -> secondes
       defaultTimerDuration: formData.timerConfig?.simpleTimerDuration 
         ? formData.timerConfig.simpleTimerDuration * 60 
         : editingSubject.defaultTimerDuration,
@@ -407,9 +407,9 @@ export const StudyPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Mes Matières</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('study.title', 'Mes Matières')}</h1>
           <p className="text-gray-600">
-            Gérez vos matières d'étude et suivez vos progrès
+            {t('study.subtitle', 'Gérez vos matières d\'étude et suivez vos progrès')}
           </p>
         </div>
         
